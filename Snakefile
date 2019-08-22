@@ -1,7 +1,7 @@
 import pandas as pd
 from snakemake.utils import validate, min_version
 ##### set minimum snakemake version #####
-min_version("5.1.2")
+min_version("5.4.4")
 
 
 ##### load config and sample sheets #####
@@ -15,8 +15,6 @@ validate(samples, schema="schemas/samples.schema.yaml")
 contrasts = pd.read_table(config["contrasts"]).set_index("contrast", drop=False)
 validate(samples, schema="schemas/samples.schema.yaml")
 
-# make list of sample names:
-SAMPLES = samples["sample"].tolist()
 ##### target rules #####
 
 rule all:

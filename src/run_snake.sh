@@ -4,8 +4,8 @@
 #PBS -M dean.pettinga@vai.org
 #PBS -m ae
 #PBS -N bulk_rnaseq_workflow
-#PBS -o logs/bulk_rnaseq_workflow.o
-#PBS -e logs/bulk_rnaseq_workflow.o
+#PBS -o logs/rnaseq_workflow.o
+#PBS -e logs/rnaseq_workflow.o
 
 cd ${PBS_O_WORKDIR}
 # save DAG job file with time stamp
@@ -21,5 +21,5 @@ snakemake \
 --use-conda \
 
 # generate report
-snakemake \--report runs/bulk_rnaseq_workflow_${TIME}.html
+snakemake \--report runs/rnaseq_workflow_${TIME}.html
 # -o {cluster.std_oe}
