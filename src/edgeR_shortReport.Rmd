@@ -1,0 +1,103 @@
+---
+title: "RNAseq with EdgeR (Short Report)"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+params:
+  rmd: ""
+output:
+  html_document:
+    self_contained: yes
+    toc: false
+    toc_depth: 3
+    toc_float: false
+    number_sections: false
+    df_print: paged
+    theme: yeti
+---
+Tested in R version `r getRversion()`.
+
+```{r setup,echo=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE,cache=FALSE)
+```
+
+```{r loadlibs, include=FALSE}
+
+library(grid)
+library(gridExtra)
+library(pheatmap)
+
+```
+
+Please see the longReport.html for exhaustive documentation of methodology, QC measures, and full results. This is an abbreviated version of that document.
+
+# Results {.tabset}
+
+## Sample Clustering {.tabset}
+
+Use these figures to assess the experiment as a whole.
+
+### PCA
+
+Prinicple Components Analysis 
+
+```{r PCA, fig.height=18,fig.width=18}
+
+# import results
+pca_plot <- readRDS("../r_objects/pca_plot.rds")
+var_plot <- readRDS("../r_objects/var_plot.rds")
+
+vplayout <- function(x, y) viewport(layout.pos.row = x, layout.pos.col = y)
+
+grid.newpage()
+pushViewport(viewport(layout = grid.layout(4, 100)))
+print(pca_plot, vp = vplayout(1:3, 3:100))
+print(var_plot, vp = vplayout(4, 1:83))
+
+```
+
+### Heatmap
+
+```{r Heatmap_top_variable_genes,fig.height=28,fig.width=28}
+
+#import object
+pheatmap(readRDS("../r_objects/mat.rds"),
+         cluster_rows=TRUE,
+         labels_row = readRDS("../r_objects/rowNames_use.rds"),
+         show_rownames=TRUE,
+         main=paste('Top 100 tags by expression variance',sep=''),
+         cluster_cols=TRUE,
+         annotation_col= as.data.frame(readRDS("../r_objects/filtered_meta_heatmap.rds")) # requires a df
+)
+# pheatmap(mat, cluster_rows=TRUE,
+#          labels_row = rowNames$use,
+#          show_rownames=TRUE,
+#          main=paste('Top 100 tags by expression variance',sep=''),
+#          cluster_cols=TRUE,
+#          annotation_col= as.data.frame(filtered.meta.heatmap)
+# )
+```
+
+## Differential Gene Expression {.tabset}
+
+Differential gene expression results produced using edgeR package in R. 
+
+```{r DE_results, results='asis'}
+
+# get list of comparisons from contrasts.tsv
+contrast_list = (read.delim("../src/contrasts.tsv",stringsAsFactors = F,sep='\t'))$contrast
+
+# iterate through contrasts and report saved report objects
+for (contrast in contrast_list){
+  cat(paste0("### ",contrast), "\n\n")
+  volcano = readRDS(paste0("../r_objects/volcano.",contrast,".rds"))
+  print(volcano)
+  cat("\n\n")
+  topGenes = readRDS(paste0("../r_objects/topGenes.",contrast,".rds"))
+  print(topGenes)
+  cat("\n\n")
+}
+cat("\n\n")
+
+# View Experimental Design
+cat(paste0("### Experimental Design"), "\n\n")
+readRDS(paste0("../r_objects/DGE_design.",contrast,".rds"))
+```

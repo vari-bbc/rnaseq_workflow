@@ -1,0 +1,50 @@
+name: edgeR
+channels:
+ - r
+ - bioconda
+dependencies:
+ - r-base=3.5.1
+ - graphviz=2.40.1
+ - pyyaml=5.1
+ - docutils=0.14
+ - r-dplyr=0.7.6
+ - r-ggfortify=0.4.6
+ - r-ggplot2=3.0.0
+ - r-ggrepel=0.8.1
+ - r-gplots=3.0.1.1
+ - r-gridExtra=2.3
+ - r-kableExtra=1.1.0
+ - r-matrixStats=0.54.0
+ - r-pheatmap=1.0.12
+ - r-plyr=1.8.4
+ - r-rcolorbrewer=1.1_2
+ - r-rcpp=0.12.18
+ - r-reshape=0.8.8
+ - r-reshape2=1.4.3
+ - r-stringr=1.3.1
+ - r-tibble=1.4.2
+ - r-tidyr=0.8.1
+ - r-upsetr=1.3.3
+ - r-xtable=1.8_3
+ - r-BiocManager=1.30.4
+ - r-devtools=2.0.2
+ - r-data.table=1.11.4
+ - r-msigdbr=6.2.1
+ - r-ggalt=0.4.0
+ - r-readxl=1.3.1
+ - r-statmod=1.4.30
+ - r-matrixstats=0.54.0
+ - r-codetools=0.2_16
+
+ - bioconductor-biocinstaller=1.32.1
+ - bioconductor-edger=3.26.0
+ - bioconductor-annotate=1.60.1
+ - bioconductor-biomart=2.38.0
+ - bioconductor-fgsea=1.8.0
+ - bioconductor-genomicranges=1.34.0
+ - bioconductor-go.db=3.7.0
+ - bioconductor-goseq=1.34.1
+ - bioconductor-IRanges=2.16.0
+ - bioconductor-limma=3.40.0
+ - bioconductor-summarizedexperiment=1.12.0
+ - bioconductor-s4vectors=0.20.1

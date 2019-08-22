@@ -1,0 +1,5 @@
+name: trimgalore
+channels:
+ - conda-forge
+dependencies:
+ - pigz

@@ -1,0 +1,36 @@
+{
+    "__default__" :
+    {
+        "account" : "dean.pettinga@vai.org",
+        "qname" : "bbc",
+        "time" : "10:00:00",
+        "nodes" : "1",
+        "ppn" : "1",
+        "mem" : "16gb",
+        "std_oe" : "logs/"
+    },
+    "trim_galore_pe" :
+    {
+        "qname" : "bbc",
+        "time" : "10:00:00",
+        "nodes" : "1",
+        "ppn" : "4",
+        "mem" : "64gb"
+    },
+    "align" :
+    {
+        "qname" : "bbc",
+        "time" : "10:00:00",
+        "nodes" : "1",
+        "ppn" : "24",
+        "mem" : "250gb"
+    },
+    "sort_index_bam" :
+    {
+        "qname" : "bbc",
+        "time" : "10:00:00",
+        "nodes" : "1",
+        "ppn" : "12",
+        "mem" : "250gb"
+    }
+}
