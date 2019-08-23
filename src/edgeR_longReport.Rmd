@@ -10,7 +10,7 @@ output:
     toc: true
     toc_depth: 5
     toc_float:
-      collapsed: true
+      collapsed: false
       smooth_scroll: true
     number_sections: false 
     df_print: paged
@@ -1107,48 +1107,48 @@ for (i in 1:length(contrast_list$contrast)){
 
   cat("\n\n\n\n")
   
-  # GSEA: ------------------------------------------------------------------------
-  
-  # if the analysis has not been run, do it 
-  if (!paste0(contrast.name,"_GSEA.txt") %in% list.files("../deliverables/")){
-    
-    pathways_db = c(msigdbr(species = "Homo sapiens", category= "H") %>% 
-                      split(x = as.character(.$gene_symbol), f = .$gs_name),
-                    msigdbr(species = "Homo sapiens", category= "C2", subcategory = "CP:KEGG") %>% 
-                      split(x = as.character(.$gene_symbol), f = .$gs_name))
-    
-    cat(paste0("### ",contrast.name), "\n\n")
-    
-    # import DGE results for contrast
-    DGE = read.delim(paste0("../deliverables/",contrast.name, ".txt"), sep = "\t") %>%
-      select(c("ens_gene","ext_gene","logFC","PValue","FDR"))
-    
-    # compute rankings
-    ranks <- getranks(contrast.name, DGE)
-    
-    # do the fgsea analysis
-    set.seed(1000)
-    fgseaRes <- fgsea(pathways = pathways_db,
-                      stats = ranks,
-                      nperm=1000)
-    cat("Significant pathways (padj < 0.05):", sum(fgseaRes[, padj < 0.05]), "out of", length(pathways_db),"\n\n")
-    
-    # save the results
-    cat("see",paste0(contrast.name,"_GSEA.txt"),"for table of full GSEA results.")
-    write.table(fgseaRes %>% select(-c(leadingEdge)), paste0("../deliverables/",contrast.name,"_GSEA.txt"), quote = F, sep = "\t", row.names = F, col.names = T)
-
-    cat("\n\n\n\n")
-
-  # if analysis already complete, just provide results file.
-  }else if (paste0(contrast.name,"_GSEA.txt") %in% list.files("../deliverables/")){
-    cat("see",paste0(contrast.name,"_GSEA.txt"),"for table of full GSEA results.")
-    cat("\n\n\n\n")
-    }
-  } 
+  # # fGSEA: ------------------------------------------------------------------------
+  # 
+  # # if the analysis has not been run, do it 
+  # if (!paste0(contrast.name,"_GSEA.txt") %in% list.files("../deliverables/")){
+  #   
+  #   pathways_db = c(msigdbr(species = "Homo sapiens", category= "H") %>% 
+  #                     split(x = as.character(.$gene_symbol), f = .$gs_name),
+  #                   msigdbr(species = "Homo sapiens", category= "C2", subcategory = "CP:KEGG") %>% 
+  #                     split(x = as.character(.$gene_symbol), f = .$gs_name))
+  #   
+  #   cat(paste0("### ",contrast.name), "\n\n")
+  #   
+  #   # import DGE results for contrast
+  #   DGE = read.delim(paste0("../deliverables/",contrast.name, ".txt"), sep = "\t") %>%
+  #     select(c("ens_gene","ext_gene","logFC","PValue","FDR"))
+  #   
+  #   # compute rankings
+  #   ranks <- getranks(contrast.name, DGE)
+  #   
+  #   # do the fgsea analysis
+  #   set.seed(1000)
+  #   fgseaRes <- fgsea(pathways = pathways_db,
+  #                     stats = ranks,
+  #                     nperm=1000)
+  #   cat("Significant pathways (padj < 0.05):", sum(fgseaRes[, padj < 0.05]), "out of", length(pathways_db),"\n\n")
+  #   
+  #   # save the results
+  #   cat("see",paste0(contrast.name,"_GSEA.txt"),"for table of full GSEA results.")
+  #   write.table(fgseaRes %>% select(-c(leadingEdge)), paste0("../deliverables/",contrast.name,"_GSEA.txt"), quote = F, sep = "\t", row.names = F, col.names = T)
+  # 
+  #   cat("\n\n\n\n")
+  # 
+  # # if analysis already complete, just provide results file.
+  # }else if (paste0(contrast.name,"_GSEA.txt") %in% list.files("../deliverables/")){
+  #   cat("see",paste0(contrast.name,"_GSEA.txt"),"for table of full GSEA results.")
+  #   cat("\n\n\n\n")
+  #   }
+} 
 
 ```
 
-### Methods Continued
+# Appendix: RNAseq Methods (Continued)
 
 **RNAseq Methods Continued:**
 

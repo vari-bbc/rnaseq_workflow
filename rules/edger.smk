@@ -24,7 +24,7 @@ rule edgeR_longReport:
         # GSEA results
         expand("deliverables/{contrast}.cls", contrast=contrasts['contrast'].tolist()),
         expand("deliverables/{contrast}.gct", contrast=contrasts['contrast'].tolist()),
-        expand("deliverables/{contrast}_GSEA.txt", contrast=contrasts['contrast'].tolist()),
+        #expand("deliverables/{contrast}_GSEA.txt", contrast=contrasts['contrast'].tolist()),
         # HTML report
         "deliverables/edgeR_longReport.html",
     params:

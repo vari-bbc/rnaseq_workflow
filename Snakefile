@@ -42,7 +42,7 @@ rule all:
         "deliverables/UniquelyMappingReads.txt",
         "deliverables/starMatrix.txt",
         # edger
-        #"deliverables/edgeR_shortReport.html",
+        "deliverables/edgeR_shortReport.html",
         "deliverables/edgeR_longReport.html",
 
 ##### load rules #####

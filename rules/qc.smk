@@ -26,7 +26,13 @@ rule multiqc:
         # skip the pass1 from STAR
         "--ignore '*._STARpass1/*'"
     output:
-        "qc/multiqc_report.html"
+        "qc/multiqc_report.html",
+        "qc/multiqc_report_data/multiqc.log",
+        "qc/multiqc_report_data/multiqc_cutadapt.txt",
+        "qc/multiqc_report_data/multiqc_fastqc.txt",
+        "qc/multiqc_report_data/multiqc_general_stats.txt",
+        "qc/multiqc_report_data/multiqc_sources.txt",
+        "qc/multiqc_report_data/multiqc_star.txt",
     log:
         "logs/multiqc.log"
     wrapper:

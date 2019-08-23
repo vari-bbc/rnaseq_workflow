@@ -5,11 +5,16 @@ properties:
   sample:
     type: string
     description: sample name/identifier
+  group:
+    type: string
+    description: grouping for DE contrasts in edgeR
   condition:
     type: string
-    description: sample condition that will be compared during differential expression analysis (e.g. a treatment, a tissue time, a disease)
-
+    description: experimental condition/treatment
 required:
   - sample
+  - group
+  - condition
   - fq1
-  - fq2
+  #- fq2
+  #- strandedness

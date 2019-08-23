@@ -7,17 +7,8 @@ type: object
 properties:
   samples:
     type: string
-  units:
+  contrasts:
     type: string
-  trimming:
-    type: object
-    properties:
-      skip:
-        type: boolean
-      adapter:
-        type: string
-        pattern: "^[ACGT]+$"
-
   ref:
     type: object
     properties:

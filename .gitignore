@@ -25,6 +25,7 @@ deliverables/*
 
 src/edgeR_longReport_cache
 src/edgeR_longReport_files
+src/edgeR_longReport.html
 src/edgeR_shortReport_cache
 src/edgeR_longReport_files
 src/ensembl_go.txt
