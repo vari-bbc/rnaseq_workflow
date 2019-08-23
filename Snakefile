@@ -15,6 +15,8 @@ validate(samples, schema="schemas/samples.schema.yaml")
 contrasts = pd.read_table(config["contrasts"]).set_index("contrast", drop=False)
 validate(samples, schema="schemas/samples.schema.yaml")
 
+# make list of sample names:
+SAMPLES = samples["sample"].tolist()
 ##### target rules #####
 
 rule all:
@@ -40,7 +42,7 @@ rule all:
         "deliverables/UniquelyMappingReads.txt",
         "deliverables/starMatrix.txt",
         # edger
-        "deliverables/edgeR_shortReport.html",
+        #"deliverables/edgeR_shortReport.html",
         "deliverables/edgeR_longReport.html",
 
 ##### load rules #####

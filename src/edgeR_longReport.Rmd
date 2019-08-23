@@ -8,9 +8,11 @@ output:
   html_document:
     self_contained: yes
     toc: true
-    toc_depth: 3
-    toc_float: false
-    number_sections: false
+    toc_depth: 5
+    toc_float:
+      collapsed: true
+      smooth_scroll: true
+    number_sections: false 
     df_print: paged
     theme: yeti
 ---
@@ -57,8 +59,8 @@ library(gplots)
 library(biomaRt)
 library(reshape2)
 library(reshape)
-library(grid)
 library(gridExtra)
+require(grid)
 library(plyr)
 library(dplyr)
 library(tidyr)
@@ -137,7 +139,7 @@ RNAseq = function(design,contrast,.meta,block){
     # Save it as an object:
     saveRDS(
       knitr::kable(design,caption='Diff. Gene Expr. Analysis Design:') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12),
-      paste0("../r_objects/DGE_design.",contrast.name,".rds")
+      paste0("r_objects/DGE_design.",contrast.name,".rds")
     )
   
   # Print the contrast matrix:
@@ -147,7 +149,7 @@ RNAseq = function(design,contrast,.meta,block){
     # Save it as an object:
     saveRDS(
       knitr::kable(contrast,caption='Contrast Matrix:') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12),
-      paste0("../r_objects/contrastMatrix.",contrast.name,".rds")
+      paste0("r_objects/contrastMatrix.",contrast.name,".rds")
     )  
   
   ##Generate the DGEList object from the filtered data
@@ -244,7 +246,7 @@ change between the samples for the genes that best distinguish that pair of samp
     # save as object
     saveRDS(
       volcano(log2FC = Table[,i],pval=Table$PValue,qval=Table$FDR,fdr.filter = fdr.filter,title=colnames(Table)[i]),
-      paste0("../r_objects/volcano.",contrast.name,".rds")
+      paste0("r_objects/volcano.",contrast.name,".rds")
     )
     cat('\n\n')
   }
@@ -259,7 +261,7 @@ change between the samples for the genes that best distinguish that pair of samp
   saveRDS(
     head(Table,topN) %>% knitr::kable(caption=paste('Top',topN,'Differentially Expressed Genes By Adjusted Pvalue')) %>% 
       kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12),
-    paste0("../r_objects/topGenes.",contrast.name,".rds")
+    paste0("r_objects/topGenes.",contrast.name,".rds")
   )
   
   
@@ -539,15 +541,29 @@ feature_counts_and_low_count_filtering = function(raw_data,sample.cpm.filter,cpm
 # View(listAttributes(mart,))
 
 if (!exists(c("t2g_no_dup_genes","t2g"))){
-  t2g_file='hsapiens_gene_ensembl_go.txt'
+  t2g_file='r_objects/ensembl_go.rds'
   if(t2g_file %in% list.files()){
-    t2g = read.delim(t2g_file,sep='\t',stringsAsFactors = FALSE)
+    t2g = readRDS(t2g_file)
   }else{
-    mart <- biomaRt::useMart(biomart = 'ENSEMBL_MART_ENSEMBL', host="www.ensembl.org", dataset = 'hsapiens_gene_ensembl', ensemblRedirect = FALSE)
-    t2g <- biomaRt::getBM(attributes = c("ensembl_gene_id", "external_gene_name", "description","chromosome_name","start_position","end_position","strand","transcript_length","go_id"), mart = mart) # "kegg_enzyme"
-    # dim(t2g)
-    t2g <- dplyr::rename(t2g, ens_gene = ensembl_gene_id, ext_gene = external_gene_name, predicted_function = description)
-    write.table(t2g,t2g_file,sep='\t',quote=FALSE,row.names = FALSE)
+    mart <- biomaRt::useMart(biomart = 'ENSEMBL_MART_ENSEMBL', host="www.ensembl.org", dataset = 'hsapiens_gene_ensembl', ensemblRedirect = NULL)
+    t2g_1 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "external_gene_name"), mart = mart)
+    t2g_2 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "description"), mart = mart)
+    t2g_3 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "chromosome_name"), mart = mart)    
+    t2g_4 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "start_position"), mart = mart)
+    t2g_5 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "end_position"), mart = mart)
+    t2g_6 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "transcript_length"), mart = mart)
+    t2g_7 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "go_id"), mart = mart)
+    
+    t2g <- t2g_1 %>%
+      left_join(t2g_2, by='ensembl_gene_id') %>%
+      left_join(t2g_3, by='ensembl_gene_id') %>%
+      left_join(t2g_4, by='ensembl_gene_id') %>%
+      left_join(t2g_5, by='ensembl_gene_id') %>%
+      left_join(t2g_6, by='ensembl_gene_id') %>%
+      left_join(t2g_7, by='ensembl_gene_id') %>%
+      dplyr::rename(ens_gene = ensembl_gene_id, ext_gene = external_gene_name, predicted_function = description)
+    
+    saveRDS(t2g, file=t2g_file)
   }
   t2g_no_dup_genes = t2g[-which(duplicated(t2g$ens_gene)),-which(colnames(t2g)=='go_id')] # no duplicates (e.g. when multipe mappings to go terms)
 }
@@ -555,37 +571,30 @@ if (!exists(c("t2g_no_dup_genes","t2g"))){
 
 ```{r load_REACTOME_db}
 
-if (!file.exists(c("../r_objects/reactome.mapper.RDS","../r_objects/reactome.mapper.RDS"))){
-  reactome.mapper = read.delim('https://reactome.org/download/current/Ensembl2Reactome_All_Levels.txt',sep='\t',header=FALSE)
+reactome.mapper = read.delim('https://reactome.org/download/current/Ensembl2Reactome_All_Levels.txt',sep='\t',header=FALSE)
 
-  colnames(reactome.mapper)=c('ens_gene','Reactome_Pathway','url','Pathway_Name','Evidence_Code','Species')
-  reactome.mapper = dplyr::filter(reactome.mapper,Species=='Homo sapiens')
-  reactome.mapper$ens_gene=as.character(reactome.mapper$ens_gene)
-  # dim(reactome.mapper)
-  # length(unique(reactome.mapper$ens_gene))
-  #    Source database identifier, e.g. UniProt, ENSEMBL, NCBI Gene or ChEBI identifier
-  #    Reactome Pathway Stable identifier
-  #    URL
-  #    Event (Pathway or Reaction) Name
-  #    Evidence Code
-  #    Species
-  reactome.mapper.goseq = dplyr::select(reactome.mapper,one_of(c('ens_gene','Reactome_Pathway')))
+colnames(reactome.mapper)=c('ens_gene','Reactome_Pathway','url','Pathway_Name','Evidence_Code','Species')
+reactome.mapper = dplyr::filter(reactome.mapper,Species=='Homo sapiens')
+reactome.mapper$ens_gene=as.character(reactome.mapper$ens_gene)
+# dim(reactome.mapper)
+# length(unique(reactome.mapper$ens_gene))
+#    Source database identifier, e.g. UniProt, ENSEMBL, NCBI Gene or ChEBI identifier
+#    Reactome Pathway Stable identifier
+#    URL
+#    Event (Pathway or Reaction) Name
+#    Evidence Code
+#    Species
+reactome.mapper.goseq = dplyr::select(reactome.mapper,one_of(c('ens_gene','Reactome_Pathway')))
 
-  # Now get the unique pathways:
-  reactome.mapper = dplyr::select(
-    reactome.mapper[-which(duplicated(reactome.mapper$Reactome_Pathway)),],
-    one_of(c('Reactome_Pathway','Pathway_Name'))
-  )
-  
-  # save the objects as RDS for later access
-  saveRDS(reactome.mapper,"../r_objects/reactome.mapper.RDS")
-  saveRDS(reactome.mapper.goseq,"../r_objects/reactome.mapper.goseq.RDS")
-}
-reactome.mapper <- readRDS("../r_objects/reactome.mapper.RDS")
-reactome.mapper.goseq <- readRDS("../r_objects/reactome.mapper.goseq.RDS")
-    
+# Now get the unique pathways:
+reactome.mapper = dplyr::select(
+  reactome.mapper[-which(duplicated(reactome.mapper$Reactome_Pathway)),],
+  one_of(c('Reactome_Pathway','Pathway_Name'))
+)
 
-# library(org.Mm.eg.db)
+# # save the objects as RDS for later access
+# saveRDS(reactome.mapper,"r_objects/reactome.mapper.RDS")
+# saveRDS(reactome.mapper.goseq,"r_objects/reactome.mapper.goseq.RDS")
 
 ```
 
@@ -618,7 +627,7 @@ ranks <- deframe(ranks)
 }
 ```
 
-# Intro {.tabset}
+# Intro 
 
 ## Methods
 
@@ -641,7 +650,7 @@ Raw data were quality controlled with FastQC. The reads have high quality for al
 ```{r load_metadata}
 
 cat('This data powers the contrasts, if there are problems please contact me\n')
-metadata.file="../samples.tsv"
+metadata.file="samples.tsv"
 meta = read.delim(metadata.file,sep='\t',stringsAsFactors = TRUE,header=TRUE)
 meta$sample = as.character(meta$sample)
 
@@ -755,7 +764,7 @@ write.table(raw_data.ext, "../deliverables/STAR_raw_counts_with_annotation.txt",
 
 ```
 
-# Differential Gene Expression {.tabset}
+# Differential Gene Expression 
 
 ## Feature Counts And Initial Filtering
 
@@ -806,8 +815,8 @@ rd %>% ggplot(aes(count)) + geom_histogram(binwidth=1) + ggtitle('Raw Data Gene 
 ############################################################################
 # Filter 1
 # 
-sample.cpm.filter=7 # How many samples must meet the cpm threshhold
-cpm.filter=10/min(lib_sizes$millions_of_counts) # feature cpm threshold
+sample.cpm.filter = min(plyr::count(meta$group)$freq) # How many samples must meet the cpm threshhold (# of samples in smallest group)
+cpm.filter = 10/min(lib_sizes$millions_of_counts) # feature cpm threshold
 cat('Derived the cpm filter from a minimum of 10 counts in the smallest library\n')
 cat('Filters:\nminimum',cpm.filter,'cpm in ',sample.cpm.filter,'sample\n')
 keep <- rowSums(cpm(raw.data.dgelist)>cpm.filter) >= sample.cpm.filter
@@ -925,7 +934,7 @@ write.table(rpkm(filtered.data$counts,
             col.names = NA)
 ```
 
-## Sample Clustering {.tabset}
+## Sample Clustering 
 
 ### PCA
 
@@ -974,8 +983,10 @@ print(var_plot, vp = vplayout(4, 1:83))
 # tiff("~/Desktop/PCA.tiff", height = 12, width = 17, units = 'cm', res = 300)
 # pca_plot
 # dev.off()
-saveRDS(pca_plot, file = "../r_objects/pca_plot.rds")
-saveRDS(var_plot, file = "../r_objects/var_plot.rds")
+
+saveRDS(pca_plot, file = "r_objects/pca_plot.rds")
+saveRDS(var_plot, file = "r_objects/var_plot.rds")
+
 ```
 
 
@@ -989,7 +1000,7 @@ mat = y.voom$E[order(rowVars(y.voom$E),decreasing=TRUE)[1:topRows],] # Variance,
 
 # -Inf if 0 on log2
 mat[mat==-Inf] <- 0
-saveRDS(mat, file = "../r_objects/mat.rds")
+saveRDS(mat, file = "r_objects/mat.rds")
 
 # get the exterior gene names from the t2g object 
 geneNames = t2g_no_dup_genes$ext_gene[which(t2g_no_dup_genes$ens_gene %in% rownames(mat))]
@@ -997,12 +1008,12 @@ ensNames = t2g_no_dup_genes$ens_gene[which(t2g_no_dup_genes$ens_gene %in% rownam
 rowNames = cbind(geneNames,ensNames)
 rowNames = rowNames[match(rownames(mat),rowNames[,2]),] # now in the right order
 rowNames$use = paste(rowNames[,1],': ',rowNames[,2],sep='')
-saveRDS(rowNames$use, file = "../r_objects/rowNames_use.rds")
+saveRDS(rowNames$use, file = "r_objects/rowNames_use.rds")
 
 
 filtered.meta.heatmap <- as.data.frame(meta[,'condition']) # can take specific metadata: [,c("cov","geno")], but need two columns minimum
 rownames(filtered.meta.heatmap) = meta$sample
-saveRDS(filtered.meta.heatmap, file = "../r_objects/filtered_meta_heatmap.rds")
+saveRDS(filtered.meta.heatmap, file = "r_objects/filtered_meta_heatmap.rds")
 
 heatmap = pheatmap(mat, cluster_rows=TRUE,
          labels_row = rowNames$use,
@@ -1024,19 +1035,19 @@ heatmap = pheatmap(mat, cluster_rows=TRUE,
 # dev.off()
 ```
 
-## DGE Analysis {.tabset}
+## DGE Analysis 
 
-```{r DGE_analysis_individual, results='asis'}
+```{r DGE_analysis, results='asis'}
 
-contrast_list = read.delim("../contrasts.tsv",stringsAsFactors = F,sep='\t')
+contrast_list = read.delim("contrasts.tsv",stringsAsFactors = T ,sep='\t')
 
 design = model.matrix(~0 + group, data = meta)
 
 # Loop Through all listed contrasts and run edgeR, GO, GSEAoutput
 for (i in 1:length(contrast_list$contrast)){
   myargs = list(paste0(contrast_list[i,1]," = ",
-                       contrast_list[i,2], " - ",
-                       contrast_list[i,3]),
+                       "group",contrast_list[i,2], " - ",
+                       "group",contrast_list[i,3]),
                        levels=design)
   
   #set values for invocation of edgeR with RNAseq()
@@ -1046,8 +1057,7 @@ for (i in 1:length(contrast_list$contrast)){
   cat(paste0("### ",contrast.name), "\n\n")
   
   contrast = do.call(makeContrasts, myargs)
-
-
+  
   # Do the RNAseq analysis--------------------------------------------------------
   list = RNAseq(
     design = design,
@@ -1056,33 +1066,33 @@ for (i in 1:length(contrast_list$contrast)){
   )
 
   # GSEA--------------------------------------------------------------------------
-  # ## With Reactome
-  # genesetenrichment(
-  #   de.genelist=list$de.genes, # differential genes
-  #   genelist = t2g_no_dup_genes$ens_gene,
-  #   lengthData = t2g_no_dup_genes$transcript_length,
-  #   goseq_mapper=reactome.mapper.goseq, # reactome gene ontology
-  #   reactome.mapper=reactome.mapper
-  #   # goseq_mapper=dplyr::select(t2g,one_of(c('ens_gene','go_id'))) # To do e.g. BP, CC, MF gene ontology
-  # )
+  ## With Reactome
+  genesetenrichment(
+    de.genelist=list$de.genes, # differential genes
+    genelist = t2g_no_dup_genes$ens_gene,
+    lengthData = t2g_no_dup_genes$transcript_length,
+    goseq_mapper=reactome.mapper.goseq, # reactome gene ontology
+    reactome.mapper=reactome.mapper
+    # goseq_mapper=dplyr::select(t2g,one_of(c('ens_gene','go_id'))) # To do e.g. BP, CC, MF gene ontology
+  )
 
-  # ## With GO terms
-  # genesetenrichment(
-  #   de.genelist=list$de.genes, # differential genes
-  #   genelist = t2g_no_dup_genes$ens_gene,
-  #   lengthData = t2g_no_dup_genes$transcript_length,
-  #   # goseq_mapper=reactome.mapper.goseq, # reactome gene ontology
-  #   goseq_mapper=dplyr::select(t2g,one_of(c('ens_gene','go_id'))) # To do e.g. BP, CC, MF gene ontology
-  # )
+  ## With GO terms
+  genesetenrichment(
+    de.genelist=list$de.genes, # differential genes
+    genelist = t2g_no_dup_genes$ens_gene,
+    lengthData = t2g_no_dup_genes$transcript_length,
+    # goseq_mapper=reactome.mapper.goseq, # reactome gene ontology
+    goseq_mapper=dplyr::select(t2g,one_of(c('ens_gene','go_id'))) # To do e.g. BP, CC, MF gene ontology
+  )
 
-  # ## GSEA output
-  # gsea_output_files(
-  #   file.prefix=contrast.name, # Name the file!
-  #   t2g_no_dup_genes=t2g_no_dup_genes,
-  #   samples = .meta$sample,
-  #   genotypes = .meta$group,
-  #   exprdata = y.voom$E
-  # )
+  ## GSEA output
+  gsea_output_files(
+    file.prefix=contrast.name, # Name the file!
+    t2g_no_dup_genes=t2g_no_dup_genes,
+    samples = .meta$sample,
+    genotypes = .meta$group,
+    exprdata = y.voom$E
+  )
 
   # # Save output for intersects:---------------------------------------------------
   # if(!exists("degs.list")){
@@ -1135,75 +1145,6 @@ for (i in 1:length(contrast_list$contrast)){
     cat("\n\n\n\n")
     }
   } 
-
-```
-
-### Normal_vs_GBM
-
-```{r DGE_analysis_group, results='asis'}
-
-design = model.matrix(~0 + condition, data = meta)
-
-# Loop Through all listed contrasts and run edgeR, GO, GSEAoutput
-  myargs = list(paste0("Normal_vs_GBM"," = ",
-                       "conditionGBM", " - ",
-                       "conditionNormal"),
-                       levels=design)
-  
-  #set values for invocation of edgeR with RNAseq()
-  contrast.name = "Normal_vs_GBM"
-  
-  # Divide iterations of this loop in the report.
-  
-  contrast = do.call(makeContrasts, myargs)
-
-
-  # Do the RNAseq analysis--------------------------------------------------------
-  list = RNAseq(
-    design = design,
-    contrast = contrast,
-    .meta <- meta
-  )
-
-  # # GSEA--------------------------------------------------------------------------
-  # ## With Reactome
-  # genesetenrichment(
-  #   de.genelist=list$de.genes, # differential genes
-  #   genelist = t2g_no_dup_genes$ens_gene,
-  #   lengthData = t2g_no_dup_genes$transcript_length,
-  #   goseq_mapper=reactome.mapper.goseq, # reactome gene ontology
-  #   reactome.mapper=reactome.mapper
-  #   # goseq_mapper=dplyr::select(t2g,one_of(c('ens_gene','go_id'))) # To do e.g. BP, CC, MF gene ontology
-  # )
-  # 
-  # ## With GO terms
-  # genesetenrichment(
-  #   de.genelist=list$de.genes, # differential genes
-  #   genelist = t2g_no_dup_genes$ens_gene,
-  #   lengthData = t2g_no_dup_genes$transcript_length,
-  #   # goseq_mapper=reactome.mapper.goseq, # reactome gene ontology
-  #   goseq_mapper=dplyr::select(t2g,one_of(c('ens_gene','go_id'))) # To do e.g. BP, CC, MF gene ontology
-  # )
-  # 
-  # ## GSEA output
-  # gsea_output_files(
-  #   file.prefix=contrast.name, # Name the file!
-  #   t2g_no_dup_genes=t2g_no_dup_genes,
-  #   samples = .meta$sample,
-  #   genotypes = .meta$group,
-  #   exprdata = y.voom$E
-  # )
-
-  # Save output for intersects:---------------------------------------------------
-  if(!exists("degs.list")){
-    degs.list=list(list$de.genes)
-    names(degs.list)=contrast.name
-  }else{
-    degs.list=list(degs.list,list$de.genes)
-    names(degs.list)[length(degs.list)]=contrast.name
-  }
-  
-  
 
 ```
 

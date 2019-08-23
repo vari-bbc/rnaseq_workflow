@@ -3,7 +3,7 @@
 #PBS -l nodes=1:ppn=1
 #PBS -M dean.pettinga@vai.org
 #PBS -m ae
-#PBS -N bulk_rnaseq_workflow
+#PBS -N rnaseq_workflow
 #PBS -o logs/rnaseq_workflow.o
 #PBS -e logs/rnaseq_workflow.o
 

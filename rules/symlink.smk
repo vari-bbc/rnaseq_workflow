@@ -1,3 +1,6 @@
+# make list of sample names:
+SAMPLES = samples["sample"].tolist()
+
 # set up symlinks for files with names that don't fit standard convention
 rule symlink:
     output:

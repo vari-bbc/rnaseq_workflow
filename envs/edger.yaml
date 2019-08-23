@@ -2,6 +2,7 @@ name: edgeR
 channels:
  - r
  - bioconda
+ - conda-forge
 dependencies:
  - r-base=3.5.1
  - graphviz=2.40.1
@@ -48,3 +49,23 @@ dependencies:
  - bioconductor-limma=3.40.0
  - bioconductor-summarizedexperiment=1.12.0
  - bioconductor-s4vectors=0.20.1
+ # Annotation Packages
+ - bioconductor-org.Ag.eg.db # Anopheles
+ - bioconductor-org.At.tair.db # Arabidopsis
+ - bioconductor-org.Bt.eg.db # Bovine
+ - bioconductor-org.Ce.eg.db # Worm
+ - bioconductor-org.Cf.eg.db # Canine
+ - bioconductor-org.Dm.eg.db # Fly
+ - bioconductor-org.Dr.eg.db # Zebrafish
+ - bioconductor-org.EcK12.eg.db # E coli strain K12
+ - bioconductor-org.EcSakai.eg.db # E coli strain Sakai
+ - bioconductor-org.Gg.eg.db # Chicken
+ - bioconductor-org.Hs.eg.db # Human
+ - bioconductor-org.Mm.eg.db # Mouse
+ - bioconductor-org.Mmu.eg.db # Rhesus
+ - bioconductor-org.Pf.plasmo.db # Malaria
+ - bioconductor-org.Pt.eg.db # Chimpanzee
+ - bioconductor-org.Rn.eg.db # Rat
+ - bioconductor-org.Sc.sgd.db # Yeast
+ - bioconductor-org.Ss.eg.db # Pig
+ - bioconductor-org.Xl.eg.db # Xenopus

@@ -1,1 +1,3 @@
 contrast	group1	group2
+Normal_vs_GBM	GBM	Normal
+GBM_vs_Normal	Normal	GBM
