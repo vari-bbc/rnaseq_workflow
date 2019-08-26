@@ -3,6 +3,8 @@ samples: src/samples.tsv
 # path or URL to contrast sheet (TSV format, columns: sample, condition, ...)
 contrasts: src/contrasts.tsv
 
+units: src/units.tsv
+
 ref:
   # the STAR index
   index: /primary/projects/bbc/references/human/indexes/hg38/hg38_STAR/

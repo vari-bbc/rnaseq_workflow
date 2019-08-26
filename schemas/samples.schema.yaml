@@ -15,6 +15,6 @@ required:
   - sample
   - group
   - condition
-  - fq1
+  #- fq1
   #- fq2
   #- strandedness
