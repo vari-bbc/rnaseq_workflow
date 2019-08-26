@@ -12,6 +12,8 @@ validate(config, schema="schemas/config.schema.yaml")
 samples = pd.read_table(config["samples"]).set_index("sample", drop=False)
 validate(samples, schema="schemas/samples.schema.yaml")
 
+units = pd.read_table(config["units"]).set_index("sample", drop=False)
+
 contrasts = pd.read_table(config["contrasts"]).set_index("contrast", drop=False)
 validate(samples, schema="schemas/samples.schema.yaml")
 
@@ -22,28 +24,28 @@ SAMPLES = samples["sample"].tolist()
 rule all:
     input:
         # symlink
-        expand("raw_reads/{samples.sample}_{read}.fastq.gz", read=["1","2"], samples=samples.itertuples()),
-        # fastqc_raw
-        expand("qc/fastqc/raw_reads/{samples.sample}_{read}_fastqc.html", read=["1","2"], samples=samples.itertuples()),
-        expand("qc/fastqc/raw_reads/{samples.sample}_{read}_fastqc.zip", read=["1","2"], samples=samples.itertuples()),
-        # Trim_Galore
-        expand("trimmed_data/{samples.sample}_1_val_1.fq.gz", samples=samples.itertuples()),
-        expand("trimmed_data/{samples.sample}_2_val_2.fq.gz", samples=samples.itertuples()),
-        # STAR alignment
-        expand("star/{samples.sample}.Aligned.out.bam", samples=samples.itertuples()),
-        expand("star/{samples.sample}.Log.out", samples=samples.itertuples()),
-        # sort_index_bam
-        expand("star/{samples.sample}.sorted.bam", samples=samples.itertuples()),
-        expand("star/{samples.sample}.sorted.bam.bai", samples=samples.itertuples()),
-        # multiqc
-        "qc/multiqc_report.html",
-        # starMatrix
-        "deliverables/UniquelyMappingRates.txt",
-        "deliverables/UniquelyMappingReads.txt",
-        "deliverables/starMatrix.txt",
-        # edger
-        "deliverables/edgeR_shortReport.html",
-        "deliverables/edgeR_longReport.html",
+        # expand("raw_reads/{units.sample}_{units.unit}_{read}.fastq.gz", read=["R1","R2"], units=units.itertuples()),
+        # # fastqc_raw
+        # expand("qc/fastqc/raw_reads/{samples.sample}_{read}_fastqc.html", read=["1","2"], samples=samples.itertuples()),
+        # expand("qc/fastqc/raw_reads/{samples.sample}_{read}_fastqc.zip", read=["1","2"], samples=samples.itertuples()),
+        # # Trim_Galore
+        # expand("trimmed_data/{units.sample}_{units.unit}_R1_val_1.fq.gz", units=units.itertuples()),
+        # expand("trimmed_data/{units.sample}_{units.unit}_R2_val_2.fq.gz", units=units.itertuples()),
+        # # STAR alignment
+        # expand("star/{units.sample}_{units.unit}.Aligned.out.bam", units=units.itertuples()),
+        # expand("star/{units.sample}_{units.unit}.Log.out", units=units.itertuples()),
+        # # sort_index_bam
+        expand("analysis/star/{units.sample}_{units.unit}.sorted.bam", units=units.itertuples()),
+        expand("analysis/star/{units.sample}_{units.unit}.sorted.bam.bai", units=units.itertuples()),
+        # # multiqc
+        # "qc/multiqc_report.html",
+        # # starMatrix
+        # "deliverables/UniquelyMappingRates.txt",
+        # "deliverables/UniquelyMappingReads.txt",
+        # "deliverables/starMatrix.txt",
+        # # edger
+        # "deliverables/edgeR_shortReport.html",
+        # "deliverables/edgeR_longReport.html",
 
 ##### load rules #####
 

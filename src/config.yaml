@@ -7,13 +7,13 @@ units: src/units.tsv
 
 ref:
   # the STAR index
-  index: /primary/projects/bbc/references/human/indexes/hg38/hg38_STAR/
+  index: /primary/projects/bbc/references/mouse/indexes/mm10/star/star_p1idx
   # gtf file with transcripts
-  annotation: /primary/projects/bbc/references/human/annotation/hg38/ensembl/Homo_sapiens.GRCh38.87.chr.gtf
+  annotation: /primary/projects/bbc/references/mouse/annotation/mm10/ensembl/Mus_musculus.GRCm38.86.gtf
 
 # two-letter species annotation for (e.g. "Hs" <- Human)
-org: Hs
+org: Mm
 
 # org.db package used for annotation (e.g. "org.eg.Hs.db" for Human)
 # see edger.yaml for supported species packages
-annotation: org.eg.Hs.db
+annotation: org.eg.Mm.db

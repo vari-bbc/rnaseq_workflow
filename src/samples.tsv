@@ -1,4 +1,4 @@
-sample	group	genotype	condition	fq1	fq2	strandedness
+sample	group	genotype	condition
 RJ_RNA_1	LKB1-/-	LKB1-/-	nt
 RJ_RNA_6	LKB1+/+	LKB1+/+	nt
 RJ_RNA_11	LKB1-/-	LKB1-/-	nt

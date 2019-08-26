@@ -8,7 +8,7 @@ def get_strandness(samples):
 rule mapping_summary:
     # get unique mapping rates to text file from STAR logs
     input:
-        expand("star/{samples.sample}.ReadsPerGene.out.tab", samples=samples.itertuples())
+        expand("star/{units.sample}_{units.unit}.ReadsPerGene.out.tab", units=units.itertuples())
     output:
         rates = "deliverables/UniquelyMappingRates.txt",
         reads = "deliverables/UniquelyMappingReads.txt",
