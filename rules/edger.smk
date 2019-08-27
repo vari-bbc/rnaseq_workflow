@@ -28,7 +28,9 @@ rule edgeR_longReport:
         # HTML report
         "deliverables/edgeR_longReport.html",
     params:
-        org = config["org"],
+        sp_abbrv = config["species"]["abbrv"],
+        sp_short = config["species"]["short"],
+        sp_long = config["species"]["long"]
     conda:
         "../envs/edger.yaml"
     shell:

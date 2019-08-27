@@ -545,7 +545,7 @@ if (!exists(c("t2g_no_dup_genes","t2g"))){
   if(t2g_file %in% list.files()){
     t2g = readRDS(t2g_file)
   }else{
-    mart <- biomaRt::useMart(biomart = 'ENSEMBL_MART_ENSEMBL', host="www.ensembl.org", dataset = 'hsapiens_gene_ensembl', ensemblRedirect = NULL)
+    mart <- biomaRt::useMart(biomart = 'ENSEMBL_MART_ENSEMBL', host="www.ensembl.org", dataset = 'mmusculus_gene_ensembl', ensemblRedirect = NULL)
     t2g_1 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "external_gene_name"), mart = mart)
     t2g_2 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "description"), mart = mart)
     t2g_3 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "chromosome_name"), mart = mart)    
@@ -574,7 +574,7 @@ if (!exists(c("t2g_no_dup_genes","t2g"))){
 reactome.mapper = read.delim('https://reactome.org/download/current/Ensembl2Reactome_All_Levels.txt',sep='\t',header=FALSE)
 
 colnames(reactome.mapper)=c('ens_gene','Reactome_Pathway','url','Pathway_Name','Evidence_Code','Species')
-reactome.mapper = dplyr::filter(reactome.mapper,Species=='Homo sapiens')
+reactome.mapper = dplyr::filter(reactome.mapper,Species=='Mus musculus')
 reactome.mapper$ens_gene=as.character(reactome.mapper$ens_gene)
 # dim(reactome.mapper)
 # length(unique(reactome.mapper$ens_gene))
@@ -680,9 +680,9 @@ logfc.filter=1.5
 
 ```{r load_STAR_data}
 # Load STAR feature counts:
-raw.data.file='../deliverables/starMatrix.txt'
+raw.data.file <- '../deliverables/counts.tsv'
 raw_data = read.delim(raw.data.file, row.names=1,stringsAsFactors = F, check.names = F,sep='\t')
-raw_data <- raw_data[,-ncol(raw_data)] #Removing a column of NAs presuming it's the last column
+#raw_data <- raw_data[,-ncol(raw_data)] #Removing a column of NAs presuming it's the last column
 cat('The following samples have no meta data:\n')
 no.meta.data = colnames(raw_data)[which(! colnames(raw_data) %in% meta$sample)]
 with.meta.data = colnames(raw_data)[which(colnames(raw_data) %in% meta$sample)]
@@ -711,13 +711,19 @@ if(length(no.raw.data)>0){
 # grep 'Uniquely mapped reads %' ${ANALYSIS}*Log.final.out |cut -d ' ' -f1,29|awk -F 'Log.final.out: \\|' '{print $1$2}' >> ${DIR}/deliverables/UniquelyMappingRates.txt
 # grep 'Uniquely mapped reads number' ${ANALYSIS}*Log.final.out |cut -d ' ' -f1,24|awk -F 'Log.final.out: \\|' '{print $1$2}' >> ${DIR}/deliverables/UniquelyMappingReads.txt
 # fi
+  
+units <- read.delim("../src/units.tsv",sep='\t',header=TRUE,stringsAsFactors = F) %>% 
+  mutate(sample_unit=paste0(sample,"_",unit)) %>%
+  left_join(.,meta)
+
+
   mapstat = read.delim("../deliverables/UniquelyMappingRates.txt",sep='\t',header=TRUE,stringsAsFactors = F)
-  colnames(mapstat)=c('sample','UniquelyMappingRate')
+  colnames(mapstat)=c('sample_unit','UniquelyMappingRate')
   mapstat$sample= gsub(".*/","",mapstat$sample)
   mapstat$UniquelyMappingRate=as.numeric(gsub('%','',mapstat$UniquelyMappingRate))
   # mapstat$sample= as.character(mapstat$sample)
-  mapstat = dplyr::left_join(mapstat,meta)
-  mapstat$sample=factor(mapstat$sample,levels=meta$sample)
+  mapstat = dplyr::left_join(mapstat,units, by="sample_unit")
+  mapstat$sample=factor(mapstat$sample_unit,levels=units$sample_unit)
 
 
   ggplot(mapstat,aes(x=sample,y=UniquelyMappingRate)) + 
@@ -730,14 +736,14 @@ if(length(no.raw.data)>0){
 
 
 mapstat = read.delim("../deliverables/UniquelyMappingReads.txt",sep='\t',header=TRUE,stringsAsFactors = F)
-colnames(mapstat)=c('sample','UniquelyMappingReads')
+colnames(mapstat)=c('sample_unit','UniquelyMappingReads')
 mapstat$sample=gsub(".*/","",mapstat$sample)
-mapstat = dplyr::left_join(mapstat,meta)
-mapstat$sample=factor(mapstat$sample,levels=meta$sample)
+mapstat = dplyr::left_join(mapstat,units, by="sample_unit")
+mapstat$sample=factor(mapstat$sample_unit,levels=meta$sample_unit)
 
 # ggplot(mapstat,aes(UniquelyMappingReads)) + geom_histogram() #+ facet_grid(genotype~.)
 
-ggplot(mapstat,aes(x=sample,y=UniquelyMappingReads)) + 
+ggplot(mapstat,aes(x=sample_unit,y=UniquelyMappingReads)) + 
     labs(title=paste('Mapping Stats - Uniquely Mapping Reads'),subtitle='',caption='Data: UniquelyMappingReads.txt') +
     scale_color_brewer('Set1') + 
     theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8)) + 
@@ -764,9 +770,7 @@ write.table(raw_data.ext, "../deliverables/STAR_raw_counts_with_annotation.txt",
 
 ```
 
-# Differential Gene Expression 
-
-## Feature Counts And Initial Filtering
+# Feature Counts And Initial Filtering
 
 ```{r feature_counts_and_low_count_filtering}
 
@@ -850,7 +854,7 @@ plot
 
 ```
 
-## VOOM Normalization For Plotting
+# VOOM Normalization For Plotting
 
 We use a VOOM normalization to visualize the data. This transforms on a log2 scale.
 
@@ -870,7 +874,7 @@ filtered.data <- calcNormFactors(filtered.data)
 # covariate <- factor(c(rep(c( ... ), ... )))
 
 # y <- voomWithQualityWeights(x, design) # useful if you are comparing a gene deletion to a control
-design = model.matrix(~0 + condition, data = meta)
+design = model.matrix(~0 + group, data = meta)
 y.voom <- voom(filtered.data, design) # x is our DGEList counts data
 
 # corfit <- duplicateCorrelation(y, design, block=c(meta$batch)) # duplicate
@@ -934,9 +938,9 @@ write.table(rpkm(filtered.data$counts,
             col.names = NA)
 ```
 
-## Sample Clustering 
+# Sample Clustering 
 
-### PCA
+## PCA
 
 ```{r PCA, fig.height=18,fig.width=18}
 ##Plot the PCA of genotype specific effects
@@ -990,7 +994,7 @@ saveRDS(var_plot, file = "r_objects/var_plot.rds")
 ```
 
 
-### Heatmap
+## Heatmap
 
 ```{r Heatmap_top_variable_genes,fig.height=28,fig.width=28}
 
@@ -1035,7 +1039,7 @@ heatmap = pheatmap(mat, cluster_rows=TRUE,
 # dev.off()
 ```
 
-## DGE Analysis 
+# Differential Expression 
 
 ```{r DGE_analysis, results='asis'}
 
@@ -1054,7 +1058,7 @@ for (i in 1:length(contrast_list$contrast)){
   contrast.name = contrast_list[i,1]
 
   # Divide iterations of this loop in the report.
-  cat(paste0("### ",contrast.name), "\n\n")
+  cat(paste0("## ",contrast.name), "\n\n")
   
   contrast = do.call(makeContrasts, myargs)
   

@@ -1,3 +1,2 @@
 contrast	group1	group2
-Normal_vs_GBM	GBM	Normal
-GBM_vs_Normal	Normal	GBM
+WT_vs_KO	LKB1_KO	LKB1_WT

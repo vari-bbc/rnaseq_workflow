@@ -12,7 +12,10 @@ ref:
   annotation: /primary/projects/bbc/references/mouse/annotation/mm10/ensembl/Mus_musculus.GRCm38.86.gtf
 
 # two-letter species annotation for (e.g. "Hs" <- Human)
-org: Mm
+species:
+  abbrv: Mm
+  short: Mmusculus
+  long: Mus musculus
 
 # org.db package used for annotation (e.g. "org.eg.Hs.db" for Human)
 # see edger.yaml for supported species packages

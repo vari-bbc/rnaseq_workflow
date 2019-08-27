@@ -1,27 +1,27 @@
 
-rule fastqc_raw:
+rule fastqc:
     input:
-        "raw_reads/{sample}.fastq.gz"
+        "raw_reads/{sample}_{unit}_{read}.fastq.gz"
     output:
-        html="qc/fastqc/raw_reads/{sample}_fastqc.html",
-        zip="qc/fastqc/raw_reads/{sample}_fastqc.zip"
+        html="qc/fastqc/{sample}_{unit}_{read}_fastqc.html",
+        zip="qc/fastqc/{sample}_{unit}_{read}_fastqc.zip"
     params: ""
     log:
-        "logs/fastqc/raw_reads/{sample}.log"
+        "logs/fastqc/{sample}_{unit}_{read}.log"
     wrapper:
         "0.35.1/bio/fastqc"
 
 rule multiqc:
     input:
         # fastqc raw data
-        expand("qc/fastqc/raw_reads/{samples.sample}_{read}_fastqc.html", read=["1","2"], samples=samples.itertuples()),
-        expand("qc/fastqc/raw_reads/{samples.sample}_{read}_fastqc.zip", read=["1","2"], samples=samples.itertuples()),
+        expand("qc/fastqc/{units.sample}_{units.unit}_{read}_fastqc.html", read=["R1","R2"], units=units.itertuples()),
+        expand("qc/fastqc/{units.sample}_{units.unit}_{read}_fastqc.zip", read=["R1","R2"], units=units.itertuples()),
         # trim_galore data----
             # cutadapt report from trim_galore
-        expand("trimmed_data/{samples.sample}_{read}.fastq.gz_trimming_report.txt", read=["1","2"], samples=samples.itertuples()),
+        expand("trimmed_data/{units.sample}_{units.unit}_{read}.fastq.gz_trimming_report.txt", read=["R1","R2"], units=units.itertuples()),
             # fastqc on trim_galore
         # STAR alingments
-        expand("star/{samples.sample}.Log.final.out", samples=samples.itertuples()),
+        expand("analysis/star/{units.sample}_{units.unit}.Log.final.out", units=units.itertuples()),
     params:
         # skip the pass1 from STAR
         "--ignore '*._STARpass1/*'"
