@@ -49,6 +49,8 @@ dependencies:
  - bioconductor-limma=3.40.0
  - bioconductor-summarizedexperiment=1.12.0
  - bioconductor-s4vectors=0.20.1
+ - bioconductor-clusterprofiler=3.8.1
+ 
  # Annotation Packages
  - bioconductor-org.Ag.eg.db # Anopheles
  - bioconductor-org.At.tair.db # Arabidopsis

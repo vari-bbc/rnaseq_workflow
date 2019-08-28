@@ -1,2 +1,2 @@
-contrast	group1	group2
-WT_vs_KO	LKB1_KO	LKB1_WT
+contrast	groupRelative	groupBaseline
+KO_vs_WT	LKB1_KO	LKB1_WT
