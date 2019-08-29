@@ -23,37 +23,6 @@ knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE,cache=TRUE)
 ```
 
 ```{r loadlibs}
-#Check if packages can be loaded and download and install them if they are not found
-cranPkgLoad <- function(x)
-  {#General function to see if a CRAN package is installed and if not, to install it
-    if (!require(x,character.only = TRUE))
-    {
-      #Install the given package and its dependencies through the user default CRAN mirror
-      install.packages(x,dep=TRUE, repos="https://cloud.r-project.org/")
-      #Throw an error and halt program execution if the package cannot be loaded or installed
-      #There is likely an error with the mirror or package and inform the user to look at the software docs
-      if(!require(x,character.only = TRUE)) stop("Tried to install the above CRAN package but could not. Refer to the documentation for additional details regarding manual installation.")
-    }
-  }
-
-biocPkgLoad <- function(x)
-  { #General function to see if a bioconductor package is installed and if not, to install it
-    if (!require(x,character.only = TRUE))
-    {
-      #Check if the BiocInstaller library can be loaded
-      if (!require(BiocManager))
-      {
-        #http was chosen here in case https is not supported
-        source("http://bioconductor.org/BiocManager.R")
-      }
-      #Suppress any updates to the package or its dependencies and suppress updates to the bioconductor package manager
-      #Install the bioconductor package and its dependencies through the user default bioc mirror
-      BiocManager::install(x,suppressUpdates = TRUE, suppressAutoUpdate = TRUE)
-      #Throw an error and halt program execution if the package cannot be loaded or installed
-      #There is likely an error with the mirror or package and inform the user to look at the software docs
-      if(!require(x,character.only = TRUE)) stop("Tried to install the above bioConductor package but could not. Refer to the documentation for additional details regarding manual installation.")
-    }
-}
 library(ggplot2)
 library(gplots)
 library(biomaRt)
@@ -84,11 +53,11 @@ library(fgsea)
 library(statmod)
 library(matrixStats)
 library(cowplot)
-
 library(clusterProfiler)
 library(enrichplot)
 library(DOSE)
 
+# annotation packages
 library(org.Mm.eg.db)
 ```
 
@@ -125,6 +94,7 @@ volcano = function(log2FC,pval,qval,fdr.filter,title){
 # Need a predefined df called 'meta' with columns 'sample' and 'genotype'.
 # Need a predefined logfc.filter, fdr.filter, and t2g_no_dup_genes.
 # Need a Formal class 'DGEList' with the filtered count data (default to the filtered.data obj from the project Rmd)
+
 RNAseq = function(design,contrast,.meta,block){
   
   # Check that filtered.data is a DGEList object!
@@ -221,7 +191,7 @@ change between the samples for the genes that best distinguish that pair of samp
   #contrast1 = makeContrasts(genotypeOfInterest-genotypeControl,levels=design) # an example with 1 contrast
   
   # When you pass multiple coefficients or contrasts to glmQLFTest, it will do an ANOVA-like test of the combined null hypothesis that all of them are equal to zero.
-  qlf <- glmQLFTest(fit, contrast = contrast)
+  qlf <- glmTreat(fit, contrast = contrast, lfc= logfc.filter)
 
   # Get topTags ####
   Table <- topTags(qlf, n = Inf, p.value =1)$table # Get all genes
@@ -231,7 +201,7 @@ change between the samples for the genes that best distinguish that pair of samp
   cat("\n\nTotal tags: ",nrow(Table),".\n")
   cat(paste0("\n\n\n\n\nTags with FDR<",fdr.filter,": ",nrow(Table.filtered)),".\n\n\n\n")
   # Because there can be multiple contrasts, need to filter on logFC in the following way:
-  logfold.columns = grep('logFC',colnames(Table.filtered)) # get columns for logFC 
+  logfold.columns = grep('^logFC',colnames(Table.filtered)) # get columns for logFC 
   if(length(logfold.columns)==1){  
     Table.filtered = Table.filtered[ifelse(lapply(Table.filtered[,logfold.columns],FUN=function(x){return(max(abs(x)))})>logfc.filter,TRUE,FALSE),]
   }else{
@@ -285,260 +255,6 @@ change between the samples for the genes that best distinguish that pair of samp
   # samples from the same subject. None of the negative binomial packages, including edgeR, can do that.
 }
 
-# For this function, need:
-#   t2g with transcript_length & ens_gene columns
-#   genelist with significant genes only
-#   genome: 
-genesetenrichment = function(de.genelist,genelist,lengthData,goseq_mapper,reactome.mapper){
-  names(lengthData) = genelist
-  
-  # Get gene vectors for the goseq pwf function (vector of all genes, 1 if DE, 0 if not DE)
-  formatted.genelist=as.integer(genelist%in%de.genelist)
-  
-  # Probability Weighting Function to establish the null distribution for goseq
-  # supportedGenomes()
-  pwf=nullp(formatted.genelist,id="ens_gene",bias.data=lengthData,plot.fit=F)
-  # plotPWF(pwf,main=paste('pwf fit')) # plot the pwf
-  
-  # Format pwf:
-  rownames(pwf) = names(lengthData) 
-  
-  # Do goseq:
-  GO = goseq(pwf,
-             # gene2cat = dplyr::select(t2g,one_of(c('ens_gene','go_id'))), # A data frame with two columns containing the mapping between genes and the categories of interest
-             gene2cat = goseq_mapper,
-             test.cats = "KEGG" # "GO:CC", "GO:BP", "GO:MF" & "KEGG". The three GO terms refer to the Cellular Component, Biological Process and Molecular Function respectively. "KEGG" refers to KEGG pathways.
-  )
-  # GO=GO[-which(is.na(GO$ontology)),] # sometimes a few ontologies are NA
-  # GOBP = subset(GO,GO$ontology=="BP")# Subset to GO:Biological Process (not done by goseq despite test.cats="GO:BP")
-  
-  # Get the signif over/under represented GO terms:
-  overrep = which(p.adjust(GO$over_represented_pvalue,method="BH")<fdr.filter)
-  underrep = which(p.adjust(GO$under_represented_pvalue,method="BH")<fdr.filter)
-
-  
-  if(!missing(reactome.mapper)){
-    cat('Gene set enrichment with Reactome Pathways\n')
-    cat('\nFound',length(overrep),'OVERREPRESENTED reactome pathways with an adjusted p.value <',fdr.filter,'\n\n')
-    cat('\nFound',length(underrep),'UNDERREPRESENTED reactome pathways with an adjusted p.value <',fdr.filter,'\n\n') 
-    if(length(overrep)>0){
-      print(
-        dplyr::left_join(
-          GO[overrep,],reactome.mapper,
-          by=c('category'='Reactome_Pathway')
-        ) %>% knitr::kable(caption='Overrepresented Reactome Pathways') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
-      )
-    }
-    if(length(underrep)>0){
-      print(
-        dplyr::left_join(
-          GO[underrep,],reactome.mapper,
-          by=c('category'='Reactome_Pathway')
-        ) %>% knitr::kable(caption='Underrepresented Reactome Pathways') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
-      )
-    }
-  }else{
-    cat('\nGene set enrichment with GO terms\n')
-    cat('\nFound',length(overrep),'OVERREPRESENTED ontology terms with an adjusted p.value <',fdr.filter,'\n\n')
-    cat('\nFound',length(underrep),'UNDERREPRESENTED ontology terms with an adjusted p.value <',fdr.filter,'\n\n') 
-    if(length(overrep)>0){
-      # cat('#### Overrep\n')
-      # Table of the frequency of GO ontology:
-      print(
-        as.data.frame(table(GO[overrep,]$ontology)) %>% dplyr::rename('ontology'='Var1') %>% 
-          knitr::kable(caption='Ontology frequency for significantly OVERREPRESENTED GOs') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
-      )
-      # Full table:
-      print(
-        knitr::kable(GO[overrep,],caption='Overrepresented Gene Ontologies') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
-      )
-      }
-    if(length(underrep)>0){
-      if( ! is.na(GO[underrep,]$ontology)){
-        # cat('#### Underrep\n')
-        # Table of the frequency of GO ontology:
-        print(
-          as.data.frame(table(GO[underrep,]$ontology)) %>% dplyr::rename('ontology'='Var1')  %>% knitr::kable(caption='Ontology frequency for significantly UNDERREPRESENTED GOs') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
-        )
-        # Full table:
-        print(
-          knitr::kable(GO[underrep,],caption='Underrepresented Gene Ontologies') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
-        )
-      }
-    }
- 
-  }
-  #_________________________________________________________________________________
-  # Get the genes that are in the overepresented BP GOs
-  # go2get = GO[overrep,1]
-  # First get the genes that have that have overrep GO & are signif DE
-  # genes = t2g[which(t2g$go_id %in% go2get & t2g$ensembl_gene_id %in% vector),1] # ens_gene for genes with go2get
-  # DEtags_withGO = dplyr::filter(t2g,ens_gene %in% genes & go_id %in% go2get)
-  #_________________________________________________________________________________
-  #Print the tables:
-  
-  # knitr::kable(DEtags_withGO,caption=paste0('DE genes with a GO in the overrepresented GO terms'))
-  # knitr::kable(GOBP[underrep,],caption='Underrepresented biological processes') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
-
-}
-
-gsea_output_files = function(samples,genotypes,file.prefix,exprdata,t2g_no_dup_genes){
-
-  # Write the genelist to a .gmx file 
-  # gmx = 'NAME OF GENE LIST.gmx'
-  # cat("NAME OF GENE LIST\n",file=gmx)
-  # cat("na\n",file=gmx,append=TRUE)
-  # cat(genelist,sep="\n",file=gmx,append=TRUE)
-  
-  # phenotype .cls
-  filepheno<-paste0("../deliverables/",file.prefix,".cls")
-  cat(c(length(samples),length(unique(genotypes)),1),file=filepheno,sep=' ')
-  cat("\n",file=filepheno,append = TRUE)
-  cat('#',unique(as.character(genotypes)),file=filepheno,sep=" ",append = TRUE)
-  cat("\n",file=filepheno,append = TRUE)
-  cat(as.character(genotypes),file=filepheno,sep=" ",append = TRUE)
-  cat("\n",file=filepheno,append = TRUE)
-  
-  # .gct
-  exprdata = exprdata[,which(colnames(exprdata) %in% samples)]
-  exprdata = exprdata[,as.character(samples)]
-  # get ext_gene
-  mapper = as.data.frame(rownames(exprdata)); colnames(mapper)='ens_gene'
-  mapper = dplyr::left_join(mapper,dplyr::select(t2g_no_dup_genes,one_of(c('ens_gene','ext_gene'))),by='ens_gene')
-  NAME=toupper(mapper$ext_gene)
-  # exprdata = exprdata[duplicated(fulltumd$ext_gene)==FALSE,]
-  DESCRIPTION = rep('NA',nrow(exprdata))
-  exprdatafile = paste0("../deliverables/",file.prefix,'.gct')
-  cat('# 1.2',file=exprdatafile)
-  cat("\n",file=exprdatafile,append = TRUE)
-  # cat(nrow(exprdata),"\t",ncol(exprdata),file=exprdatafile,append=TRUE)
-  cat(paste0(nrow(y.voom$E),"\t",ncol(y.voom$E)),file=exprdatafile,append=TRUE)
-  cat("\n",file=exprdatafile,append = TRUE)
-  exprdata = as.data.frame(cbind(NAME,DESCRIPTION,exprdata)) # Total data formatted
-  write.table(exprdata,exprdatafile,sep="\t",row.names = FALSE,quote = FALSE,append=TRUE)
-  
-  # length(which(raw.list$ext_gene %in% rownames(exprdata)))
-  #chip file
-  chipfile = paste0("../deliverables/",file.prefix,'.chip')
-  chip = t2g_no_dup_genes %>% 
-                filter(ens_gene %in% rownames(y.voom$E)) %>% 
-                select(ext_gene,ens_gene,predicted_function) %>% 
-                rename("Probe Set ID"= ext_gene,"Gene Symbol"=ens_gene,"Gene Title"=predicted_function)
-              
-  write.table(chip,chipfile, sep="\t",row.names = FALSE,quote = FALSE,append=TRUE)
-  
-  
-  # Report the output files
-  cat('Files for GSEA:\n')
-  
-  cat('\t',filepheno,'\n\t',exprdatafile,'\n')
-}
-
-feature_counts_and_low_count_filtering = function(raw_data,sample.cpm.filter,cpm.filter){
-  
-  # Library sizes are computed from the reads counts for mapped reads to gff features
-  lib_sizes <- data.frame(colSums(raw_data)/1e6) # In millions
-  lib_sizes$sample <- factor(rownames(lib_sizes))
-  colnames(lib_sizes)[1] <- 'millions_of_counts'
-  
-  cat('Raw Feature Counts Summary (Millions):\n')
-  # print(
-    # t(summary(lib_sizes$millions_of_counts)) %>% knitr::kable() %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
-  # )
-  print(
-    as.matrix(summary(lib_sizes$millions_of_counts)) %>% knitr::kable() %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
-  )
-  print(
-    knitr::kable(lib_sizes,caption='Raw Feature Counts') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
-  )
-  print(
-    ggplot(lib_sizes, aes(x = sample, y = millions_of_counts)) +
-      geom_bar(stat="identity",fill='blue') +
-      labs(caption=paste0('data: ',raw.data.file),y="Raw Counts (Millions)",title="Total Raw Read Counts For All Features") +
-      theme_bw(10) +
-      theme(
-        axis.text.x = element_text(angle=45, hjust=1),
-        axis.title.x = element_blank(),
-        plot.title = element_text(hjust = 0.5)
-      )
-  )
-  
-  
-  raw.data.dgelist <- DGEList(counts=raw_data)
-  rd = tidyr::gather(as.data.frame(raw.data.dgelist$counts),sample,count) 
-  rd = dplyr::left_join(rd,meta)
-  
-  cat("Total tags:",nrow(raw_data),'\n')
-  cat("Total tags with >0 counts:",nrow(raw_data[rowSums(raw_data) >= 1,]),'\n')
-  
-  plot = ggplot(rd,aes(x=sample, y=count, fill=genotype)) +
-    geom_boxplot() +
-    scale_fill_brewer(palette = "Set1") +
-    ylab("Counts Per Million") +
-    ggtitle("Raw Untransformed Count Distributions") +
-    theme_bw() +
-    theme(
-      plot.margin = margin(2, 2, 2, 2, "cm"),
-      axis.text.x = element_text(angle=45, hjust=1,size=12),
-      axis.title.x = element_blank(),
-      plot.title = element_text(hjust = 0.5)
-    ) 
-  print(
-    plot 
-  )
-  print(
-    plot + ylim(c(0,as.numeric(quantile(rd$count,probs=c(0.9))))) + ggtitle('Raw Untransformed Count Distributions - ylim=c(0,90th quantile)') # ylim to 90% 
-  )
-  print(
-    rd %>% ggplot(aes(count)) + geom_histogram(binwidth=1) + ggtitle('Raw Data Gene Count Histogram') + xlim(c(0,as.numeric(quantile(rd$count,probs=c(0.9)))))
-  )
-  
-  # Filter 1
-  # 
-  if(missing(sample.cpm.filter)){sample.cpm.filter=2} # How many samples must meet the cpm threshhold
-  if(missing(cpm.filter)){
-    cpm.filter=10/min(lib_sizes$millions_of_counts) # feature cpm threshold
-  }
-  cat('The cpm filter is derived from a minimum of 10 counts in the smallest library (In this case,',min(lib_sizes$millions_of_counts),'million counts in sample',as.character(lib_sizes$sample[which.min(lib_sizes$millions_of_counts)]),')\n')
-  cat('In this case, for a gene to pass filtering, need ≥',cpm.filter,'cpm in ≥',sample.cpm.filter,'samples\n')
-  keep <- rowSums(cpm(raw.data.dgelist)>cpm.filter) >= sample.cpm.filter
-  filtered.data <- raw.data.dgelist[keep, , keep.lib.sizes=FALSE]
-  cat(nrow(filtered.data$counts),"genes PASS this filter.\n")
-  
-  fd = tidyr::gather(as.data.frame(filtered.data$counts),sample,count) 
-  fd = dplyr::left_join(fd,meta)
-  
-  plot = fd %>% ggplot(aes(count)) + geom_histogram(binwidth=1) + ggtitle('Filtered Data Gene Count Histogram') + xlim(c(0,as.numeric(quantile(fd$count,probs=c(0.9)))))
-  print(
-    plot
-  )
-  print(
-    plot + xlim(0,as.numeric(quantile(fd$count,probs=c(0.25)))) + ggtitle('Filtered Data Gene Count Histogram - xlim=c(0,25th quantile)')
-  )
-  
-  
-  
-  plot = ggplot(fd,aes(x=sample, y=count, fill=genotype)) +
-    geom_boxplot() +
-    scale_fill_brewer(palette = "Set1") +
-    ylab("Counts Per Million") +
-    ggtitle(paste0("Filtered Untransformed Count Distributions - ",nrow(filtered.data$counts)," Tags")) +
-    theme_bw() +
-    theme(
-      plot.margin = margin(2, 2, 2, 2, "cm"),
-      axis.text.x = element_text(angle=45, hjust=1,size=12),
-      axis.title.x = element_blank(),
-      plot.title = element_text(hjust = 0.5)
-    ) + ylim(c(0,as.numeric(quantile(fd$count,probs=c(0.9))))) # ylim to 90% 
-  print(
-    plot
-  )
-  
-  return(filtered.data)
-  
-}
- 
-
 ```
 
 ```{r t2g_object,eval=TRUE,cache=TRUE}
@@ -560,7 +276,6 @@ if (!exists(c("t2g_no_dup_genes","t2g"))){
     t2g_5 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "end_position"), mart = mart)
     t2g_6 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "transcript_length"), mart = mart)
     t2g_7 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "go_id"), mart = mart)
-    t2g_8 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "entrezgene_id"), mart = mart)
     
     t2g <- t2g_1 %>%
       left_join(t2g_2, by='ensembl_gene_id') %>%
@@ -569,7 +284,6 @@ if (!exists(c("t2g_no_dup_genes","t2g"))){
       left_join(t2g_5, by='ensembl_gene_id') %>%
       left_join(t2g_6, by='ensembl_gene_id') %>%
       left_join(t2g_7, by='ensembl_gene_id') %>%
-      left_join(t2g_8, by='ensembl_gene_id') %>%
       dplyr::rename(ens_gene = ensembl_gene_id, ext_gene = external_gene_name, predicted_function = description)
     
     saveRDS(t2g, file=t2g_file)
@@ -607,42 +321,13 @@ reactome.mapper = dplyr::select(
 
 ```
 
-```{r define_fGSEA_functions, include=FALSE}
-
-library(tibble)
-getranks = function(title, table){
-
-# calculate rankings
-# use inverse sign of log change so that upregulated genes are at the left of the plots
-table$FCsign <- sign(table$logFC)
-table$logP <- -log10(table$FDR)
-table$metric <- table$logP/table$FCsign
-
-# set up the list of ranks for genes in order of the calculated metric
-ranks <- table[,c("ext_gene","metric")]
-ranks[,"ext_gene"] <- as.character(ranks[,"ext_gene"])
-
-# remove samples with duplicate gene symbols, metrics, and NAs, NaNs for "metric"
-# sort by metric: positive values first.
-ranks <- dplyr::distinct(.data = ranks, ext_gene, .keep_all=TRUE) %>%
-  dplyr::filter( !is.na(ext_gene)) %>% 
-  arrange(-metric)
-# convert NaN's to 0
-ranks$metric[ranks$metric == "NaN"] <- 0
-ranks$metric[ranks$metric == "Inf"] <- 0
-
-# format frame for fgsea
-ranks <- deframe(ranks)
-}
-```
-
 # Intro 
 
 ## Methods
 
-Raw data were quality controlled with FastQC. The reads have high quality for all samples. Adapters were removed with Trimgalore and mapped with STAR[1] to the **mm10 genome**. STAR outputs counts for all genomic features/tags/genes (option: --quantMode GeneCounts). These are the raw data imported into this R pipeline which uses the edgeR[2] framework for RNAseq analysis (see tab 'DGE Analysis' for more details). First, however, genes with low counts and unlikely to be translated (biologically meaningful) and also without enough counts for a reliable statistical judgement are removed. We require genes to have greater than (10/minimum sample library size in millions) counts per million in two samples.
+Raw data were quality controlled with FastQC. The reads have high quality for all samples. Adapters were removed with Trimgalore and mapped with STAR[1] to the **mm10 genome**. STAR outputs counts for all genomic features/tags/genes (option: --quantMode GeneCounts). These are the raw data imported into this R pipeline which uses the edgeR[2] framework for RNAseq analysis (see 'Differential Expression' for more details). First, however, genes with low counts and unlikely to be translated (biologically meaningful) and also without enough counts for a reliable statistical judgement are removed. We require genes to have greater than (10/minimum sample library size in millions) counts per million.
 
-The DGE analysis was performed using the edgeR framework. The TMM normalization for library size and composition bias was applied to the count-filtered data (not the VOOM normalized). This was followed by the models indicated in each contrast tab and tested using the quasi-likelihood F test. P-values were then adjusted using the BH method. Genes were termed significant if they passed the FDR and logFC thresholds (indicated in the specific contrast tabs). These significant genes were used in the gene set enrichment analysis using the R package goseq which adjusts for gene length. Both the Reactome Pathway and Gene Ontologies were tested for enrichment.
+The DGE analysis was performed using the edgeR framework. The TMM normalization for library size and composition bias was applied to the count-filtered data (not the VOOM normalized). This was followed by the models indicated in each contrast tab and tested using the quasi-likelihood t-test relative to a threshold (TREAT)[4] using a log2(1.5) threshold for differential expression between groups. P-values were then adjusted using the BH method. Genes were termed significant with FDR < 0.05. These significant genes were used in the Functional Enrichment using the ClusterProfiler R package. Both the Reactome Pathway and Gene Ontologies were tested for enrichment.
 
 **More detailed RNAseq explanation for users**
 Most of the following text describing the RNAseq workflow was copied directly from the following publications to give a summary overview of the workflow:
@@ -651,6 +336,7 @@ Most of the following text describing the RNAseq workflow was copied directly fr
    * EdgeR User Guide: http://www.bioconductor.org/packages//2.10/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf
    *  Conesa, A., Madrigal, P., Tarazona, S., Gomez-Cabrero, D., Cervera, A., McPherson, A., … Mortazavi, A. (2016). A survey of best practices for RNA-seq data analysis. Genome Biology, 17(1), 13. https://doi.org/10.1186/s13059-016-0881-8
    *  Liu, R., Holik, A. Z., Su, S., Jansz, N., Chen, K., Leong, H. S., … Ritchie, M. E. (2015). Why weight? Modelling sample and observational level variability improves power in RNA-seq analyses. Nucleic Acids Research, 43(15), e97–e97. https://doi.org/10.1093/nar/gkv412
+   *  McCarthy, D. J., and Smyth, G. K. (2009). Testing significance relative to a fold-change threshold is a TREAT. Bioinformatics 25, 765-771. https://doi.org/10.1093/bioinformatics/btp053 
 
 EdgeR uses the negative binomial (NB) distribution to model the read counts for each gene in each sample. The dispersion parameter of the NB distribution accounts for variability between biological replicates. edgeR estimates an empirical Bayes moderated dispersion for each individual gene. It also estimates a common dispersion, which is a global dispersion estimate averaged over all genes, and a trended dispersion where the dispersion of a gene is predicted from its abundance. The estimation is robustified against potential outlier genes. For RNA-seq studies, the NB dispersions tend to be higher for genes with very low counts. The dispersion trend tends to decrease smoothly with abundance and to asymptotic to a constant value for genes with larger counts. From our past experience, the asymptotic value for the BCV tends to be in range from 0.05 to 0.2 for genetically identical mice or cell lines, whereas somewhat larger values (> 0.3) are observed for human subjects.
 
@@ -701,7 +387,7 @@ knitr::kable(dplyr::arrange(meta,condition),caption='Metadata') %>% kable_stylin
 
 ```{r set_initial_RNAseq_filters}
 fdr.filter=0.05
-logfc.filter=1.5
+logfc.filter=0.58
 ```
 
 ```{r load_STAR_data}
@@ -915,10 +601,9 @@ v2 <- as.data.frame(t(y.voom$E))
 # annotate samples from rows
 v2$sample <- rownames(v2)
 # add the condition by looking it up in meta matching the order of the v2$sample column.
-v2$condition <- (dplyr::full_join(v2 %>% select(c("sample")),
-                 meta %>% select(c("sample","condition")),
+v2$condition <- (dplyr::full_join(v2 %>% dplyr::select(c("sample")),
+                 meta %>% dplyr::select(c("sample","condition")),
                  by="sample"))$condition
-
 
 # v2$covariate <- meta$covariate
 #If you have additional covariates, you'll need to add them as additional strings in the vector
@@ -955,7 +640,7 @@ t_lengths = dplyr::left_join(fpkm_table,
                t2g_no_dup_genes,
                by = 'ens_gene'
                ) %>%
-  select(c("ens_gene","transcript_length"))
+  dplyr::select(c("ens_gene","transcript_length"))
 
 write.table(rpkm(filtered.data$counts,
                  gene.length = t_lengths$transcript_length,
@@ -976,8 +661,8 @@ pca <- prcomp(t(y.voom$E)) # voom normalized
 pr_comps <- data.frame(pca$x)
 pr_comps$sample <- rownames(pr_comps)
 # add the condition by looking it up in meta matching the order of the v2$sample column.
-pr_comps$condition <- (dplyr::full_join(v2 %>% select(c("sample")),
-                 meta %>% select(c("sample","condition")),
+pr_comps$condition <- (dplyr::full_join(v2 %>% dplyr::select(c("sample")),
+                 meta %>% dplyr::select(c("sample","condition")),
                  by="sample"))$condition
 
 pca_plot <- ggplot(pr_comps, aes(x=PC1, y=PC2)) + 
@@ -1003,10 +688,10 @@ var_plot <- ggplot(prop_var, aes(x=num, y=prop)) +
     axis.title.y = element_text(vjust=1),
     plot.margin = unit(c(0,0,0,6), "mm")
   ) 
-vplayout <- function(x, y) viewport(layout.pos.row = x, layout.pos.col = y)
+vplayout <- function(x, y) grid::viewport(layout.pos.row = x, layout.pos.col = y)
 
-grid.newpage()
-pushViewport(viewport(layout = grid.layout(4, 100)))
+grid::grid.newpage()
+grid::pushViewport(grid::viewport(layout = grid::grid.layout(4, 100)))
 print(pca_plot, vp = vplayout(1:3, 3:100))
 print(var_plot, vp = vplayout(4, 1:83))
 
@@ -1040,7 +725,6 @@ ensNames = t2g_no_dup_genes$ens_gene[which(t2g_no_dup_genes$ens_gene %in% rownam
 rowNames = cbind(geneNames,ensNames)
 rowNames = rowNames[match(rownames(mat),rowNames[,2]),] # now in the right order
 rowNames$use = paste(rowNames[,1],': ',rowNames[,2],sep='')
-saveRDS(rowNames$use, file = "r_objects/rowNames_use.rds")
 
 
 filtered.meta.heatmap <- as.data.frame(meta[,'condition']) # can take specific metadata: [,c("cov","geno")], but need two columns minimum
@@ -1096,6 +780,9 @@ for (i in 1:length(contrast_list$contrast)){
     contrast = contrast,
     .meta <- meta
   )
+  
+    # save the results
+    
   # Functional Enrichment ---------------------------------------------------------
   cat("\n\n### Functional Enrichment \n\n")
   
@@ -1131,18 +818,18 @@ for (i in 1:length(contrast_list$contrast)){
   
   # plot top 30 for each GO category
   cat("\n\n##### GO: Biological Process \n\n")
-  print(dotplot(GO.BP, showCategory=30) + ggtitle("GO:Biological Process"))
-  print(emapplot(GO.BP) + ggtitle("GO:Biological Process"))
+  print(dotplot(GO.BP, showCategory=30) + ggtitle("DotPlot - GO:Biological Process"))
+  print(emapplot(GO.BP) + ggtitle("EnrichmentMap - GO:Biological Process"))
   #print(cnetplot(GO.BP, foldChange=geneList) + ggtitle("GO:Biological Process"))
   
   cat("\n\n##### GO: Molecular Function \n\n")
-  print(dotplot(GO.MF, showCategory=30) + ggtitle("GO:Molecular Function"))
-  print(emapplot(GO.MF) + ggtitle("GO:Molecular Function"))
+  print(dotplot(GO.MF, showCategory=30) + ggtitle("DotPlot - GO:Molecular Function"))
+  print(emapplot(GO.MF) + ggtitle("EnrichmentMap - GO:Molecular Function"))
   #cnetplot(GO.MF, foldChange=geneList) + ggtitle("GO:Molecular Function")
   
   cat("\n\n##### GO: Cellular Compartment \n\n")
-  print(dotplot(GO.CC, showCategory=30) + ggtitle("GO:Cellular Compartment"))
-  print(emapplot(GO.CC) + ggtitle("GO:Molecular Function"))
+  print(dotplot(GO.CC, showCategory=30) + ggtitle("DotPlot - GO:Cellular Compartment"))
+  print(emapplot(GO.CC) + ggtitle("EnrichmentMap - GO:Molecular Function"))
   #cnetplot(GO.CC, foldChange=geneList) + ggtitle("GO:Molecular Function")
   
   ## GSEA: Reactome and KEGG ---------------------------------
@@ -1160,6 +847,7 @@ for (i in 1:length(contrast_list$contrast)){
           theme(axis.text.y = element_text(size=8)) +
           theme(axis.text.x = element_text(size=8)) +
           theme(axis.title = element_text(size=8)) +
+          ggtitle("RidgePlot - GSEA: Reactome") +
           xlab("log2FC"))
   for (i in 1:min(30,length(gsea_res$Description))){
     print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
@@ -1175,12 +863,71 @@ for (i in 1:length(contrast_list$contrast)){
         theme(axis.text.y = element_text(size=8)) +
         theme(axis.text.x = element_text(size=8)) +
         theme(axis.title = element_text(size=8)) +
+        ggtitle("RidgePlot - GSEA: KEGG") +
         xlab("log2FC"))
   for (i in 1:min(30,length(gsea_res$Description))){
     print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
   }
 
+  ## Clustering ---------------------------------------------------------
+  cat("\n\n#### K-means Clustering  \n\n")
+  
+  print("Significantly differentially expressed genes are k-means clustered (k=6).")
+  print("GO category enrichment is performed on each of these clusters.")
+  
+  # prepare the data (mean of each "group" listed in samples.tsv)
+  forClust_group <- as.data.frame(y.voom$E) %>%
+    rownames_to_column(var="ens_gene") %>%
+    dplyr::filter(ens_gene %in% list$de.genes) %>% # filter only DE genes
+    melt(id.vars=c("ens_gene")) %>%
+    dplyr::left_join(meta %>% dplyr::select(sample,group) %>%
+                       dplyr::rename(variable=sample),by="variable") %>%
+    dcast(ens_gene ~ group, value.var="value", fun.aggregate = mean, na.rm = TRUE) %>%
+    column_to_rownames(var="ens_gene")
+  
+  # cluster the data,visualize, and extract clusters with pheatmap
+  pheat <- pheatmap(forClust_group, kmeans_k = 6)
+  pheat
+  pheat_clust <- as.data.frame(pheat$kmeans$cluster) %>% 
+    rownames_to_column(var="ens_gene") %>%
+    dplyr::left_join(t2g_no_dup_genes %>% dplyr::select(c("ens_gene","entrezgene_id"))) %>%
+    dplyr::rename(Entrez=entrezgene_id) %>% 
+    dplyr::mutate_all(as.factor) %>%
+    dplyr::rename(clust="pheat$kmeans$cluster") %>%
+    dplyr::select(c(Entrez,clust))
+  
+  # test for GO enrichment
+  pheat_enrichGO <- compareCluster(Entrez~clust, data=pheat_clust, fun="enrichGO", OrgDb='org.Mm.eg.db')
+  # plot the top5 GO categories for each cluster
+  dotplot(pheat_enrichGO, x=~clust, title="GO enrichment by expression cluster")
+  
 } 
-
 ```
 
+```{r seriesClustering_dev}
+
+  # ## do the clustering
+  # max_itr <-  50
+  # n_clust  <-  4 # number of cluster 
+  # set.seed(123) # reproduce the cluster 
+  # kmeans_out  <- kmeans(forClust, n_clust, iter.max = max_itr)
+  # 
+  # ## add cluster info to original matrix 
+  # forClust <- forClust %>% 
+  #   rownames_to_column(var='ens_gene') %>% 
+  #   mutate(clust = kmeans_out$cluster) %>%
+  #   dplyr::left_join((t2g_no_dup_genes %>% dplyr::select(ens_gene,ext_gene)),by="ens_gene")
+  # 
+  # ## visualise each cluster 
+  # forClust %>% 
+  #   gather(key = "Sample" , value = "Normalized_Expression", -c("ens_gene","ext_gene","clust")) %>%
+  #   group_by(Sample) %>%
+  #   mutate(row_num =  1:n()) %>%
+  #   ggplot(aes(x =  Sample , y = Normalized_Expression , group = row_num)) +
+  #   geom_point() +
+  #   geom_line(alpha = .1 , aes(col = as.character(clust))) + 
+  #   theme_bw() +  
+  #   theme(legend.position = "none" , axis.text.x = element_text(angle = 90 , vjust = 0.4)) +
+  #   facet_wrap(~clust)
+
+```
