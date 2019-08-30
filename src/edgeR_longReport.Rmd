@@ -1,5 +1,5 @@
 ---
-title: "RNAseq with EdgeR (Long Report)"
+title: "RNAseq with EdgeR"
 author: "Dean Pettinga"
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 params:
@@ -23,14 +23,13 @@ knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE,cache=TRUE)
 ```
 
 ```{r loadlibs}
+library(yaml)
 library(ggplot2)
 library(gplots)
 library(biomaRt)
 library(reshape2)
-library(reshape)
 library(gridExtra)
 require(grid)
-library(plyr)
 library(dplyr)
 library(tidyr)
 library(ggrepel)
@@ -38,14 +37,11 @@ library(RColorBrewer)
 library(goseq)
 library(edgeR)
 library(pheatmap)
-#library(ggalt)
 library(ggfortify)
 library(kableExtra)
-#library(formattable)
 library(readxl)
 library(UpSetR)
 library(xtable)
-#library(sva)
 library(tibble)
 library(msigdbr)
 library(data.table)
@@ -56,9 +52,30 @@ library(cowplot)
 library(clusterProfiler)
 library(enrichplot)
 library(DOSE)
+library(yaml)
 
 # annotation packages
-library(org.Mm.eg.db)
+library(org.Ag.eg.db) # Anopheles
+library(org.At.tair.db) # Arabidopsis
+library(org.Bt.eg.db) # Bovine
+library(org.Ce.eg.db) # Worm
+library(org.Cf.eg.db) # Canine
+library(org.Dm.eg.db) # Fly
+library(org.Dr.eg.db) # Zebrafish
+library(org.EcK12.eg.db) # E coli strain K12
+library(org.EcSakai.eg.db) # E coli strain Sakai
+library(org.Gg.eg.db) # Chicken
+library(org.Hs.eg.db) # Human
+library(org.Mm.eg.db) # Mouse
+library(org.Mmu.eg.db) # Rhesus
+library(org.Pf.plasmo.db) # Malaria
+library(org.Pt.eg.db) # Chimpanzee
+library(org.Rn.eg.db) # Rat
+library(org.Sc.sgd.db) # Yeast
+library(org.Ss.eg.db) # Pig
+library(org.Xl.eg.db) # Xenopus
+
+config <- yaml.load_file("config.yaml")
 ```
 
 ```{r, RNAseq}
@@ -268,7 +285,7 @@ if (!exists(c("t2g_no_dup_genes","t2g"))){
   if(t2g_file %in% list.files()){
     t2g = readRDS(t2g_file)
   }else{
-    mart <- biomaRt::useMart(biomart = 'ENSEMBL_MART_ENSEMBL', host="www.ensembl.org", dataset = 'mmusculus_gene_ensembl', ensemblRedirect = NULL)
+    mart <- biomaRt::useMart(biomart = 'ENSEMBL_MART_ENSEMBL', host="www.ensembl.org", dataset = paste0(config$species$short, '_gene_ensembl'), ensemblRedirect = NULL)
     t2g_1 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "external_gene_name"), mart = mart)
     t2g_2 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "description"), mart = mart)
     t2g_3 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "chromosome_name"), mart = mart)    
@@ -276,6 +293,7 @@ if (!exists(c("t2g_no_dup_genes","t2g"))){
     t2g_5 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "end_position"), mart = mart)
     t2g_6 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "transcript_length"), mart = mart)
     t2g_7 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "go_id"), mart = mart)
+    t2g_8 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "entrezgene_id"), mart = mart)
     
     t2g <- t2g_1 %>%
       left_join(t2g_2, by='ensembl_gene_id') %>%
@@ -284,6 +302,7 @@ if (!exists(c("t2g_no_dup_genes","t2g"))){
       left_join(t2g_5, by='ensembl_gene_id') %>%
       left_join(t2g_6, by='ensembl_gene_id') %>%
       left_join(t2g_7, by='ensembl_gene_id') %>%
+      left_join(t2g_8, by='ensembl_gene_id') %>%
       dplyr::rename(ens_gene = ensembl_gene_id, ext_gene = external_gene_name, predicted_function = description)
     
     saveRDS(t2g, file=t2g_file)
@@ -297,7 +316,7 @@ if (!exists(c("t2g_no_dup_genes","t2g"))){
 reactome.mapper = read.delim('https://reactome.org/download/current/Ensembl2Reactome_All_Levels.txt',sep='\t',header=FALSE)
 
 colnames(reactome.mapper)=c('ens_gene','Reactome_Pathway','url','Pathway_Name','Evidence_Code','Species')
-reactome.mapper = dplyr::filter(reactome.mapper,Species=='Mus musculus')
+reactome.mapper = dplyr::filter(reactome.mapper,Species==config$species$long)
 reactome.mapper$ens_gene=as.character(reactome.mapper$ens_gene)
 # dim(reactome.mapper)
 # length(unique(reactome.mapper$ens_gene))
@@ -325,7 +344,7 @@ reactome.mapper = dplyr::select(
 
 ## Methods
 
-Raw data were quality controlled with FastQC. The reads have high quality for all samples. Adapters were removed with Trimgalore and mapped with STAR[1] to the **mm10 genome**. STAR outputs counts for all genomic features/tags/genes (option: --quantMode GeneCounts). These are the raw data imported into this R pipeline which uses the edgeR[2] framework for RNAseq analysis (see 'Differential Expression' for more details). First, however, genes with low counts and unlikely to be translated (biologically meaningful) and also without enough counts for a reliable statistical judgement are removed. We require genes to have greater than (10/minimum sample library size in millions) counts per million.
+Raw data were quality controlled with FastQC. The reads have high quality for all samples. Adapters were removed with Trimgalore and mapped with STAR[1] which outputs counts for all genomic features/tags/genes (option: --quantMode GeneCounts). These are the raw data imported into this R pipeline which uses the edgeR[2] framework for RNAseq analysis (see 'Differential Expression' for more details). First, however, genes with low counts and unlikely to be translated (biologically meaningful) and also without enough counts for a reliable statistical judgement are removed. We require genes to have greater than (10/minimum sample library size in millions) counts per million.
 
 The DGE analysis was performed using the edgeR framework. The TMM normalization for library size and composition bias was applied to the count-filtered data (not the VOOM normalized). This was followed by the models indicated in each contrast tab and tested using the quasi-likelihood t-test relative to a threshold (TREAT)[4] using a log2(1.5) threshold for differential expression between groups. P-values were then adjusted using the BH method. Genes were termed significant with FDR < 0.05. These significant genes were used in the Functional Enrichment using the ClusterProfiler R package. Both the Reactome Pathway and Gene Ontologies were tested for enrichment.
 
@@ -360,7 +379,6 @@ The QL F-test is then used to find differentially expressed genes. While the lik
 ## Load Data
 
 ```{r load_metadata, results='asis'}
-
 cat('This data powers the contrasts, if there are problems please contact me\n')
 metadata.file="samples.tsv"
 meta = read.delim(metadata.file,sep='\t',stringsAsFactors = TRUE,header=TRUE)
@@ -755,7 +773,7 @@ heatmap = pheatmap(mat, cluster_rows=TRUE,
 
 ```{r DGE_analysis, results='asis'}
 
-contrast_list = read.delim("contrasts.tsv",stringsAsFactors = T ,sep='\t')
+contrast_list = read.delim(gsub("src/","",config$contrasts),stringsAsFactors = T ,sep='\t')
 
 design = model.matrix(~0 + group, data = meta)
 
@@ -801,17 +819,17 @@ for (i in 1:length(contrast_list$contrast)){
   DE <- names(geneList)[abs(geneList) > 2]
   
   GO.BP = enrichGO(gene=DE,
-                OrgDb= org.Mm.eg.db,
+                OrgDb= config$annotation,
                 ont ="BP",
                 keyType = "SYMBOL",
                 pAdjustMethod = "BH")
   GO.MF = enrichGO(gene=DE,
-                OrgDb= org.Mm.eg.db,
+                OrgDb= config$annotation,
                 ont ="MF",
                 keyType = "SYMBOL",
                 pAdjustMethod = "BH")
   GO.CC = enrichGO(gene=DE,
-                OrgDb= org.Mm.eg.db,
+                OrgDb= config$annotation,
                 ont ="CC",
                 keyType = "SYMBOL",
                 pAdjustMethod = "BH")
@@ -839,10 +857,10 @@ for (i in 1:length(contrast_list$contrast)){
   
   # REACTOME
   cat("\n\n##### Reactome Pathways \n\n")
-  m_t2g <- msigdbr(species = "Mus musculus", category = "C2", subcategory = "CP:REACTOME") %>% 
+  m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:REACTOME") %>% 
     dplyr::select(gs_name, gene_symbol)
   
-  gsea_res <- GSEA(geneList, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
+  gsea_res <- clusterProfiler::GSEA(geneList, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
   print(ridgeplot(gsea_res) +
           theme(axis.text.y = element_text(size=8)) +
           theme(axis.text.x = element_text(size=8)) +
@@ -855,7 +873,7 @@ for (i in 1:length(contrast_list$contrast)){
   
   # KEGG
   cat("\n\n##### KEGG Pathways \n\n")
-  m_t2g <- msigdbr(species = "Mus musculus", category = "C2", subcategory = "CP:KEGG") %>% 
+  m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:KEGG") %>% 
     dplyr::select(gs_name, gene_symbol)
   
   gsea_res <- GSEA(geneList, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
@@ -868,12 +886,17 @@ for (i in 1:length(contrast_list$contrast)){
   for (i in 1:min(30,length(gsea_res$Description))){
     print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
   }
+} 
+```
 
-  ## Clustering ---------------------------------------------------------
+```{r seriesClustering_dev, eval=FALSE, include=FALSE}
+## NOT RUN: Extra Analyses for DE genelists
+
+## Kmeans Clustering DE Genes ---------------------------------------------------------
   cat("\n\n#### K-means Clustering  \n\n")
   
-  print("Significantly differentially expressed genes are k-means clustered (k=6).")
-  print("GO category enrichment is performed on each of these clusters.")
+  cat("Significantly differentially expressed genes are k-means clustered (k=6).\n\n")
+  print("GO category enrichment is performed on each of these clusters.\n\n")
   
   # prepare the data (mean of each "group" listed in samples.tsv)
   forClust_group <- as.data.frame(y.voom$E) %>%
@@ -897,37 +920,9 @@ for (i in 1:length(contrast_list$contrast)){
     dplyr::select(c(Entrez,clust))
   
   # test for GO enrichment
-  pheat_enrichGO <- compareCluster(Entrez~clust, data=pheat_clust, fun="enrichGO", OrgDb='org.Mm.eg.db')
+  pheat_enrichGO <- compareCluster(Entrez~clust, data=pheat_clust, fun="enrichGO", OrgDb=config$annotation)
   # plot the top5 GO categories for each cluster
-  dotplot(pheat_enrichGO, x=~clust, title="GO enrichment by expression cluster")
-  
-} 
-```
+  print(dotplot(pheat_enrichGO, x=~clust, title="GO enrichment by expression cluster"))
 
-```{r seriesClustering_dev}
-
-  # ## do the clustering
-  # max_itr <-  50
-  # n_clust  <-  4 # number of cluster 
-  # set.seed(123) # reproduce the cluster 
-  # kmeans_out  <- kmeans(forClust, n_clust, iter.max = max_itr)
-  # 
-  # ## add cluster info to original matrix 
-  # forClust <- forClust %>% 
-  #   rownames_to_column(var='ens_gene') %>% 
-  #   mutate(clust = kmeans_out$cluster) %>%
-  #   dplyr::left_join((t2g_no_dup_genes %>% dplyr::select(ens_gene,ext_gene)),by="ens_gene")
-  # 
-  # ## visualise each cluster 
-  # forClust %>% 
-  #   gather(key = "Sample" , value = "Normalized_Expression", -c("ens_gene","ext_gene","clust")) %>%
-  #   group_by(Sample) %>%
-  #   mutate(row_num =  1:n()) %>%
-  #   ggplot(aes(x =  Sample , y = Normalized_Expression , group = row_num)) +
-  #   geom_point() +
-  #   geom_line(alpha = .1 , aes(col = as.character(clust))) + 
-  #   theme_bw() +  
-  #   theme(legend.position = "none" , axis.text.x = element_text(angle = 90 , vjust = 0.4)) +
-  #   facet_wrap(~clust)
 
 ```

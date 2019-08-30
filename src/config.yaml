@@ -13,10 +13,9 @@ ref:
 
 # two-letter species annotation for (e.g. "Hs" <- Human)
 species:
-  abbrv: Mm
-  short: Mmusculus
+  short: mmusculus
   long: Mus musculus
 
 # org.db package used for annotation (e.g. "org.eg.Hs.db" for Human)
 # see edger.yaml for supported species packages
-annotation: org.eg.Mm.db
+annotation: org.Mm.eg.db

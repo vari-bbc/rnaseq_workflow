@@ -1,24 +1,23 @@
-
 rule fastqc:
     input:
-        "raw_reads/{sample}_{unit}_{read}.fastq.gz"
+        "raw_reads/{sample}_{unit}_R{read}.fastq.gz",
     output:
-        html="qc/fastqc/{sample}_{unit}_{read}_fastqc.html",
-        zip="qc/fastqc/{sample}_{unit}_{read}_fastqc.zip"
+        html="qc/fastqc/{sample}_{unit}_R{read}_fastqc.html",
+        zip="qc/fastqc/{sample}_{unit}_R{read}_fastqc.zip",
     params: ""
     log:
-        "logs/fastqc/{sample}_{unit}_{read}.log"
+        "logs/fastqc/{sample}_{unit}_R{read}.log"
     wrapper:
         "0.35.1/bio/fastqc"
 
 rule multiqc:
     input:
         # fastqc raw data
-        expand("qc/fastqc/{units.sample}_{units.unit}_{read}_fastqc.html", read=["R1","R2"], units=units.itertuples()),
-        expand("qc/fastqc/{units.sample}_{units.unit}_{read}_fastqc.zip", read=["R1","R2"], units=units.itertuples()),
+        expand("qc/fastqc/{units.sample}_{units.unit}_R{read}_fastqc.html", read=["1","2"], units=units.itertuples()),
+        expand("qc/fastqc/{units.sample}_{units.unit}_R{read}_fastqc.zip", read=["1","2"], units=units.itertuples()),
         # trim_galore data----
             # cutadapt report from trim_galore
-        expand("trimmed_data/{units.sample}_{units.unit}_{read}.fastq.gz_trimming_report.txt", read=["R1","R2"], units=units.itertuples()),
+        expand("trimmed_data/{units.sample}_{units.unit}_R{read}.fastq.gz_trimming_report.txt", read=["1","2"], units=units.itertuples()),
             # fastqc on trim_galore
         # STAR alingments
         expand("analysis/star/{units.sample}_{units.unit}.Log.final.out", units=units.itertuples()),
