@@ -13,8 +13,6 @@ rule trim_galore_pe:
         extra = "--retain_unpaired -q 20"
     log:
         "logs/trim/trim_galore.{sample}_{unit}.log"
-    conda:
-        "../envs/trimgalore.yaml"
     wrapper:
         #"0.31.1/bio/trim_galore/pe"
         "file:wrappers/trim_galore_pe"
