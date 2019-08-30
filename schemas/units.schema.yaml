@@ -1,0 +1,26 @@
+$schema: "http://json-schema.org/draft-06/schema#"
+
+description: sequencing units (e.g. lanes)
+properties:
+  sample:
+    type: string
+    description: sample name/identifier
+  unit:
+    type: string
+    description: sequencing unit name (e.g. lane1)
+  fq1:
+    type: string
+    description: Read 1
+  fq2:
+    type: string
+    description: Read 2
+  strandedness:
+    type: string
+    description: orientation of library - needed to choose STAR counts column 
+
+required:
+  - sample
+  - unit
+  - fq1
+  #- fq2
+  #- strandedness
