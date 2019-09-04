@@ -15,16 +15,20 @@ output:
       smooth_scroll: true
     number_sections: false 
     df_print: paged
-    theme: yeti
 ---
+
+# R Packages
 Tested in R version `r getRversion()`.
 
 ```{r setup,echo=FALSE}
-knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE,cache=TRUE)
-
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE,
+	cache = TRUE
+)
 # look in Dean's library for packages. implemented to avoid a HUGE conda env with all dependencies in this document.
 .libPaths("/secondary/projects/bbc/tools/dean_R_libraries/x86_64-redhat-linux-gnu-library/3.6/")
-.libPaths()
 ```
 
 ```{r loadlibs}
@@ -72,12 +76,12 @@ library(org.Rn.eg.db) # Rat
 library(org.Sc.sgd.db) # Yeast
 library(org.Ss.eg.db) # Pig
 library(org.Xl.eg.db) # Xenopus
-
 library(vegan)
 
-sessionInfo(
-)
-config <- yaml.load_file("config.yaml")
+```
+
+```{r sessionInfo}
+sessionInfo()
 ```
 
 ```{r, RNAseq}
@@ -121,7 +125,7 @@ RNAseq = function(design,contrast,.meta,block){
   #   stop('Error - filtered.data NOT a DGEList Object\n')
   # }
   
-  cat('FDR Filter:',fdr.filter,'.\n\nlogFC Filter',logfc.filter,'.\n\n')
+  cat('FDR Filter:',fdr.filter,'\n\nlogFC Filter',logfc.filter,'\n\n')
   # Format design
   rownames(design) <- .meta$sample # do not make these names, make meta names in 'load data' tab
   colnames(design)=make.names(colnames(design))
@@ -344,12 +348,11 @@ reactome.mapper = dplyr::select(
 
 ```{r preRank_function, include=FALSE}
 # takes a $table from the RNAseq() output
-preRank = function(title, table){
-
+preRank = function(table){
 # calculate rankings
 # use inverse sign of log change so that upregulated genes are at the left of the plots
 table$FCsign <- sign(table$logFC)
-table$logP <- -log10(table$FDR)
+table$logP <- -log10(table$PValue)
 table$metric <- table$logP/table$FCsign
 
 # set up the list of ranks for genes in order of the calculated metric
@@ -362,7 +365,11 @@ ranks <- dplyr::distinct(.data = ranks, ext_gene, .keep_all=TRUE) %>% dplyr::fil
 
 # format frame for fgsea
 ranks <- deframe(ranks)
+return(ranks)
 }
+
+table = list$table
+
 ```
 
 # Intro 
@@ -404,10 +411,13 @@ The QL F-test is then used to find differentially expressed genes. While the lik
 ## Load Data
 
 ```{r load_metadata, results='asis'}
+# conta
+config <- yaml.load_file("config.yaml")
+
 cat('This data powers the contrasts, if there are problems please contact me\n')
-metadata.file="samples.tsv"
-meta = read.delim(metadata.file,sep='\t',stringsAsFactors = TRUE,header=TRUE)
-meta$sample = as.character(meta$sample)
+metadata.file="units.tsv"
+meta <- unique(read.delim(metadata.file,sep='\t',stringsAsFactors = TRUE,header=TRUE) %>%
+         dplyr::select(-c(unit,fq1,fq2,strandedness)))
 
 cat('Found',nrow(meta),'samples in file',metadata.file,'\n')
 
@@ -429,13 +439,13 @@ knitr::kable(dplyr::arrange(meta,condition),caption='Metadata') %>% kable_stylin
 ```
 
 ```{r set_initial_RNAseq_filters}
-fdr.filter=0.05
-logfc.filter=0.58
+fdr.filter <- config$fdr.filter
+logfc.filter <- config$logfc.filter
 ```
 
 ```{r load_STAR_data}
 # Load STAR feature counts:
-raw.data.file <- '../deliverables/counts.tsv'
+raw.data.file <- '../deliverables/counts_.tsv'
 raw_data = read.delim(raw.data.file, row.names=1,stringsAsFactors = F, check.names = F,sep='\t')
 #raw_data <- raw_data[,-ncol(raw_data)] #Removing a column of NAs presuming it's the last column
 cat('The following samples have no meta data:\n')
@@ -487,12 +497,12 @@ ggplot(mapstat_unit,aes(x=sample_unit,y=UniquelyMappingReads, fill=sample)) +
 # Plot by SAMPLE-----------------------------------------------------------------------------------------------------
 
 mapstat_sample <- mapstat_unit %>% 
-  group_by(sample) %>%
-  summarise(sumUnique=sum(UniquelyMappingReads),sumTotalReads=sum(TotalReads)) %>%
+  dplyr::group_by(sample) %>%
+  dplyr::summarise(sumUnique=sum(UniquelyMappingReads),sumTotalReads=sum(TotalReads)) %>%
   dplyr::rename(UniquelyMappingReads=sumUnique) %>%
   mutate(UniquelyMappingRate=100*(UniquelyMappingReads/sumTotalReads))
 
-ggplot(mapstat_sample,aes(x=sample,y=UniquelyMappingRate, fill=sample), ) + 
+ggplot(mapstat_sample,aes(x=sample,y=UniquelyMappingRate, fill=sample)) + 
   labs(title=paste('Mapping Stats - Uniquely Mapping Percentage'),subtitle='',caption='Data: UniquelyMappingRates.txt') +
   scale_color_brewer('Set1') + 
   ylim(0,100) +
@@ -748,43 +758,18 @@ saveRDS(var_plot, file = "r_objects/var_plot.rds")
 
 ```
 
-```{r}
-data(iris)
-require(vegan)
+### Clustering Stats
 
-# PCA
-# Open first four columns of iris data and scales the entries(rows)
-iris_c <- scale(iris[ ,1:4])
-# rda calls PCA on the data
-pca <- rda(iris_c)
+Adonis 
 
-# plot
-plot(pca, type = 'n', display = 'sites')
-cols <- c('red', 'blue', 'green')
-points(pca, display='sites', col = cols[iris$Species], pch = 16)
-# display the groups
-ordihull(pca, groups=iris$Species)
-# label the centroid of each group
-ordispider(pca, groups = iris$Species, label = TRUE)
-
+```{r adonis}
 # PerMANOVA - partitioning the euclidean distance matrix by 'condition'
-pr_comps_c <- scale(t(y.voom$E))
-
-#using scaled-normalized expression values
-adonis(scale(t(y.voom$E)) ~ condition,
+  # using all PCs
+pca_sig <- adonis((pr_comps %>% dplyr::select(-c(sample,condition))) ~ condition,
        data = pr_comps,
-       permutations = 999,
+       permutations = 9999,
        method='eu')
-#using PC1/PC2
-adonis((pr_comps %>% dplyr::select(c(PC1,PC2))) ~ condition,
-       data = pr_comps,
-       permutations = 999,
-       method='eu')
-#using all PCs
-adonis((pr_comps %>% dplyr::select(-c(sample,condition))) ~ condition,
-       data = pr_comps,
-       permutations = 999,
-       method='eu')
+pca_sig
 ```
 
 
@@ -835,7 +820,7 @@ heatmap = pheatmap(mat, cluster_rows=TRUE,
 
 # Differential Expression 
 
-```{r DGE_analysis, results='asis'}
+```{r DGE_analysis, results='asis',}
 
 contrast_list = read.delim(gsub("src/","",config$contrasts),stringsAsFactors = T ,sep='\t')
 
@@ -863,22 +848,21 @@ for (i in 1:length(contrast_list$contrast)){
     .meta <- meta
   )
     
-  # Functional Enrichment ---------------------------------------------------------
+  # Functional Enrichment --------------------------------------------------------
   cat("\n\n### Functional Enrichment \n\n")
   
   ## Hypergeometric Test for GO-------------------------------
   cat("\n\n#### Hypergeometric Test \n\n ")
   
-  cat("GSEA testing was performed with ClusterProfiler's `enrichGO` function. \n\n")
+  cat("Hypergeometric tests were performed with ClusterProfiler's `enrichGO` function. \n\n")
   
   # are the non-unique ext_gene values all NAs? yes if TRUE
   nrow(list$table) - nrow(list$table %>% filter(!is.na(ext_gene))) == nrow(list$table) - length(unique(list$table$ext_gene))
   # prepare the genelist
-  d <- list$table %>% dplyr::select(c(ens_gene,ext_gene,logFC))
-  geneList <- d[,3]
-  names(geneList) <- as.character(d[,2])
-  geneList <- sort(geneList, decreasing = TRUE)
-  DE <- names(geneList)[abs(geneList) > 2]
+  # get all significant genes from glmTREAT (ext_gene symbols)
+  DE <- (list$table %>% 
+    dplyr::select(c(ens_gene,ext_gene,FDR)) %>%
+    dplyr::filter(FDR < 0.05))$ext_gene
   
   GO.BP = enrichGO(gene=DE,
                 OrgDb= config$annotation,
@@ -898,56 +882,62 @@ for (i in 1:length(contrast_list$contrast)){
   
   # plot top 30 for each GO category
   cat("\n\n##### GO: Biological Process \n\n")
-  print(dotplot(GO.BP, showCategory=30) + ggtitle("DotPlot - GO:Biological Process"))
-  print(emapplot(GO.BP) + ggtitle("EnrichmentMap - GO:Biological Process"))
+  print(enrichplot::dotplot(GO.BP, showCategory=30) + ggtitle("DotPlot - GO:Biological Process"))
+  print(enrichplot::emapplot(GO.BP) + ggtitle("EnrichmentMap - GO:Biological Process"))
   #print(cnetplot(GO.BP, foldChange=geneList) + ggtitle("GO:Biological Process"))
   
   cat("\n\n##### GO: Molecular Function \n\n")
-  print(dotplot(GO.MF, showCategory=30) + ggtitle("DotPlot - GO:Molecular Function"))
-  print(emapplot(GO.MF) + ggtitle("EnrichmentMap - GO:Molecular Function"))
+  print(enrichplot::dotplot(GO.MF, showCategory=30) + ggtitle("DotPlot - GO:Molecular Function"))
+  print(enrichplot::emapplot(GO.MF) + ggtitle("EnrichmentMap - GO:Molecular Function"))
   #cnetplot(GO.MF, foldChange=geneList) + ggtitle("GO:Molecular Function")
   
   cat("\n\n##### GO: Cellular Compartment \n\n")
-  print(dotplot(GO.CC, showCategory=30) + ggtitle("DotPlot - GO:Cellular Compartment"))
-  print(emapplot(GO.CC) + ggtitle("EnrichmentMap - GO:Molecular Function"))
+  print(enrichplot::dotplot(GO.CC, showCategory=30) + ggtitle("DotPlot - GO:Cellular Compartment"))
+  print(enrichplot::emapplot(GO.CC) + ggtitle("EnrichmentMap - GO:Molecular Function"))
   #cnetplot(GO.CC, foldChange=geneList) + ggtitle("GO:Molecular Function")
   
   ## GSEA: Reactome and KEGG ---------------------------------
   cat("\n\n#### GSEA \n\n")  
-  
   cat("GSEA testing was performed with ClusterProfiler's wrapper for the `fgsea` function. \n\n")
   
-  # REACTOME
-  cat("\n\n##### Reactome Pathways \n\n")
-  m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:REACTOME") %>% 
-    dplyr::select(gs_name, gene_symbol)
+  # assign ranks based upon current contrast
+  geneRanks <- preRank(list$table)
   
-  gsea_res <- clusterProfiler::GSEA(geneList, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
-  print(ridgeplot(gsea_res) +
+  # REACTOME
+    cat("\n\n##### Reactome Pathways \n\n")
+    # assign pathways
+    m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:REACTOME") %>% 
+      dplyr::select(gs_name, gene_symbol)
+    # run fGSEA
+    gsea_res <- clusterProfiler::GSEA(geneRanks, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
+    # print results
+    print(ridgeplot(gsea_res) +
+            theme(axis.text.y = element_text(size=8)) +
+            theme(axis.text.x = element_text(size=8)) +
+            theme(axis.title = element_text(size=8)) +
+            ggtitle("RidgePlot - GSEA: Reactome") +
+            xlab("log2FC"))
+    for (i in 1:min(30,length(gsea_res$Description))){
+      print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
+    }
+    
+  # KEGG
+    cat("\n\n##### KEGG Pathways \n\n")
+    # assign pathways
+    m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:KEGG") %>% 
+      dplyr::select(gs_name, gene_symbol)
+    # run fGSEA
+    gsea_res <- clusterProfiler::GSEA(geneRanks, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
+    # print results
+    print(ridgeplot(gsea_res) +
           theme(axis.text.y = element_text(size=8)) +
           theme(axis.text.x = element_text(size=8)) +
           theme(axis.title = element_text(size=8)) +
-          ggtitle("RidgePlot - GSEA: Reactome") +
+          ggtitle("RidgePlot - GSEA: KEGG") +
           xlab("log2FC"))
-  for (i in 1:min(30,length(gsea_res$Description))){
-    print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
-  }
-  
-  # KEGG
-  cat("\n\n##### KEGG Pathways \n\n")
-  m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:KEGG") %>% 
-    dplyr::select(gs_name, gene_symbol)
-  
-  gsea_res <- GSEA(geneList, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
-  print(ridgeplot(gsea_res) +
-        theme(axis.text.y = element_text(size=8)) +
-        theme(axis.text.x = element_text(size=8)) +
-        theme(axis.title = element_text(size=8)) +
-        ggtitle("RidgePlot - GSEA: KEGG") +
-        xlab("log2FC"))
-  for (i in 1:min(30,length(gsea_res$Description))){
-    print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
-  }
+    for (i in 1:min(30,length(gsea_res$Description))){
+      print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
+    }
 }
 
 ```

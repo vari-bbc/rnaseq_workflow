@@ -1,9 +1,7 @@
 # path or URL to sample sheet (TSV format, columns: sample, condition, ...)
-samples: src/samples.tsv
+units: src/units.tsv
 # path or URL to contrast sheet (TSV format, columns: sample, condition, ...)
 contrasts: src/contrasts.tsv
-
-units: src/units.tsv
 
 ref:
   # the STAR index
@@ -11,11 +9,14 @@ ref:
   # gtf file with transcripts
   annotation: /primary/projects/bbc/references/mouse/annotation/mm10/ensembl/Mus_musculus.GRCm38.86.gtf
 
+### EdgeR Variables ###
+
 # two-letter species annotation for (e.g. "Hs" <- Human)
 species:
   short: mmusculus
   long: Mus musculus
-
-# org.db package used for annotation (e.g. "org.eg.Hs.db" for Human)
-# see edger.yaml for supported species packages
+# org.db package used for annotation
 annotation: org.Mm.eg.db
+# differential expression cutoff values
+logfc.filter: 0.58
+fdr.filter: 0.05

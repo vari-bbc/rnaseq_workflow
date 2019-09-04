@@ -9,14 +9,11 @@ min_version("5.4.4")
 configfile: "src/config.yaml"
 validate(config, schema="schemas/config.schema.yaml")
 
-samples = pd.read_table(config["samples"]).set_index("sample", drop=False)
-validate(samples, schema="schemas/samples.schema.yaml")
-
 units = pd.read_table(config["units"]).set_index("sample", drop=False)
 validate(units, schema="schemas/units.schema.yaml")
 
 contrasts = pd.read_table(config["contrasts"]).set_index("contrast", drop=False)
-validate(samples, schema="schemas/samples.schema.yaml")
+validate(contrasts, schema="schemas/contrasts.schema.yaml")
 
 ##### target rules #####
 
