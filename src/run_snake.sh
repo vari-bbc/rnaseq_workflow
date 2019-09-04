@@ -16,8 +16,8 @@ snakemake --dag | dot -Tpng > runs/dag_${TIME}.png
 snakemake \
 -s Snakefile \
 -j 48 \
---cluster-config src/cluster.json \
---cluster 'qsub -q {cluster.qname} -l nodes={cluster.nodes}:ppn={cluster.ppn} -l mem={cluster.mem} -l walltime={cluster.time} -M {cluster.account} -m ea -o error_files/ -e error_files/' \
+--cluster-config src/cluster.yaml \
+--cluster 'qsub -q {cluster.qname} -l nodes={cluster.nodes}:ppn={cluster.ppn} -l mem={cluster.mem} -l walltime={cluster.time} -m ea -o error_files/ -e error_files/' \
 --use-conda \
 
 # generate report

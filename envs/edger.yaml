@@ -5,7 +5,8 @@ channels:
  - conda-forge
 dependencies:
  - r-base=3.5.1
- - graphviz=2.40.1
+ - r-xtable=1.8_3
+ - r-tidyverse=1.2.1
  - pyyaml=5.1
  - docutils=0.14
  - r-dplyr=0.7.6
@@ -26,7 +27,7 @@ dependencies:
  - r-tibble=1.4.2
  - r-tidyr=0.8.1
  - r-upsetr=1.3.3
- - r-xtable=1.8_3
+
  - r-BiocManager=1.30.4
  - r-devtools=2.0.2
  - r-data.table=1.11.4
@@ -41,33 +42,29 @@ dependencies:
  - bioconductor-edger=3.26.0
  - bioconductor-annotate=1.60.1
  - bioconductor-biomart=2.38.0
- - bioconductor-fgsea=1.8.0
  - bioconductor-genomicranges=1.34.0
- - bioconductor-go.db=3.7.0
- - bioconductor-goseq=1.34.1
  - bioconductor-IRanges=2.16.0
- - bioconductor-limma=3.40.0
  - bioconductor-summarizedexperiment=1.12.0
  - bioconductor-s4vectors=0.20.1
  - bioconductor-clusterprofiler=3.8.1
- 
+
  # Annotation Packages
- - bioconductor-org.Ag.eg.db # Anopheles
- - bioconductor-org.At.tair.db # Arabidopsis
- - bioconductor-org.Bt.eg.db # Bovine
- - bioconductor-org.Ce.eg.db # Worm
- - bioconductor-org.Cf.eg.db # Canine
- - bioconductor-org.Dm.eg.db # Fly
- - bioconductor-org.Dr.eg.db # Zebrafish
- - bioconductor-org.EcK12.eg.db # E coli strain K12
- - bioconductor-org.EcSakai.eg.db # E coli strain Sakai
- - bioconductor-org.Gg.eg.db # Chicken
+ # - bioconductor-org.Ag.eg.db # Anopheles
+ # - bioconductor-org.At.tair.db # Arabidopsis
+ # - bioconductor-org.Bt.eg.db # Bovine
+ # - bioconductor-org.Ce.eg.db # Worm
+ # - bioconductor-org.Cf.eg.db # Canine
+ # - bioconductor-org.Dm.eg.db # Fly
+ # - bioconductor-org.Dr.eg.db # Zebrafish
+ # - bioconductor-org.EcK12.eg.db # E coli strain K12
+ # - bioconductor-org.EcSakai.eg.db # E coli strain Sakai
+ # - bioconductor-org.Gg.eg.db # Chicken
  - bioconductor-org.Hs.eg.db # Human
  - bioconductor-org.Mm.eg.db # Mouse
- - bioconductor-org.Mmu.eg.db # Rhesus
- - bioconductor-org.Pf.plasmo.db # Malaria
- - bioconductor-org.Pt.eg.db # Chimpanzee
- - bioconductor-org.Rn.eg.db # Rat
- - bioconductor-org.Sc.sgd.db # Yeast
- - bioconductor-org.Ss.eg.db # Pig
- - bioconductor-org.Xl.eg.db # Xenopus
+ # - bioconductor-org.Mmu.eg.db # Rhesus
+ # - bioconductor-org.Pf.plasmo.db # Malaria
+ # - bioconductor-org.Pt.eg.db # Chimpanzee
+ # - bioconductor-org.Rn.eg.db # Rat
+ # - bioconductor-org.Sc.sgd.db # Yeast
+ # - bioconductor-org.Ss.eg.db # Pig
+ # - bioconductor-org.Xl.eg.db # Xenopus

@@ -5,8 +5,6 @@ rule fastqc:
         html="qc/fastqc/{sample}_{unit}_R{read}_fastqc.html",
         zip="qc/fastqc/{sample}_{unit}_R{read}_fastqc.zip",
     params: ""
-    log:
-        "logs/fastqc/{sample}_{unit}_R{read}.log"
     wrapper:
         "0.35.1/bio/fastqc"
 

@@ -23,6 +23,7 @@ The following recipe provides established best practices for running and extendi
 ### Step 2: Configure the workflow
 * Modify the config, and any necessary sheets, e.g.:
   * src/samples.tsv
+  * src/units.tsv
   * src/contrasts.tsv
   * src/config.yaml
   * src/cluster.json

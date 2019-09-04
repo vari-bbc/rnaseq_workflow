@@ -7,11 +7,14 @@ rule align:
         fq2 = "trimmed_data/{sample}_{unit}_R2_val_2.fq.gz"
     output:
         # see STAR manual for additional output files
-        "analysis/star/{sample}_{unit}.ReadsPerGene.out.tab",
         "analysis/star/{sample}_{unit}.Aligned.out.bam",
+        "analysis/star/{sample}_{unit}.Log.final.out",
         "analysis/star/{sample}_{unit}.Log.out",
         "analysis/star/{sample}_{unit}.Log.progress.out",
-        "analysis/star/{sample}_{unit}.Log.final.out",
+        "analysis/star/{sample}_{unit}.ReadsPerGene.out.tab",
+        "analysis/star/{sample}_{unit}.SJ.out.tab",
+        directory("analysis/star/{sample}_{unit}._STARgenome"),
+        directory("analysis/star/{sample}_{unit}._STARpass1"),
     log:
         "logs/star/{sample}_{unit}.log"
     params:
@@ -25,19 +28,16 @@ rule align:
 
 rule sort_index_bam:
     input:
-        "analysis/star/{sample}_{unit}.Aligned.out.bam",
+        bam="analysis/star/{sample}_{unit}.Aligned.out.bam",
+        log="analysis/star/{sample}_{unit}.Log.final.out",
     output:
         sorted = "analysis/star/{sample}_{unit}.sorted.bam",
         index = "analysis/star/{sample}_{unit}.sorted.bam.bai"
     threads: 24
-    # singularity:
-    #     "shub://deanpettinga/rnaseq:rnaseq"
-    log:
-        "logs/sort/sort_index_bam.{sample}_{unit}.log"
     conda:
         "../envs/samtools.yaml"
     shell:
         '''
-        samtools sort -@ {threads} -O BAM -o {output.sorted} {input}
+        samtools sort -@ {threads} -O BAM -o {output.sorted} {input.bam}
         samtools index -b {output.sorted}
         '''

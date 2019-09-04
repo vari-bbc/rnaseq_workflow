@@ -6,6 +6,7 @@ params:
   rmd: ""
 output:
   html_document:
+    code_folding: hide
     self_contained: yes
     toc: true
     toc_depth: 5
@@ -20,41 +21,38 @@ Tested in R version `r getRversion()`.
 
 ```{r setup,echo=FALSE}
 knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE,cache=TRUE)
+
+# look in Dean's library for packages. implemented to avoid a HUGE conda env with all dependencies in this document.
+.libPaths("/secondary/projects/bbc/tools/dean_R_libraries/x86_64-redhat-linux-gnu-library/3.6/")
+.libPaths()
 ```
 
 ```{r loadlibs}
 library(yaml)
-library(ggplot2)
-library(gplots)
-library(biomaRt)
+library(xtable)
+library(kableExtra)
+library(tidyverse)
 library(reshape2)
+library(matrixStats)
+#library(readxl)
+#library(tibble)
+#library(ggplot2)
+#library(dplyr)
+#library(tidyr)
+library(ggrepel)
+library(ggfortify)
 library(gridExtra)
 require(grid)
-library(dplyr)
-library(tidyr)
-library(ggrepel)
-library(RColorBrewer)
-library(goseq)
-library(edgeR)
 library(pheatmap)
-library(ggfortify)
-library(kableExtra)
-library(readxl)
-library(UpSetR)
-library(xtable)
-library(tibble)
-library(msigdbr)
-library(data.table)
-library(fgsea)
-library(statmod)
-library(matrixStats)
 library(cowplot)
+library(RColorBrewer)
+# bioconductor
+library(edgeR)
 library(clusterProfiler)
 library(enrichplot)
-library(DOSE)
-library(yaml)
-
 # annotation packages
+library(msigdbr)
+library(biomaRt)
 library(org.Ag.eg.db) # Anopheles
 library(org.At.tair.db) # Arabidopsis
 library(org.Bt.eg.db) # Bovine
@@ -75,6 +73,10 @@ library(org.Sc.sgd.db) # Yeast
 library(org.Ss.eg.db) # Pig
 library(org.Xl.eg.db) # Xenopus
 
+library(vegan)
+
+sessionInfo(
+)
 config <- yaml.load_file("config.yaml")
 ```
 
@@ -340,6 +342,29 @@ reactome.mapper = dplyr::select(
 
 ```
 
+```{r preRank_function, include=FALSE}
+# takes a $table from the RNAseq() output
+preRank = function(title, table){
+
+# calculate rankings
+# use inverse sign of log change so that upregulated genes are at the left of the plots
+table$FCsign <- sign(table$logFC)
+table$logP <- -log10(table$FDR)
+table$metric <- table$logP/table$FCsign
+
+# set up the list of ranks for genes in order of the calculated metric
+ranks <- table[,c("ext_gene","metric")]
+ranks[,"ext_gene"] <- as.character(ranks[,"ext_gene"])
+
+# remove samples with duplicate gene symbols, metrics, and NAs, NaNs for "metric"
+# sort by metric: positive values first.
+ranks <- dplyr::distinct(.data = ranks, ext_gene, .keep_all=TRUE) %>% dplyr::filter( !is.na(ext_gene)) %>% arrange(-metric)
+
+# format frame for fgsea
+ranks <- deframe(ranks)
+}
+```
+
 # Intro 
 
 ## Methods
@@ -431,70 +456,68 @@ if(length(no.raw.data)>0){
 
 ```
 
-```{r mapping_stats_RNAseq,eval=FALSE}
+```{r mapping_stats_RNAseq}
 
-# For usage with this bash code:
-# if [ ! -f ${DIR}/deliverables/UniquelyMappingRates.txt ]; then
-# echo "Generating Mapstats"
-# echo "sample	UniquelyMappingRates" > ${DIR}/deliverables/UniquelyMappingRates.txt
-# echo "sample	UniquelyMappingReads" > ${DIR}/deliverables/UniquelyMappingReads.txt
-# grep 'Uniquely mapped reads %' ${ANALYSIS}*Log.final.out |cut -d ' ' -f1,29|awk -F 'Log.final.out: \\|' '{print $1$2}' >> ${DIR}/deliverables/UniquelyMappingRates.txt
-# grep 'Uniquely mapped reads number' ${ANALYSIS}*Log.final.out |cut -d ' ' -f1,24|awk -F 'Log.final.out: \\|' '{print $1$2}' >> ${DIR}/deliverables/UniquelyMappingReads.txt
-# fi
-  
+# Plot by UNIT-----------------------------------------------------------------------------------------------------
+
 units <- read.delim("../src/units.tsv",sep='\t',header=TRUE,stringsAsFactors = F) %>% 
   mutate(sample_unit=paste0(sample,"_",unit)) %>%
   left_join(.,meta)
 
+mapstat_unit <- read.delim("../deliverables/UniquelyMappingRates.txt",sep='\t',header=TRUE,stringsAsFactors = F) %>% 
+  dplyr::left_join(read.delim("../deliverables/UniquelyMappingReads.txt",sep='\t',header=TRUE,stringsAsFactors = F), by="sample") %>%
+  dplyr::rename(sample_unit=sample,UniquelyMappingRate=UniquelyMappingRates) %>%
+  dplyr::left_join(units %>% dplyr::select(c("sample","sample_unit"))) %>%
+  dplyr::mutate_at(vars("UniquelyMappingRate"), funs(as.numeric(gsub('%','',.)))) %>%
+  dplyr::mutate(TotalReads=UniquelyMappingReads/(UniquelyMappingRate/100))
 
-  mapstat = read.delim("../deliverables/UniquelyMappingRates.txt",sep='\t',header=TRUE,stringsAsFactors = F)
-  colnames(mapstat)=c('sample_unit','UniquelyMappingRate')
-  mapstat$sample= gsub(".*/","",mapstat$sample)
-  mapstat$UniquelyMappingRate=as.numeric(gsub('%','',mapstat$UniquelyMappingRate))
-  # mapstat$sample= as.character(mapstat$sample)
-  mapstat = dplyr::left_join(mapstat,units, by="sample_unit")
-  mapstat$sample=factor(mapstat$sample_unit,levels=units$sample_unit)
+ggplot(mapstat_unit,aes(x=sample_unit,y=UniquelyMappingRate, fill=sample), ) + 
+  labs(title=paste('Mapping Stats - Uniquely Mapping Percentage'),subtitle='',caption='Data: UniquelyMappingRates.txt') +
+  scale_color_brewer('Set1') + 
+  ylim(0,100) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8)) + 
+  geom_bar(stat="identity",position='stack',colour="black") + labs(y='Uniquely Mapping Percentage',x='Sample') #+ facet_grid(genotype~.)
 
+ggplot(mapstat_unit,aes(x=sample_unit,y=UniquelyMappingReads, fill=sample)) + 
+  labs(title=paste('Mapping Stats - Uniquely Mapping Reads'),subtitle='',caption='Data: UniquelyMappingReads.txt') +
+  scale_color_brewer('Set1') + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8)) + 
+  geom_bar(stat="identity",position='stack',colour="black") + labs(y='Uniquely Mapping Reads', x='Sample') #+ facet_grid(genotype~.)
 
-  ggplot(mapstat,aes(x=sample,y=UniquelyMappingRate)) + 
-    labs(title=paste('Mapping Stats - Uniquely Mapping Percentage'),subtitle='',caption='Data: UniquelyMappingRates.txt') +
-    scale_color_brewer('Set1') + 
-    ylim(0,100) +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8)) + 
-    geom_bar(stat="identity",position='stack') + labs(y='Uniquely Mapping Percentage',x='Sample') #+
-    facet_grid(genotype~.)
+# Plot by SAMPLE-----------------------------------------------------------------------------------------------------
 
+mapstat_sample <- mapstat_unit %>% 
+  group_by(sample) %>%
+  summarise(sumUnique=sum(UniquelyMappingReads),sumTotalReads=sum(TotalReads)) %>%
+  dplyr::rename(UniquelyMappingReads=sumUnique) %>%
+  mutate(UniquelyMappingRate=100*(UniquelyMappingReads/sumTotalReads))
 
-mapstat = read.delim("../deliverables/UniquelyMappingReads.txt",sep='\t',header=TRUE,stringsAsFactors = F)
-colnames(mapstat)=c('sample_unit','UniquelyMappingReads')
-mapstat$sample=gsub(".*/","",mapstat$sample)
-mapstat = dplyr::left_join(mapstat,units, by="sample_unit")
-mapstat$sample=factor(mapstat$sample_unit,levels=meta$sample_unit)
+ggplot(mapstat_sample,aes(x=sample,y=UniquelyMappingRate, fill=sample), ) + 
+  labs(title=paste('Mapping Stats - Uniquely Mapping Percentage'),subtitle='',caption='Data: UniquelyMappingRates.txt') +
+  scale_color_brewer('Set1') + 
+  ylim(0,100) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8)) + 
+  geom_bar(stat="identity",position='stack',colour="black") + labs(y='Uniquely Mapping Percentage',x='Sample') #+ facet_grid(genotype~.)
 
-# ggplot(mapstat,aes(UniquelyMappingReads)) + geom_histogram() #+ facet_grid(genotype~.)
-
-ggplot(mapstat,aes(x=sample_unit,y=UniquelyMappingReads)) + 
-    labs(title=paste('Mapping Stats - Uniquely Mapping Reads'),subtitle='',caption='Data: UniquelyMappingReads.txt') +
-    scale_color_brewer('Set1') + 
-    theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8)) + 
-    geom_bar(stat="identity",position='stack') + labs(y='Uniquely Mapping Reads', x='Sample') #+
-    # facet_grid(genotype~.)
+ggplot(mapstat_sample,aes(x=sample,y=UniquelyMappingReads, fill=sample)) + 
+  labs(title=paste('Mapping Stats - Uniquely Mapping Reads'),subtitle='',caption='Data: UniquelyMappingReads.txt') +
+  scale_color_brewer('Set1') + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8)) + 
+  geom_bar(stat="identity",position='stack',colour="black") + labs(y='Uniquely Mapping Reads', x='Sample') #+ facet_grid(genotype~.)
 
 ```
 
 ```{r raw_counts}
 
 # Print the star raw counts with ext_gene
-raw_data.ext = raw_data
-raw_data.ext$ens_gene = rownames(raw_data.ext)
-raw_data.ext = dplyr::left_join(raw_data.ext,
-                    dplyr::select(t2g_no_dup_genes,one_of(c('ens_gene','ext_gene'))),
-                                              by='ens_gene'
-                    )
-raw_data.ext = raw_data.ext[,c(
-                                  which(colnames(raw_data.ext)%in%c('ens_gene','ext_gene')),
-                                  which(! colnames(raw_data.ext)%in%c('ens_gene','ext_gene'))
-                             )
+raw_data.ext <- raw_data
+raw_data.ext$ens_gene <- rownames(raw_data.ext)
+raw_data.ext <- dplyr::left_join(raw_data.ext,
+                                 dplyr::select(t2g_no_dup_genes,one_of(c('ens_gene','ext_gene'))),
+                                 by='ens_gene')
+
+raw_data.ext <- raw_data.ext[,c(which(colnames(raw_data.ext)%in%c('ens_gene','ext_gene')),
+                                which(! colnames(raw_data.ext)%in%c('ens_gene','ext_gene')))
                             ]
 write.table(raw_data.ext, "../deliverables/STAR_raw_counts_with_annotation.txt", quote = F, sep = "\t", row.names = F, col.names = T)
 
@@ -505,8 +528,9 @@ write.table(raw_data.ext, "../deliverables/STAR_raw_counts_with_annotation.txt",
 ```{r feature_counts_and_low_count_filtering}
 
 # Library sizes are computed from the reads counts for mapped reads to gff features
-lib_sizes <- data.frame(colSums(raw_data)/1e6) # In millions
+lib_sizes <- data.frame(colSums(raw_data)/1e6)  # In millions
 lib_sizes$sample <- factor(rownames(lib_sizes))
+lib_sizes <- lib_sizes %>% left_join(meta %>% dplyr::select(sample,condition),by="sample")
 colnames(lib_sizes)[1] <- 'millions_of_counts'
 
 cat('Raw Feature Counts Summary (Millions):\n')
@@ -514,8 +538,9 @@ summary(lib_sizes$millions_of_counts)
 
 knitr::kable(lib_sizes,caption='Raw Feature Counts') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
 
-ggplot(lib_sizes, aes(x = sample, y = millions_of_counts)) +
-  geom_bar(stat="identity",fill='blue') +
+ggplot(lib_sizes, aes(x = sample, y = millions_of_counts, fill=condition)) +
+  geom_bar(stat="identity", colour="black") +
+  scale_fill_brewer(palette = "Set1") +
   labs(caption=paste0('data: ',raw.data.file),y="Raw Counts (Millions)",title="Total Raw Read Counts For All Features") +
   theme_bw(10) +
   theme(
@@ -723,6 +748,45 @@ saveRDS(var_plot, file = "r_objects/var_plot.rds")
 
 ```
 
+```{r}
+data(iris)
+require(vegan)
+
+# PCA
+# Open first four columns of iris data and scales the entries(rows)
+iris_c <- scale(iris[ ,1:4])
+# rda calls PCA on the data
+pca <- rda(iris_c)
+
+# plot
+plot(pca, type = 'n', display = 'sites')
+cols <- c('red', 'blue', 'green')
+points(pca, display='sites', col = cols[iris$Species], pch = 16)
+# display the groups
+ordihull(pca, groups=iris$Species)
+# label the centroid of each group
+ordispider(pca, groups = iris$Species, label = TRUE)
+
+# PerMANOVA - partitioning the euclidean distance matrix by 'condition'
+pr_comps_c <- scale(t(y.voom$E))
+
+#using scaled-normalized expression values
+adonis(scale(t(y.voom$E)) ~ condition,
+       data = pr_comps,
+       permutations = 999,
+       method='eu')
+#using PC1/PC2
+adonis((pr_comps %>% dplyr::select(c(PC1,PC2))) ~ condition,
+       data = pr_comps,
+       permutations = 999,
+       method='eu')
+#using all PCs
+adonis((pr_comps %>% dplyr::select(-c(sample,condition))) ~ condition,
+       data = pr_comps,
+       permutations = 999,
+       method='eu')
+```
+
 
 ## Heatmap
 
@@ -798,8 +862,6 @@ for (i in 1:length(contrast_list$contrast)){
     contrast = contrast,
     .meta <- meta
   )
-  
-    # save the results
     
   # Functional Enrichment ---------------------------------------------------------
   cat("\n\n### Functional Enrichment \n\n")
@@ -853,7 +915,7 @@ for (i in 1:length(contrast_list$contrast)){
   ## GSEA: Reactome and KEGG ---------------------------------
   cat("\n\n#### GSEA \n\n")  
   
-  cat("GSEA testing was performed with ClusterProfiler's `GSEA` function. \n\n")
+  cat("GSEA testing was performed with ClusterProfiler's wrapper for the `fgsea` function. \n\n")
   
   # REACTOME
   cat("\n\n##### Reactome Pathways \n\n")
@@ -886,7 +948,8 @@ for (i in 1:length(contrast_list$contrast)){
   for (i in 1:min(30,length(gsea_res$Description))){
     print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
   }
-} 
+}
+
 ```
 
 ```{r seriesClustering_dev, eval=FALSE, include=FALSE}

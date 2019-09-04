@@ -14,7 +14,7 @@ def get_column(strandedness):
 
 counts = [pd.read_table(f, index_col=0, usecols=[0, get_column(strandedness)],
           header=None, skiprows=4)
-          for f, strandedness in zip(snakemake.input, snakemake.params.strand)]
+          for f, strandedness in zip(snakemake.input.ReadsPerGene, snakemake.params.strand)]
 
 for t, sample in zip(counts, snakemake.params.samples):
     t.columns = [sample]
