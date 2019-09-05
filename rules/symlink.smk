@@ -5,4 +5,4 @@ rule symlink:
         expand("raw_reads/{sample}_{unit}_R2.fastq.gz", sample=set(units["sample"].tolist()), unit=set(units["unit"].tolist())),
     priority: 2
     shell:
-        "Rscript src/symlinks.R"
+        "Rscript src/symlink.R"

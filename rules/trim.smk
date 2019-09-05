@@ -10,7 +10,7 @@ rule trim_galore_pe:
         "trimmed_data/{sample}_{unit}_R2_val_2.fq.gz",
         "trimmed_data/{sample}_{unit}_R2.fastq.gz_trimming_report.txt"
     params:
-        extra = "--retain_unpaired -q 20"
+        extra = "-q 20"
     log:
         "logs/trim/trim_galore.{sample}_{unit}.log"
     wrapper:

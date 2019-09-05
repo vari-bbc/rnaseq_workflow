@@ -13,7 +13,7 @@ output:
     toc_float:
       collapsed: false
       smooth_scroll: true
-    number_sections: false 
+    number_sections: false
     df_print: paged
 ---
 
@@ -77,7 +77,10 @@ library(org.Sc.sgd.db) # Yeast
 library(org.Ss.eg.db) # Pig
 library(org.Xl.eg.db) # Xenopus
 library(vegan)
+```
 
+```{r config}
+config <- yaml.load_file("config.yaml")
 ```
 
 ```{r sessionInfo}
@@ -99,13 +102,13 @@ volcano = function(log2FC,pval,qval,fdr.filter,title){
               )
             )
   n.signif = length(which(x$signif%in%c('Significant Upregulated','Significant Downregulated')))
-  plot = ggplot(x,aes(x=log2FC,y=-log10(pval))) + 
-    geom_point(aes(color=signif)) + 
+  plot = ggplot(x,aes(x=log2FC,y=-log10(pval))) +
+    geom_point(aes(color=signif)) +
     # scale_colour_brewer(palette = 'Paired') +
     scale_colour_manual(values = c('Gray','Blue','Red')) +
     # geom_vline(xintercept = logfc.filter) +
     # geom_vline(xintercept = -logfc.filter) +
-    # geom_hline(yintercept = -log(fdr.filter)) + 
+    # geom_hline(yintercept = -log(fdr.filter)) +
     ggtitle(paste(title,'Volcano plot.',n.signif,'Significant Tags'))
   return(plot)
 }
@@ -119,19 +122,19 @@ volcano = function(log2FC,pval,qval,fdr.filter,title){
 # Need a Formal class 'DGEList' with the filtered count data (default to the filtered.data obj from the project Rmd)
 
 RNAseq = function(design,contrast,.meta,block){
-  
+
   # Check that filtered.data is a DGEList object!
   # if(class(filtered.data)!='DGEList'){
   #   stop('Error - filtered.data NOT a DGEList Object\n')
   # }
-  
+
   cat('FDR Filter:',fdr.filter,'\n\nlogFC Filter',logfc.filter,'\n\n')
   # Format design
   rownames(design) <- .meta$sample # do not make these names, make meta names in 'load data' tab
   colnames(design)=make.names(colnames(design))
   # check if anything in the design is non-estimable:
   nonEstimable(design)
-  
+
   # Print the design:
   print(
     knitr::kable(design,caption='Diff. Gene Expr. Analysis Design:') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
@@ -141,7 +144,7 @@ RNAseq = function(design,contrast,.meta,block){
       knitr::kable(design,caption='Diff. Gene Expr. Analysis Design:') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12),
       paste0("r_objects/DGE_design.",contrast.name,".rds")
     )
-  
+
   # Print the contrast matrix:
   print(
     knitr::kable(contrast,caption='Contrast Matrix:') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
@@ -150,58 +153,58 @@ RNAseq = function(design,contrast,.meta,block){
     saveRDS(
       knitr::kable(contrast,caption='Contrast Matrix:') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12),
       paste0("r_objects/contrastMatrix.",contrast.name,".rds")
-    )  
-  
+    )
+
   ##Generate the DGEList object from the filtered data
   y <- filtered.data[,rownames(design)]
-  
+
   #Normalize based on library size and composition biases in the sample - trimmed mean of M-values (TMM) method
   #The normalization factors of all the libraries multiply to unity. A normalization factor below one indicates that a small
   #number of high count genes are monopolizing the sequencing, causing the counts for other genes to be lower than
   #would be usual given the library size. As a result, the effective library size will be scaled down for that sample.
   cat('Normalizing for library size and composition biases in the samples using trimmed mean of M-values (TMM) method\n')
   y <- edgeR::calcNormFactors(y)
-  
+
   #Check norm.factors:
   print(
     y$samples %>% knitr::kable() %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
   )
-  
+
   #Check MDS plot:
   cat('In the MDS plot, the distance between each pair of samples can be interpreted as the leading log-fold
 change between the samples for the genes that best distinguish that pair of samples. By default, leading fold-change is defined as the root-mean-square of the largest 500 log2-fold changes between that pair of samples.\n'
   )
   plotMDS(y)
-  
+
   #Calc dispersions
   y <- estimateDisp(y, design, robust = TRUE)
-  
+
   #Check the dispersion estimates
   cat('\n\n')
-  cat('Common dispersion:',y$common.dispersion,'.\n\n\n') 
+  cat('Common dispersion:',y$common.dispersion,'.\n\n\n')
   #The square root of dispersion is the common coefficient of biological variation (BCV):
   cat('Biological Coefficient of Variation:',sqrt(y$common.dispersion),'.\n\n\n')
   cat('Typical values for the common BCV (square-root-dispersion) for datasets arising from well-controlled experiments are 0.4 for human data, 0.1 for data on genetically identical model organisms or 0.01 for technical replicates.\n\n\n')
-  
+
   #Plot the BCV dispersions
   plotBCV(y)
-  
-  
+
+
   # Duplicate correlations if e.g. blocking for random effects - not implemented in current version
   # if(! missing(block)){
   #   cor=duplicateCorrelation(y$counts,design,block=block)
   #   fit <- glmQLFit(y, design, robust=TRUE,block=block,correlation=cor$consensus.correlation) # fit is a DGEGLM object
   # }else{
-  
-  
+
+
   # Fit the model ####
     # The quasi-liklihood dispersions can be estimated using the glmQLFit function
   fit <- glmQLFit(y, design, robust=TRUE) # fit is a DGEGLM object
   # }
-  
-  #Plot the quasi-liklihood dispersions. 
+
+  #Plot the quasi-liklihood dispersions.
   plotQLDisp(fit)
-  
+
   # Differential expression testing
   # Default: glmQLFtest
 
@@ -209,10 +212,10 @@ change between the samples for the genes that best distinguish that pair of samp
   #working if design ~genotype+covariates not ~0+genotype+covariates
   #The coef argument corresponds to the column in the design matrix
   #glmQLFTest(fit, coef = 1) # method 1 ()
-  
+
   #method 2 (working if design ~0+genotype):
   #contrast1 = makeContrasts(genotypeOfInterest-genotypeControl,levels=design) # an example with 1 contrast
-  
+
   # When you pass multiple coefficients or contrasts to glmQLFTest, it will do an ANOVA-like test of the combined null hypothesis that all of them are equal to zero.
   qlf <- glmTreat(fit, contrast = contrast, lfc= logfc.filter)
 
@@ -224,14 +227,14 @@ change between the samples for the genes that best distinguish that pair of samp
   cat("\n\nTotal tags: ",nrow(Table),".\n")
   cat(paste0("\n\n\n\n\nTags with FDR<",fdr.filter,": ",nrow(Table.filtered)),".\n\n\n\n")
   # Because there can be multiple contrasts, need to filter on logFC in the following way:
-  logfold.columns = grep('^logFC',colnames(Table.filtered)) # get columns for logFC 
-  if(length(logfold.columns)==1){  
+  logfold.columns = grep('^logFC',colnames(Table.filtered)) # get columns for logFC
+  if(length(logfold.columns)==1){
     Table.filtered = Table.filtered[ifelse(lapply(Table.filtered[,logfold.columns],FUN=function(x){return(max(abs(x)))})>logfc.filter,TRUE,FALSE),]
   }else{
     Table.filtered = Table.filtered[ifelse(apply(Table.filtered[,logfold.columns],1,FUN=function(x){return(max(abs(x)))})>logfc.filter,TRUE,FALSE),]
   }
   cat(paste0("\n\n\n\n\nDifferentially expressed tags (FDR<",fdr.filter," & logFC>",round(logfc.filter,2),"): ",nrow(Table.filtered)),".\n\n\n\n")
-  
+
 
   #Histogram of PValue for all genes
   print(
@@ -250,31 +253,31 @@ change between the samples for the genes that best distinguish that pair of samp
     )
     cat('\n\n')
   }
-  
-  # Top DGE 
+
+  # Top DGE
   topN=25
   print(
-    head(Table,topN) %>% knitr::kable(caption=paste('Top',topN,'Differentially Expressed Genes By Adjusted Pvalue')) %>% 
+    head(Table,topN) %>% knitr::kable(caption=paste('Top',topN,'Differentially Expressed Genes By Adjusted Pvalue')) %>%
       kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
   )
   # Save as object
   saveRDS(
-    head(Table,topN) %>% knitr::kable(caption=paste('Top',topN,'Differentially Expressed Genes By Adjusted Pvalue')) %>% 
+    head(Table,topN) %>% knitr::kable(caption=paste('Top',topN,'Differentially Expressed Genes By Adjusted Pvalue')) %>%
       kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12),
     paste0("r_objects/topGenes.",contrast.name,".rds")
   )
-  
-  
+
+
   #Write out the table
   #write.table(Table, "Controls.dge.txt", quote = F, sep = "\t", row.names = F, col.names = T)
-  
+
   returnList = list(
     table=Table,
     de.genes = Table.filtered$ens_gene
   )
   return(returnList)
-  
-  # Limma is the only package that has the ability to use random effects to correlate repeated 
+
+  # Limma is the only package that has the ability to use random effects to correlate repeated
   # samples from the same subject. None of the negative binomial packages, including edgeR, can do that.
 }
 
@@ -294,13 +297,13 @@ if (!exists(c("t2g_no_dup_genes","t2g"))){
     mart <- biomaRt::useMart(biomart = 'ENSEMBL_MART_ENSEMBL', host="www.ensembl.org", dataset = paste0(config$species$short, '_gene_ensembl'), ensemblRedirect = NULL)
     t2g_1 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "external_gene_name"), mart = mart)
     t2g_2 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "description"), mart = mart)
-    t2g_3 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "chromosome_name"), mart = mart)    
+    t2g_3 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "chromosome_name"), mart = mart)
     t2g_4 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "start_position"), mart = mart)
     t2g_5 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "end_position"), mart = mart)
     t2g_6 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "transcript_length"), mart = mart)
     t2g_7 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "go_id"), mart = mart)
     t2g_8 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "entrezgene_id"), mart = mart)
-    
+
     t2g <- t2g_1 %>%
       left_join(t2g_2, by='ensembl_gene_id') %>%
       left_join(t2g_3, by='ensembl_gene_id') %>%
@@ -310,7 +313,7 @@ if (!exists(c("t2g_no_dup_genes","t2g"))){
       left_join(t2g_7, by='ensembl_gene_id') %>%
       left_join(t2g_8, by='ensembl_gene_id') %>%
       dplyr::rename(ens_gene = ensembl_gene_id, ext_gene = external_gene_name, predicted_function = description)
-    
+
     saveRDS(t2g, file=t2g_file)
   }
   t2g_no_dup_genes = t2g[-which(duplicated(t2g$ens_gene)),-which(colnames(t2g)=='go_id')] # no duplicates (e.g. when multipe mappings to go terms)
@@ -372,7 +375,7 @@ table = list$table
 
 ```
 
-# Intro 
+# Intro
 
 ## Methods
 
@@ -387,11 +390,11 @@ Most of the following text describing the RNAseq workflow was copied directly fr
    * EdgeR User Guide: http://www.bioconductor.org/packages//2.10/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf
    *  Conesa, A., Madrigal, P., Tarazona, S., Gomez-Cabrero, D., Cervera, A., McPherson, A., … Mortazavi, A. (2016). A survey of best practices for RNA-seq data analysis. Genome Biology, 17(1), 13. https://doi.org/10.1186/s13059-016-0881-8
    *  Liu, R., Holik, A. Z., Su, S., Jansz, N., Chen, K., Leong, H. S., … Ritchie, M. E. (2015). Why weight? Modelling sample and observational level variability improves power in RNA-seq analyses. Nucleic Acids Research, 43(15), e97–e97. https://doi.org/10.1093/nar/gkv412
-   *  McCarthy, D. J., and Smyth, G. K. (2009). Testing significance relative to a fold-change threshold is a TREAT. Bioinformatics 25, 765-771. https://doi.org/10.1093/bioinformatics/btp053 
+   *  McCarthy, D. J., and Smyth, G. K. (2009). Testing significance relative to a fold-change threshold is a TREAT. Bioinformatics 25, 765-771. https://doi.org/10.1093/bioinformatics/btp053
 
 EdgeR uses the negative binomial (NB) distribution to model the read counts for each gene in each sample. The dispersion parameter of the NB distribution accounts for variability between biological replicates. edgeR estimates an empirical Bayes moderated dispersion for each individual gene. It also estimates a common dispersion, which is a global dispersion estimate averaged over all genes, and a trended dispersion where the dispersion of a gene is predicted from its abundance. The estimation is robustified against potential outlier genes. For RNA-seq studies, the NB dispersions tend to be higher for genes with very low counts. The dispersion trend tends to decrease smoothly with abundance and to asymptotic to a constant value for genes with larger counts. From our past experience, the asymptotic value for the BCV tends to be in range from 0.05 to 0.2 for genetically identical mice or cell lines, whereas somewhat larger values (> 0.3) are observed for human subjects.
 
-The NB model can be extended with quasi-likelihood (QL) methods to account for gene-specific variability from both biological and technical sources. Under the QL framework, the NB dispersion trend is used to describe the overall biological variability across all genes, and gene-specific variability above and below the overall level is picked up by the QL dispersion. The raw QL dispersion estimates are squeezed towards a global trend, and this moderation reduces the uncertainty of the estimates and improves testing power. The extent of the squeezing is governed by the value of the prior df estimated from the data. Large prior df estimates indicate that the QL dispersions are less variable between genes, meaning that strong EB moderation should be performed. Smaller prior df estimates indicate that the true unknown dispersions are highly variable, so weaker moderation towards the trend is appropriate. In general, if there are a large number of samples and/or high variability, then the QL dispersions are not squeezed very heavily from the raw values. If there are a low number of samples and/or low variability, then the dispersions will be squeezed more heavily. 
+The NB model can be extended with quasi-likelihood (QL) methods to account for gene-specific variability from both biological and technical sources. Under the QL framework, the NB dispersion trend is used to describe the overall biological variability across all genes, and gene-specific variability above and below the overall level is picked up by the QL dispersion. The raw QL dispersion estimates are squeezed towards a global trend, and this moderation reduces the uncertainty of the estimates and improves testing power. The extent of the squeezing is governed by the value of the prior df estimated from the data. Large prior df estimates indicate that the QL dispersions are less variable between genes, meaning that strong EB moderation should be performed. Smaller prior df estimates indicate that the true unknown dispersions are highly variable, so weaker moderation towards the trend is appropriate. In general, if there are a large number of samples and/or high variability, then the QL dispersions are not squeezed very heavily from the raw values. If there are a low number of samples and/or low variability, then the dispersions will be squeezed more heavily.
 
 The QL F-test is then used to find differentially expressed genes. While the likelihood ratio test is a more obvious choice for inferences with GLMs, the QL F-test is preferred as it reflects the uncertainty in estimating the dispersion for each gene. It provides more robust and reliable error rate control even when the number of replicates is small.
 
@@ -411,8 +414,6 @@ The QL F-test is then used to find differentially expressed genes. While the lik
 ## Load Data
 
 ```{r load_metadata, results='asis'}
-# conta
-config <- yaml.load_file("config.yaml")
 
 cat('This data powers the contrasts, if there are problems please contact me\n')
 metadata.file="units.tsv"
@@ -470,49 +471,49 @@ if(length(no.raw.data)>0){
 
 # Plot by UNIT-----------------------------------------------------------------------------------------------------
 
-units <- read.delim("../src/units.tsv",sep='\t',header=TRUE,stringsAsFactors = F) %>% 
+units <- read.delim("../src/units.tsv",sep='\t',header=TRUE,stringsAsFactors = F) %>%
   mutate(sample_unit=paste0(sample,"_",unit)) %>%
   left_join(.,meta)
 
-mapstat_unit <- read.delim("../deliverables/UniquelyMappingRates.txt",sep='\t',header=TRUE,stringsAsFactors = F) %>% 
+mapstat_unit <- read.delim("../deliverables/UniquelyMappingRates.txt",sep='\t',header=TRUE,stringsAsFactors = F) %>%
   dplyr::left_join(read.delim("../deliverables/UniquelyMappingReads.txt",sep='\t',header=TRUE,stringsAsFactors = F), by="sample") %>%
   dplyr::rename(sample_unit=sample,UniquelyMappingRate=UniquelyMappingRates) %>%
   dplyr::left_join(units %>% dplyr::select(c("sample","sample_unit"))) %>%
   dplyr::mutate_at(vars("UniquelyMappingRate"), funs(as.numeric(gsub('%','',.)))) %>%
   dplyr::mutate(TotalReads=UniquelyMappingReads/(UniquelyMappingRate/100))
 
-ggplot(mapstat_unit,aes(x=sample_unit,y=UniquelyMappingRate, fill=sample), ) + 
+ggplot(mapstat_unit,aes(x=sample_unit,y=UniquelyMappingRate, fill=sample), ) +
   labs(title=paste('Mapping Stats - Uniquely Mapping Percentage'),subtitle='',caption='Data: UniquelyMappingRates.txt') +
-  scale_color_brewer('Set1') + 
+  scale_color_brewer('Set1') +
   ylim(0,100) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8)) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8)) +
   geom_bar(stat="identity",position='stack',colour="black") + labs(y='Uniquely Mapping Percentage',x='Sample') #+ facet_grid(genotype~.)
 
-ggplot(mapstat_unit,aes(x=sample_unit,y=UniquelyMappingReads, fill=sample)) + 
+ggplot(mapstat_unit,aes(x=sample_unit,y=UniquelyMappingReads, fill=sample)) +
   labs(title=paste('Mapping Stats - Uniquely Mapping Reads'),subtitle='',caption='Data: UniquelyMappingReads.txt') +
-  scale_color_brewer('Set1') + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8)) + 
+  scale_color_brewer('Set1') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8)) +
   geom_bar(stat="identity",position='stack',colour="black") + labs(y='Uniquely Mapping Reads', x='Sample') #+ facet_grid(genotype~.)
 
 # Plot by SAMPLE-----------------------------------------------------------------------------------------------------
 
-mapstat_sample <- mapstat_unit %>% 
+mapstat_sample <- mapstat_unit %>%
   dplyr::group_by(sample) %>%
   dplyr::summarise(sumUnique=sum(UniquelyMappingReads),sumTotalReads=sum(TotalReads)) %>%
   dplyr::rename(UniquelyMappingReads=sumUnique) %>%
   mutate(UniquelyMappingRate=100*(UniquelyMappingReads/sumTotalReads))
 
-ggplot(mapstat_sample,aes(x=sample,y=UniquelyMappingRate, fill=sample)) + 
+ggplot(mapstat_sample,aes(x=sample,y=UniquelyMappingRate, fill=sample)) +
   labs(title=paste('Mapping Stats - Uniquely Mapping Percentage'),subtitle='',caption='Data: UniquelyMappingRates.txt') +
-  scale_color_brewer('Set1') + 
+  scale_color_brewer('Set1') +
   ylim(0,100) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8)) + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8)) +
   geom_bar(stat="identity",position='stack',colour="black") + labs(y='Uniquely Mapping Percentage',x='Sample') #+ facet_grid(genotype~.)
 
-ggplot(mapstat_sample,aes(x=sample,y=UniquelyMappingReads, fill=sample)) + 
+ggplot(mapstat_sample,aes(x=sample,y=UniquelyMappingReads, fill=sample)) +
   labs(title=paste('Mapping Stats - Uniquely Mapping Reads'),subtitle='',caption='Data: UniquelyMappingReads.txt') +
-  scale_color_brewer('Set1') + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8)) + 
+  scale_color_brewer('Set1') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8)) +
   geom_bar(stat="identity",position='stack',colour="black") + labs(y='Uniquely Mapping Reads', x='Sample') #+ facet_grid(genotype~.)
 
 ```
@@ -561,7 +562,7 @@ ggplot(lib_sizes, aes(x = sample, y = millions_of_counts, fill=condition)) +
 
 cat("Total tags:\n",nrow(raw_data))
 raw.data.dgelist <- DGEList(counts=raw_data)
-rd = tidyr::gather(as.data.frame(raw.data.dgelist$counts),sample,count) 
+rd = tidyr::gather(as.data.frame(raw.data.dgelist$counts),sample,count)
 rd = dplyr::left_join(rd,meta)
 
 cat("Total tags with >0 counts:\n",nrow(raw_data[rowSums(raw_data) >= 1,]))
@@ -577,13 +578,13 @@ plot = ggplot(rd, aes(x=sample, y=count, fill=condition)) +
     axis.title.x = element_blank(),
     plot.title = element_text(hjust = 0.5))
 
-plot + ylim(c(0,as.numeric(quantile(rd$count,probs=c(0.9))))) + ggtitle('Raw Untransformed Count Distributions - ylim=c(0,90th quantile)') # ylim to 90% 
+plot + ylim(c(0,as.numeric(quantile(rd$count,probs=c(0.9))))) + ggtitle('Raw Untransformed Count Distributions - ylim=c(0,90th quantile)') # ylim to 90%
 
 rd %>% ggplot(aes(count)) + geom_histogram(binwidth=1) + ggtitle('Raw Data Gene Count Histogram') + xlim(c(0,as.numeric(quantile(rd$count,probs=c(0.9)))))
 
 ############################################################################
 # Filter 1
-# 
+#
 sample.cpm.filter = min(plyr::count(meta$group)$freq) # How many samples must meet the cpm threshhold (# of samples in smallest group)
 cpm.filter = 10/min(lib_sizes$millions_of_counts) # feature cpm threshold
 cat('Derived the cpm filter from a minimum of 10 counts in the smallest library\n')
@@ -592,7 +593,7 @@ keep <- rowSums(cpm(raw.data.dgelist)>cpm.filter) >= sample.cpm.filter
 filtered.data <- raw.data.dgelist[keep, , keep.lib.sizes=FALSE]
 cat("Filtered tags:\n",nrow(filtered.data$counts))
 
-fd = tidyr::gather(as.data.frame(filtered.data$counts),sample,count) 
+fd = tidyr::gather(as.data.frame(filtered.data$counts),sample,count)
 fd = dplyr::left_join(fd,meta)
 
 plot = fd %>% ggplot(aes(count)) + geom_histogram(binwidth=1) + ggtitle('Filtered Data Gene Count Histogram') + xlim(c(0,as.numeric(quantile(fd$count,probs=c(0.9)))))
@@ -610,9 +611,9 @@ plot = ggplot(fd,aes(x=sample, y=count, fill=condition)) +
     axis.text.x = element_text(angle=45, hjust=1,size=12),
     axis.title.x = element_blank(),
     plot.title = element_text(hjust = 0.5)
-  ) + ylim(c(0,as.numeric(quantile(fd$count,probs=c(0.9))))) # ylim to 90% 
+  ) + ylim(c(0,as.numeric(quantile(fd$count,probs=c(0.9))))) # ylim to 90%
 plot
- 
+
 
 
 # Following feature counts, filtered.data is a DGEList object with the filtered genes.
@@ -634,7 +635,7 @@ Publication describing VOOM: Law, C. W., Chen, Y., Shi, W., & Smyth, G. K. (2014
 filtered.data <- calcNormFactors(filtered.data)
 
 # Rename the DGEList samples based on the genotype
-#x$samples$group = meta$genotype 
+#x$samples$group = meta$genotype
 
 # Covariates in the model:
 # (e.g. covariate <- as.factor(meta$covariate)
@@ -681,7 +682,7 @@ ggplot(melted, aes(x=sample, y=value, fill=condition)) +
     axis.text.x = element_text(angle=45, hjust=1,size=12),
     axis.title.x = element_blank(),
     plot.title = element_text(hjust = 0.5)
-  ) 
+  )
 
 # write table of the CPM of each sample
 write.table(cpm(filtered.data$counts), "../deliverables/cpm.txt", sep = "\t", row.names = T,col.names = NA)
@@ -718,10 +719,10 @@ pr_comps$condition <- (dplyr::full_join(v2 %>% dplyr::select(c("sample")),
                  meta %>% dplyr::select(c("sample","condition")),
                  by="sample"))$condition
 
-pca_plot <- ggplot(pr_comps, aes(x=PC1, y=PC2)) + 
-  geom_point(size=7,aes(color = condition, pch = condition)) + 
-  theme_bw(10) + 
-  scale_color_brewer(palette = 'Set1') + 
+pca_plot <- ggplot(pr_comps, aes(x=PC1, y=PC2)) +
+  geom_point(size=7,aes(color = condition, pch = condition)) +
+  theme_bw(10) +
+  scale_color_brewer(palette = 'Set1') +
   geom_label_repel(aes(label=sample),show.legend = FALSE) #labels for individual datapoints
 
 # Plot percent variation explained
@@ -729,18 +730,18 @@ prop_var <- data.frame(t(summary(pca)$importance))
 names(prop_var) = c('sd', 'prop', 'cum')
 prop_var$num = 1:nrow(prop_var)
 
-var_plot <- ggplot(prop_var, aes(x=num, y=prop)) + 
-  geom_point(size=1.5) + 
-  geom_line() + 
+var_plot <- ggplot(prop_var, aes(x=num, y=prop)) +
+  geom_point(size=1.5) +
+  geom_line() +
   scale_x_continuous(limits = c(1, 12), breaks = 1:12) +
-  xlab("Principal Component") + 
+  xlab("Principal Component") +
   ylab("Prop. of Variance") +
   ggtitle("PCA Plot of Expression Profiling") +
   theme_bw(10) +
   theme(
     axis.title.y = element_text(vjust=1),
     plot.margin = unit(c(0,0,0,6), "mm")
-  ) 
+  )
 vplayout <- function(x, y) grid::viewport(layout.pos.row = x, layout.pos.col = y)
 
 grid::grid.newpage()
@@ -760,7 +761,7 @@ saveRDS(var_plot, file = "r_objects/var_plot.rds")
 
 ### Clustering Stats
 
-Adonis 
+Adonis
 
 ```{r adonis}
 # PerMANOVA - partitioning the euclidean distance matrix by 'condition'
@@ -786,7 +787,7 @@ mat = y.voom$E[order(rowVars(y.voom$E),decreasing=TRUE)[1:topRows],] # Variance,
 mat[mat==-Inf] <- 0
 saveRDS(mat, file = "r_objects/mat.rds")
 
-# get the exterior gene names from the t2g object 
+# get the exterior gene names from the t2g object
 geneNames = t2g_no_dup_genes$ext_gene[which(t2g_no_dup_genes$ens_gene %in% rownames(mat))]
 ensNames = t2g_no_dup_genes$ens_gene[which(t2g_no_dup_genes$ens_gene %in% rownames(mat))]
 rowNames = cbind(geneNames,ensNames)
@@ -818,7 +819,7 @@ heatmap = pheatmap(mat, cluster_rows=TRUE,
 # dev.off()
 ```
 
-# Differential Expression 
+# Differential Expression
 
 ```{r DGE_analysis, results='asis',}
 
@@ -832,38 +833,38 @@ for (i in 1:length(contrast_list$contrast)){
                        "group",contrast_list[i,2], " - ", # this is the baseline
                        "group",contrast_list[i,3]), # this is the comparison (genes )
                        levels=design)
-  
+
   #set values for invocation of edgeR with RNAseq()
   contrast.name = contrast_list[i,1]
 
   # Divide iterations of this loop in the report.
   cat(paste0("\n\n## ",contrast.name), "\n\n")
-  
+
   contrast = do.call(makeContrasts, myargs)
-  
+
   # Do the RNAseq analysis--------------------------------------------------------
   list = RNAseq(
     design = design,
     contrast = contrast,
     .meta <- meta
   )
-    
+
   # Functional Enrichment --------------------------------------------------------
   cat("\n\n### Functional Enrichment \n\n")
-  
+
   ## Hypergeometric Test for GO-------------------------------
   cat("\n\n#### Hypergeometric Test \n\n ")
-  
+
   cat("Hypergeometric tests were performed with ClusterProfiler's `enrichGO` function. \n\n")
-  
+
   # are the non-unique ext_gene values all NAs? yes if TRUE
   nrow(list$table) - nrow(list$table %>% filter(!is.na(ext_gene))) == nrow(list$table) - length(unique(list$table$ext_gene))
   # prepare the genelist
   # get all significant genes from glmTREAT (ext_gene symbols)
-  DE <- (list$table %>% 
+  DE <- (list$table %>%
     dplyr::select(c(ens_gene,ext_gene,FDR)) %>%
     dplyr::filter(FDR < 0.05))$ext_gene
-  
+
   GO.BP = enrichGO(gene=DE,
                 OrgDb= config$annotation,
                 ont ="BP",
@@ -879,65 +880,91 @@ for (i in 1:length(contrast_list$contrast)){
                 ont ="CC",
                 keyType = "SYMBOL",
                 pAdjustMethod = "BH")
-  
+
   # plot top 30 for each GO category
   cat("\n\n##### GO: Biological Process \n\n")
   print(enrichplot::dotplot(GO.BP, showCategory=30) + ggtitle("DotPlot - GO:Biological Process"))
   print(enrichplot::emapplot(GO.BP) + ggtitle("EnrichmentMap - GO:Biological Process"))
   #print(cnetplot(GO.BP, foldChange=geneList) + ggtitle("GO:Biological Process"))
-  
+
   cat("\n\n##### GO: Molecular Function \n\n")
   print(enrichplot::dotplot(GO.MF, showCategory=30) + ggtitle("DotPlot - GO:Molecular Function"))
   print(enrichplot::emapplot(GO.MF) + ggtitle("EnrichmentMap - GO:Molecular Function"))
   #cnetplot(GO.MF, foldChange=geneList) + ggtitle("GO:Molecular Function")
-  
+
   cat("\n\n##### GO: Cellular Compartment \n\n")
   print(enrichplot::dotplot(GO.CC, showCategory=30) + ggtitle("DotPlot - GO:Cellular Compartment"))
   print(enrichplot::emapplot(GO.CC) + ggtitle("EnrichmentMap - GO:Molecular Function"))
   #cnetplot(GO.CC, foldChange=geneList) + ggtitle("GO:Molecular Function")
-  
+
   ## GSEA: Reactome and KEGG ---------------------------------
-  cat("\n\n#### GSEA \n\n")  
-  cat("GSEA testing was performed with ClusterProfiler's wrapper for the `fgsea` function. \n\n")
-  
-  # assign ranks based upon current contrast
-  geneRanks <- preRank(list$table)
-  
-  # REACTOME
-    cat("\n\n##### Reactome Pathways \n\n")
-    # assign pathways
-    m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:REACTOME") %>% 
-      dplyr::select(gs_name, gene_symbol)
-    # run fGSEA
-    gsea_res <- clusterProfiler::GSEA(geneRanks, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
-    # print results
+cat("\n\n#### GSEA \n\n")
+cat("GSEA testing was performed with ClusterProfiler's wrapper for the `fgsea` function. \n\n")
+
+# assign ranks based upon current contrast
+geneRanks <- preRank(list$table)
+
+# REACTOME
+  cat("\n\n##### Reactome Pathways \n\n")
+  # assign pathways
+  m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:REACTOME") %>%
+    dplyr::select(gs_name, gene_symbol)
+  # run fGSEA
+  gsea_res <- clusterProfiler::GSEA(geneRanks, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
+
+  # print results
+  if (nrow(gsea_res@result) >=1){
+    cat(paste("Significantly Enriched Reactome Pathways:", nrow(gsea_res@result),
+                "\n\nTop 30 pathways visualized below:"))
+    # RidgePlot
     print(ridgeplot(gsea_res) +
             theme(axis.text.y = element_text(size=8)) +
             theme(axis.text.x = element_text(size=8)) +
             theme(axis.title = element_text(size=8)) +
+            scale_y_discrete(label=function(x) paste0(abbreviate(x, minlength=40),"...")) +
             ggtitle("RidgePlot - GSEA: Reactome") +
             xlab("log2FC"))
+    # GSEA plots
     for (i in 1:min(30,length(gsea_res$Description))){
       print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
+    # Full Table
+    print(knitr::kable(gsea_res@result, caption='Enriched Reactome Pathways:') %>%
+            kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12))
     }
-    
-  # KEGG
-    cat("\n\n##### KEGG Pathways \n\n")
-    # assign pathways
-    m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:KEGG") %>% 
-      dplyr::select(gs_name, gene_symbol)
-    # run fGSEA
-    gsea_res <- clusterProfiler::GSEA(geneRanks, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
-    # print results
+  }else{
+    print(paste("Significantly Enriched Reactome Pathways:", nrow(gsea_res@result)))
+  }
+
+# KEGG
+  cat("\n\n##### KEGG Pathways \n\n")
+  # assign pathways
+  m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:KEGG") %>%
+    dplyr::select(gs_name, gene_symbol)
+  # run fGSEA
+  gsea_res <- clusterProfiler::GSEA(geneRanks, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
+
+  # print results
+  if (nrow(gsea_res@result) >=1){
+    cat(paste("Significantly Enriched KEGG Pathways:", nrow(gsea_res@result),
+                "\n\nTop 30 pathways visualized below:"))
+    # RidgePlot
     print(ridgeplot(gsea_res) +
-          theme(axis.text.y = element_text(size=8)) +
-          theme(axis.text.x = element_text(size=8)) +
-          theme(axis.title = element_text(size=8)) +
-          ggtitle("RidgePlot - GSEA: KEGG") +
-          xlab("log2FC"))
+            theme(axis.text.y = element_text(size=8)) +
+            theme(axis.text.x = element_text(size=8)) +
+            theme(axis.title = element_text(size=8)) +
+            scale_y_discrete(label=function(x) paste0(abbreviate(x, minlength=40),"...")) +
+            ggtitle("RidgePlot - GSEA: KEGG") +
+            xlab("log2FC"))
+    # GSEA plots
     for (i in 1:min(30,length(gsea_res$Description))){
       print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
+    # Full Table
+    print(knitr::kable(gsea_res@result, caption='Enriched KEGG Pathways:') %>%
+            kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12))
     }
+  }else{
+    print(paste("Significantly Enriched KEGG Pathways:", nrow(gsea_res@result)))
+  }
 }
 
 ```
@@ -947,10 +974,10 @@ for (i in 1:length(contrast_list$contrast)){
 
 ## Kmeans Clustering DE Genes ---------------------------------------------------------
   cat("\n\n#### K-means Clustering  \n\n")
-  
+
   cat("Significantly differentially expressed genes are k-means clustered (k=6).\n\n")
   print("GO category enrichment is performed on each of these clusters.\n\n")
-  
+
   # prepare the data (mean of each "group" listed in samples.tsv)
   forClust_group <- as.data.frame(y.voom$E) %>%
     rownames_to_column(var="ens_gene") %>%
@@ -960,18 +987,18 @@ for (i in 1:length(contrast_list$contrast)){
                        dplyr::rename(variable=sample),by="variable") %>%
     dcast(ens_gene ~ group, value.var="value", fun.aggregate = mean, na.rm = TRUE) %>%
     column_to_rownames(var="ens_gene")
-  
+
   # cluster the data,visualize, and extract clusters with pheatmap
   pheat <- pheatmap(forClust_group, kmeans_k = 6)
   pheat
-  pheat_clust <- as.data.frame(pheat$kmeans$cluster) %>% 
+  pheat_clust <- as.data.frame(pheat$kmeans$cluster) %>%
     rownames_to_column(var="ens_gene") %>%
     dplyr::left_join(t2g_no_dup_genes %>% dplyr::select(c("ens_gene","entrezgene_id"))) %>%
-    dplyr::rename(Entrez=entrezgene_id) %>% 
+    dplyr::rename(Entrez=entrezgene_id) %>%
     dplyr::mutate_all(as.factor) %>%
     dplyr::rename(clust="pheat$kmeans$cluster") %>%
     dplyr::select(c(Entrez,clust))
-  
+
   # test for GO enrichment
   pheat_enrichGO <- compareCluster(Entrez~clust, data=pheat_clust, fun="enrichGO", OrgDb=config$annotation)
   # plot the top5 GO categories for each cluster

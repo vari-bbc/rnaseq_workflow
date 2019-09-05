@@ -15,6 +15,7 @@ validate(units, schema="schemas/units.schema.yaml")
 contrasts = pd.read_table(config["contrasts"]).set_index("contrast", drop=False)
 validate(contrasts, schema="schemas/contrasts.schema.yaml")
 
+
 ##### target rules #####
 
 rule all:
