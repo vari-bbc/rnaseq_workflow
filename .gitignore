@@ -37,3 +37,4 @@ src/r_objects/*
 !src/r_objects/.keep
 src/._*
 src/._edgeR_longReport.html
+src/edgeR_longReport_v1.html
