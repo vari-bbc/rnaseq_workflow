@@ -11,10 +11,13 @@ dependencies:
  - r-ggplot2 ==3.1.1
  - r-ggrepel ==0.8.1
  - r-gridextra ==2.3
+ - r-igraph ==1.2.4.1 # added
  - r-kableextra ==1.1.0
  - r-lattice ==0.20.38
  - r-msigdbr ==6.2.1
  - r-matrixstats ==0.54.0
+ - r-matrix ==1.2_17
+ - r-mgcv ==1.8_28
  - r-rcolorbrewer ==1.1_2
  - r-permute ==0.9_5
  - r-pheatmap ==1.0.12
