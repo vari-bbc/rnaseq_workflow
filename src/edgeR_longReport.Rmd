@@ -28,7 +28,7 @@ knitr::opts_chunk$set(
 	cache = TRUE
 )
 # look in Dean's library for packages. implemented to avoid a HUGE conda env with all dependencies in this document.
-.libPaths("/secondary/projects/bbc/tools/dean_R_libraries/x86_64-redhat-linux-gnu-library/3.6/")
+#.libPaths("/secondary/projects/bbc/tools/dean_R_libraries/x86_64-redhat-linux-gnu-library/3.6/")
 ```
 
 ```{r loadlibs}
@@ -761,7 +761,7 @@ adonis(dist((pr_comps %>% dplyr::select(grep("PC",colnames(pr_comps),value=T))))
        data = pr_comps,
        permutations = 9999,
        method='eu')
- 
+
 adonis((pr_comps %>% dplyr::select(grep("PC",colnames(pr_comps),value=T))) ~ group,
        data = pr_comps,
        permutations = 9999,
@@ -898,11 +898,11 @@ for (i in 1:length(contrast_list$contrast)){
 
   # assign ranks based upon current contrast
   geneRanks <- preRank(list$table)
-  
+
   # REACTOME
     cat("\n\n##### Reactome Pathways \n\n")
     # assign pathways
-    m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:REACTOME") %>% 
+    m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:REACTOME") %>%
       dplyr::select(gs_name, gene_symbol)
     # run fGSEA
     gsea_res <- clusterProfiler::GSEA(geneRanks, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
@@ -917,22 +917,22 @@ for (i in 1:length(contrast_list$contrast)){
               theme(axis.title = element_text(size=8)) +
               scale_y_discrete(label=function(x) abbreviate(x, minlength=40)) +
               ggtitle("RidgePlot - GSEA: Reactome"))
-              
+
       # GSEA plots
       for (i in 1:min(30,length(gsea_res$Description))){
         print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
       }
       # Full Table
-      print(knitr::kable(gsea_res@result %>% dplyr::select(-c("ID","Description")), caption='Enriched Reactome Pathways:') %>% 
+      print(knitr::kable(gsea_res@result %>% dplyr::select(-c("ID","Description")), caption='Enriched Reactome Pathways:') %>%
               kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12))
     }else{
       print(paste("Significantly Enriched Reactome Pathways:", nrow(gsea_res@result)))
     }
-    
+
   # KEGG
     cat("\n\n##### KEGG Pathways \n\n")
     # assign pathways
-    m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:KEGG") %>% 
+    m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:KEGG") %>%
       dplyr::select(gs_name, gene_symbol)
     # run fGSEA
     gsea_res <- clusterProfiler::GSEA(geneRanks, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea", seed = TRUE)
@@ -954,7 +954,7 @@ for (i in 1:length(contrast_list$contrast)){
         print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
       }
       # Full Table
-      print(knitr::kable(gsea_res@result %>% dplyr::select(-c("ID","Description")), caption='Enriched KEGG Pathways:') %>% 
+      print(knitr::kable(gsea_res@result %>% dplyr::select(-c("ID","Description")), caption='Enriched KEGG Pathways:') %>%
               kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12))
     }else{
       print(paste("Significantly Enriched KEGG Pathways:", nrow(gsea_res@result)))
