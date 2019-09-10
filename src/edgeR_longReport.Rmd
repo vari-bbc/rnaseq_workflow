@@ -844,6 +844,11 @@ for (i in 1:length(contrast_list$contrast)){
     .meta <- meta
   )
 
+    # save results to file
+    write_delim(list$table,
+                paste0("deliverables/",contrast.name,".txt"),
+                delim="\t")
+  getwd()
   # Functional Enrichment --------------------------------------------------------
   cat("\n\n### Functional Enrichment \n\n")
 
