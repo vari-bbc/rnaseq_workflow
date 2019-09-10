@@ -4,6 +4,7 @@ channels:
  - bioconda
  - conda-forge
 dependencies:
+ - r-codetools ==0.2_16
  - r-cowplot ==1.0.0
  - r-dplyr ==0.8.0.1
  - r-forcats ==0.4.0
@@ -11,7 +12,7 @@ dependencies:
  - r-ggplot2 ==3.1.1
  - r-ggrepel ==0.8.1
  - r-gridextra ==2.3
- - r-igraph ==1.2.4.1 # added
+ - r-igraph ==1.2.4.1
  - r-kableextra ==1.1.0
  - r-lattice ==0.20.38
  - r-msigdbr ==6.2.1
@@ -25,7 +26,7 @@ dependencies:
  - r-readr ==1.3.1
  - r-reshape2 ==1.4.3
  - r-stringr ==1.4.0
- - r-stringi ==1.4.3 # added
+ - r-stringi ==1.4.3
  - r-tibble ==2.1.1
  - r-tidyr ==0.8.3
  - r-tidyverse ==1.2.1
