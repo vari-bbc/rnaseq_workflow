@@ -23,7 +23,7 @@ rule edgeR_longReport:
         directory("src/edgeR_longReport_files/"),
         # HTML report
         "edgeR_longReport.html",
-    conda:
-        "../envs/edger.yaml"
+    # conda:
+    #     "../envs/edger.yaml"
     script:
         "src/edgeR_longReport.Rmd"
