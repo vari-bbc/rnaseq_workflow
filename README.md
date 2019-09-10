@@ -22,12 +22,29 @@ The following recipe provides established best practices for running and extendi
 
 ### Step 2: Configure the workflow
 * Modify the config, and any necessary sheets, e.g.:
-  * src/samples.tsv
   * src/units.tsv
+    * sample        - ID of biological sample
+    * group         - comparison group for DE contrast
+    * genotype      - description of genotype
+    * condition     - treatment description
+    * unit          - description of sequencing unit ("lane1" or "flowcell1", etc.)
+    * fq1           - name of read1 fastq
+    * fq2           - name of read2 fastq
+    * strandedness  - strandedness of library prep
+      * typically reverse for Illumina
+      * used to identify column to count reads from STAR output.
   * src/contrasts.tsv
+    * contrast      - name for edgeR contrast
+    * groupRelative - "group" defined in units.tsv
+    * groupBaseline - other "group" defined in units.tsv
   * src/config.yaml
-  * src/cluster.json
-    * **NOTE** - default reference is ensembl hg38 gencode annotation
+    * ref
+      * index - absolute path to your STAR index directory
+      * annotation - absolute path to your genome annotation.gtf
+    * species
+      * short - e.g. "hsapiens"
+      * long  - e.g. "Homo sapiens"
+    * annotation - [Bioconductor annotation package](https://www.bioconductor.org/packages/release/BiocViews.html#___OrgDb) (e.g. "org.Hs.eg.db")
 * Move your sequencing reads to `raw_reads/`
 
 ### Step 3: Test the workflow
