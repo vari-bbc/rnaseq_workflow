@@ -23,7 +23,10 @@ rule edgeR_longReport:
         directory("src/edgeR_longReport_files/"),
         # HTML report
         "edgeR_longReport.html",
-    # conda:
-    #     "../envs/edger.yaml"
-    script:
-        "src/edgeR_longReport.Rmd"
+    conda:
+        "../envs/edger.yaml"
+    shell:
+        '''
+        Rscript -e 'rmarkdown::render("src/edgeR_longReport.Rmd",output_format="html_document")'
+        mv src/edgeR_longReport.html deliverables/edgeR_longReport.html
+        '''
