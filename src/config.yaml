@@ -4,16 +4,18 @@ units: src/units.tsv
 contrasts: src/contrasts.tsv
 
 ref:
-  # the STAR index
+  # path to STAR index
   index: /primary/projects/bbc/references/mouse/indexes/mm10/star/star_p1idx
-  # gtf file with transcripts
+  # path to gtf file with transcripts
   annotation: /primary/projects/bbc/references/mouse/annotation/mm10/ensembl/Mus_musculus.GRCm38.86.gtf
 
 ### EdgeR Variables ###
 
 # two-letter species annotation for (e.g. "Hs" <- Human)
 species:
+  # (e.g. Human -> "hsapiens")
   short: mmusculus
+  # (e.g. Human -> "Homo sapiens")
   long: Mus musculus
 # org.db package used for annotation
 annotation: org.Mm.eg.db
