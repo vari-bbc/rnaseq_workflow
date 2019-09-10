@@ -284,16 +284,8 @@ change between the samples for the genes that best distinguish that pair of samp
 ```
 
 ```{r t2g_object,eval=TRUE,cache=TRUE}
-# Set the host:
-# mart <- biomaRt::useMart(biomart = 'ENSEMBL_MART_ENSEMBL',dataset = 'hsapeins_ensembl')
-# View(listDatasets(mart))
-# View(listAttributes(mart,))
-
 if (!exists(c("t2g_no_dup_genes","t2g"))){
-  t2g_file='r_objects/ensembl_go.rds'
-  if(t2g_file %in% list.files()){
-    t2g = readRDS(t2g_file)
-  }else{
+  t2g_file='../r_objects/ensembl_go.rds'
     mart <- biomaRt::useMart(biomart = 'ENSEMBL_MART_ENSEMBL', host="www.ensembl.org", dataset = paste0(config$species$short, '_gene_ensembl'), ensemblRedirect = NULL)
     t2g_1 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "external_gene_name"), mart = mart)
     t2g_2 <- biomaRt::getBM(attributes = c("ensembl_gene_id", "description"), mart = mart)
@@ -313,11 +305,8 @@ if (!exists(c("t2g_no_dup_genes","t2g"))){
       left_join(t2g_7, by='ensembl_gene_id') %>%
       left_join(t2g_8, by='ensembl_gene_id') %>%
       dplyr::rename(ens_gene = ensembl_gene_id, ext_gene = external_gene_name, predicted_function = description)
-
-    saveRDS(t2g, file=t2g_file)
   }
   t2g_no_dup_genes = t2g[-which(duplicated(t2g$ens_gene)),-which(colnames(t2g)=='go_id')] # no duplicates (e.g. when multipe mappings to go terms)
-}
 ```
 
 ```{r load_REACTOME_db}
@@ -370,8 +359,6 @@ ranks <- dplyr::distinct(.data = ranks, ext_gene, .keep_all=TRUE) %>% dplyr::fil
 ranks <- deframe(ranks)
 return(ranks)
 }
-
-table = list$table
 
 ```
 
@@ -541,7 +528,7 @@ write.table(raw_data.ext, "../deliverables/STAR_raw_counts_with_annotation.txt",
 # Library sizes are computed from the reads counts for mapped reads to gff features
 lib_sizes <- data.frame(colSums(raw_data)/1e6)  # In millions
 lib_sizes$sample <- factor(rownames(lib_sizes))
-lib_sizes <- lib_sizes %>% left_join(meta %>% dplyr::select(sample,condition),by="sample")
+lib_sizes <- lib_sizes %>% left_join(meta %>% dplyr::select(sample,condition,group),by="sample")
 colnames(lib_sizes)[1] <- 'millions_of_counts'
 
 cat('Raw Feature Counts Summary (Millions):\n')
@@ -549,9 +536,9 @@ summary(lib_sizes$millions_of_counts)
 
 knitr::kable(lib_sizes,caption='Raw Feature Counts') %>% kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12)
 
-ggplot(lib_sizes, aes(x = sample, y = millions_of_counts, fill=condition)) +
+ggplot(lib_sizes, aes(x = reorder(sample,as.numeric(group)), y = millions_of_counts, fill=group)) +
   geom_bar(stat="identity", colour="black") +
-  scale_fill_brewer(palette = "Set1") +
+  scale_color_brewer('Set1') +
   labs(caption=paste0('data: ',raw.data.file),y="Raw Counts (Millions)",title="Total Raw Read Counts For All Features") +
   theme_bw(10) +
   theme(
@@ -566,9 +553,9 @@ rd = tidyr::gather(as.data.frame(raw.data.dgelist$counts),sample,count)
 rd = dplyr::left_join(rd,meta)
 
 cat("Total tags with >0 counts:\n",nrow(raw_data[rowSums(raw_data) >= 1,]))
-plot = ggplot(rd, aes(x=sample, y=count, fill=condition)) +
+plot = ggplot(rd, aes(x=reorder(sample,as.numeric(group)), y=count, fill=group)) +
   geom_boxplot() +
-  scale_fill_brewer(palette = "Set1") +
+  scale_color_brewer('Set1') +
   ylab("Counts Per Million") +
   ggtitle("Raw Untransformed Count Distributions") +
   theme_bw() +
@@ -600,9 +587,9 @@ plot = fd %>% ggplot(aes(count)) + geom_histogram(binwidth=1) + ggtitle('Filtere
 plot
 plot + xlim(0,as.numeric(quantile(fd$count,probs=c(0.25)))) + ggtitle('Filtered Data Gene Count Histogram - xlim=c(0,25th quantile)')
 
-plot = ggplot(fd,aes(x=sample, y=count, fill=condition)) +
+plot = ggplot(fd,aes(x=reorder(sample,as.numeric(group)), y=count, fill=group)) +
   geom_boxplot() +
-  scale_fill_brewer(palette = "Set1") +
+  scale_color_brewer('Set1') +
   ylab("Counts Per Million") +
   ggtitle(paste0("Filtered Untransformed Count Distributions - ",nrow(filtered.data$counts)," Tags")) +
   theme_bw() +
@@ -658,22 +645,25 @@ v2$sample <- rownames(v2)
 v2$condition <- (dplyr::full_join(v2 %>% dplyr::select(c("sample")),
                  meta %>% dplyr::select(c("sample","condition")),
                  by="sample"))$condition
+v2$group <- (dplyr::full_join(v2 %>% dplyr::select(c("sample")),
+                 meta %>% dplyr::select(c("sample","group")),
+                 by="sample"))$group
 
 # v2$covariate <- meta$covariate
 #If you have additional covariates, you'll need to add them as additional strings in the vector
 #e.g. melted <- melt(v2, id.var=c("Sample", "Genotype", "COVARIATE"))
 #e.g. colnames(melted) <- c("Sample", "Genotype", "COVARIATE", "Gene", "value")
-melted <- melt(v2, id.var=c("sample", "condition"))
-colnames(melted) <- c("sample", "condition", "gene", "value")
+melted <- melt(v2, id.var=c("sample", "condition","group"))
+colnames(melted) <- c("sample", "condition", "group","gene", "value")
 
 
 melted %>% ggplot(aes(value)) + geom_histogram(binwidth=1) + ggtitle('VOOM Transformed Filtered Data Gene Count Histogram') #+ xlim(c(0,as.numeric(quantile(melted$value,probs=c(0.9)))))
 
 
 # Plot transformed count distributions
-ggplot(melted, aes(x=sample, y=value, fill=condition)) +
+ggplot(melted, aes(x=reorder(sample, as.numeric(group)), y=value, fill=group)) +
   geom_boxplot() +
-  scale_fill_brewer(palette = "Set1") +
+  scale_color_brewer("Set1") +
   ylab("log2 VOOM Transformed Counts Per Million") +
   ggtitle("Voom Transformed Filtered Data Count Distributions") +
   theme_bw() +
@@ -718,6 +708,9 @@ pr_comps$sample <- rownames(pr_comps)
 pr_comps$condition <- (dplyr::full_join(v2 %>% dplyr::select(c("sample")),
                  meta %>% dplyr::select(c("sample","condition")),
                  by="sample"))$condition
+pr_comps$group <- (dplyr::full_join(v2 %>% dplyr::select(c("sample")),
+                 meta %>% dplyr::select(c("sample","group")),
+                 by="sample"))$group
 
 pca_plot <- ggplot(pr_comps, aes(x=PC1, y=PC2)) +
   geom_point(size=7,aes(color = condition, pch = condition)) +
@@ -761,16 +754,18 @@ saveRDS(var_plot, file = "r_objects/var_plot.rds")
 
 ### Clustering Stats
 
-Adonis
-
 ```{r adonis}
 # PerMANOVA - partitioning the euclidean distance matrix by 'condition'
   # using all PCs
-pca_sig <- adonis((pr_comps %>% dplyr::select(-c(sample,condition))) ~ condition,
+adonis(dist((pr_comps %>% dplyr::select(grep("PC",colnames(pr_comps),value=T)))) ~ group,
        data = pr_comps,
        permutations = 9999,
        method='eu')
-pca_sig
+ 
+adonis((pr_comps %>% dplyr::select(grep("PC",colnames(pr_comps),value=T))) ~ group,
+       data = pr_comps,
+       permutations = 9999,
+       method='eu')
 ```
 
 
@@ -898,73 +893,72 @@ for (i in 1:length(contrast_list$contrast)){
   #cnetplot(GO.CC, foldChange=geneList) + ggtitle("GO:Molecular Function")
 
   ## GSEA: Reactome and KEGG ---------------------------------
-cat("\n\n#### GSEA \n\n")
-cat("GSEA testing was performed with ClusterProfiler's wrapper for the `fgsea` function. \n\n")
+  cat("\n\n#### GSEA \n\n")
+  cat("GSEA testing was performed with ClusterProfiler's wrapper for the `fgsea` function. \n\n")
 
-# assign ranks based upon current contrast
-geneRanks <- preRank(list$table)
-
-# REACTOME
-  cat("\n\n##### Reactome Pathways \n\n")
-  # assign pathways
-  m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:REACTOME") %>%
-    dplyr::select(gs_name, gene_symbol)
-  # run fGSEA
-  gsea_res <- clusterProfiler::GSEA(geneRanks, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
-
-  # print results
-  if (nrow(gsea_res@result) >=1){
-    cat(paste("Significantly Enriched Reactome Pathways:", nrow(gsea_res@result),
-                "\n\nTop 30 pathways visualized below:"))
-    # RidgePlot
-    print(ridgeplot(gsea_res) +
-            theme(axis.text.y = element_text(size=8)) +
-            theme(axis.text.x = element_text(size=8)) +
-            theme(axis.title = element_text(size=8)) +
-            scale_y_discrete(label=function(x) paste0(abbreviate(x, minlength=40),"...")) +
-            ggtitle("RidgePlot - GSEA: Reactome") +
-            xlab("log2FC"))
-    # GSEA plots
-    for (i in 1:min(30,length(gsea_res$Description))){
-      print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
-    # Full Table
-    print(knitr::kable(gsea_res@result, caption='Enriched Reactome Pathways:') %>%
-            kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12))
+  # assign ranks based upon current contrast
+  geneRanks <- preRank(list$table)
+  
+  # REACTOME
+    cat("\n\n##### Reactome Pathways \n\n")
+    # assign pathways
+    m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:REACTOME") %>% 
+      dplyr::select(gs_name, gene_symbol)
+    # run fGSEA
+    gsea_res <- clusterProfiler::GSEA(geneRanks, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
+    # print results
+    if (nrow(gsea_res@result) >=1){
+      cat(paste("Significantly Enriched Reactome Pathways:", nrow(gsea_res@result),
+                  "\n\nTop 30 pathways visualized below:"))
+      # RidgePlot
+      print(ridgeplot(gsea_res) +
+              theme(axis.text.y = element_text(size=8)) +
+              theme(axis.text.x = element_text(size=8)) +
+              theme(axis.title = element_text(size=8)) +
+              scale_y_discrete(label=function(x) abbreviate(x, minlength=40)) +
+              ggtitle("RidgePlot - GSEA: Reactome"))
+              
+      # GSEA plots
+      for (i in 1:min(30,length(gsea_res$Description))){
+        print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
+      }
+      # Full Table
+      print(knitr::kable(gsea_res@result %>% dplyr::select(-c("ID","Description")), caption='Enriched Reactome Pathways:') %>% 
+              kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12))
+    }else{
+      print(paste("Significantly Enriched Reactome Pathways:", nrow(gsea_res@result)))
     }
-  }else{
-    print(paste("Significantly Enriched Reactome Pathways:", nrow(gsea_res@result)))
-  }
+    
+  # KEGG
+    cat("\n\n##### KEGG Pathways \n\n")
+    # assign pathways
+    m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:KEGG") %>% 
+      dplyr::select(gs_name, gene_symbol)
+    # run fGSEA
+    gsea_res <- clusterProfiler::GSEA(geneRanks, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea", seed = TRUE)
+    nrow(gsea_res@result)
+    # print results
+    if (nrow(gsea_res@result) >=1){
+      cat(paste("Significantly Enriched KEGG Pathways:", nrow(gsea_res@result),
+                  "\n\nTop 30 pathways visualized below:"))
+      # RidgePlot
+      print(ridgeplot(gsea_res) +
+              theme(axis.text.y = element_text(size=8)) +
+              theme(axis.text.x = element_text(size=8)) +
+              theme(axis.title = element_text(size=8)) +
+              scale_y_discrete(label=function(x) abbreviate(x, minlength=40)) +
+              ggtitle("RidgePlot - GSEA: KEGG"))
 
-# KEGG
-  cat("\n\n##### KEGG Pathways \n\n")
-  # assign pathways
-  m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:KEGG") %>%
-    dplyr::select(gs_name, gene_symbol)
-  # run fGSEA
-  gsea_res <- clusterProfiler::GSEA(geneRanks, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
-
-  # print results
-  if (nrow(gsea_res@result) >=1){
-    cat(paste("Significantly Enriched KEGG Pathways:", nrow(gsea_res@result),
-                "\n\nTop 30 pathways visualized below:"))
-    # RidgePlot
-    print(ridgeplot(gsea_res) +
-            theme(axis.text.y = element_text(size=8)) +
-            theme(axis.text.x = element_text(size=8)) +
-            theme(axis.title = element_text(size=8)) +
-            scale_y_discrete(label=function(x) paste0(abbreviate(x, minlength=40),"...")) +
-            ggtitle("RidgePlot - GSEA: KEGG") +
-            xlab("log2FC"))
-    # GSEA plots
-    for (i in 1:min(30,length(gsea_res$Description))){
-      print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
-    # Full Table
-    print(knitr::kable(gsea_res@result, caption='Enriched KEGG Pathways:') %>%
-            kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12))
+      # GSEA plots
+      for (i in 1:min(30,length(gsea_res$Description))){
+        print(gseaplot2(gsea_res, geneSetID = i, title = gsea_res$Description[i]))
+      }
+      # Full Table
+      print(knitr::kable(gsea_res@result %>% dplyr::select(-c("ID","Description")), caption='Enriched KEGG Pathways:') %>% 
+              kable_styling(bootstrap_options = c("striped", "hover","condensed"),font_size = 12))
+    }else{
+      print(paste("Significantly Enriched KEGG Pathways:", nrow(gsea_res@result)))
     }
-  }else{
-    print(paste("Significantly Enriched KEGG Pathways:", nrow(gsea_res@result)))
-  }
 }
 
 ```
