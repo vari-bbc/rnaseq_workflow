@@ -13,7 +13,6 @@ rule edgeR_longReport:
         "src/r_objects/pca_plot.rds",
         "src/r_objects/var_plot.rds",
         "src/r_objects/mat.rds",
-        "src/r_objects/rowNames_use.rds",
         "src/r_objects/filtered_meta_heatmap.rds",
         # edgeR results
         expand("deliverables/{contrast}.txt", contrast=contrasts['contrast'].tolist()),
@@ -22,7 +21,7 @@ rule edgeR_longReport:
         directory("src/edgeR_longReport_cache/"),
         directory("src/edgeR_longReport_files/"),
         # HTML report
-        "edgeR_longReport.html",
+        "deliverables/edgeR_longReport.html",
     conda:
         "../envs/edger.yaml"
     shell:

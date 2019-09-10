@@ -433,7 +433,7 @@ logfc.filter <- config$logfc.filter
 
 ```{r load_STAR_data}
 # Load STAR feature counts:
-raw.data.file <- '../deliverables/counts_.tsv'
+raw.data.file <- '../deliverables/counts.tsv'
 raw_data = read.delim(raw.data.file, row.names=1,stringsAsFactors = F, check.names = F,sep='\t')
 #raw_data <- raw_data[,-ncol(raw_data)] #Removing a column of NAs presuming it's the last column
 cat('The following samples have no meta data:\n')
@@ -1000,4 +1000,4 @@ for (i in 1:length(contrast_list$contrast)){
 
 
 ```
-                                     
+

@@ -43,7 +43,7 @@ rule all:
         # multiqc
         # "qc/multiqc_report.html",
         # edger
-        "edgeR_longReport.html",
+        "deliverables/edgeR_longReport.html",
 
 ##### load rules #####
 include: "rules/align.smk"
