@@ -4,7 +4,7 @@ This workflow performs a differential expression analysis with STAR and edgeR - 
 
 ## Authors
 
-* Dean Pettinga (@deanpettinga), https://github.com/deanpettinga
+* Dean Pettinga [@deanpettinga](https://github.com/deanpettinga)
 
 ## Usage
 
@@ -35,16 +35,16 @@ Test your configuration by performing a dry-run via
 
     snakemake --use-conda -np
 
-Execute as from within your project directory as a PBS job using BBC nodes via
+Execute from within your project directory as a PBS job using BBC nodes via
 
     qsub -q bbc /src/run_snake.sh
 
-This job script will produce DAG (.txt & .png) and .html with run stats for the workflow to be executed in `runs/bulk_rnaseq_workflow_(TIME)`
+This job script will produce DAG (.txt & .png) and .html with run stats for the workflow to be executed in `runs/bulk_rnaseq-workflow_(TIME)`
 
 ### Step 4: Investigate Results
 Review your results including the run stats:
 
-* `runs/bulk_rnaseq_workflow_(TIME).html`
+* `runs/rnaseq-workflow_(TIME).html`
 
 and the differential expression results:
 * `deliverables/edgeR_longReport.html`

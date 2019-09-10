@@ -7,10 +7,6 @@ properties:
     type: string
     description: sample name/identifier
 
-  sample:
-    type: string
-    description: sample name/identifier
-
   group:
     type: string
     description: group identifier for contrasts
