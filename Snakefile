@@ -46,11 +46,13 @@ rule all:
         "edgeR_longReport.html",
 
 ##### load rules #####
-
+include: "rules/align.smk"
 include: "rules/common.smk"
+include: "rules/count_matrix.smk"
+include: "rules/edger.smk"
+include: "rules/fastqc.smk"
+include: "rules/get_mapping_rates.smk"
+include: "rules/multiqc.smk"
+include: "rules/sort_index_bam.smk"
 include: "rules/symlink.smk"
 include: "rules/trim.smk"
-include: "rules/align.smk"
-include: "rules/count_matrix.smk"
-include: "rules/qc.smk"
-include: "rules/edger.smk"
