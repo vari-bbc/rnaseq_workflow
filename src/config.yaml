@@ -4,10 +4,10 @@ units: src/units.tsv
 contrasts: src/contrasts.tsv
 
 ref:
-  # path to STAR index
-  index: /primary/projects/bbc/references/mouse/indexes/mm10/star/star_p1idx
-  # path to gtf file with transcripts
-  annotation: /primary/projects/bbc/references/mouse/annotation/mm10/ensembl/Mus_musculus.GRCm38.86.gtf
+  # path/to/STAR/index/directory
+  index: 
+  # path/to/gtf/file/with/transcripts.gtf
+  annotation: 
 
 ### EdgeR Variables ###
 
@@ -17,7 +17,7 @@ species:
   short: mmusculus
   # (e.g. Human -> "Homo sapiens")
   long: Mus musculus
-# org.db package used for annotation
+# org.db package used for annotation (https://www.bioconductor.org/packages/release/BiocViews.html#___OrgDb)
 annotation: org.Mm.eg.db
 # differential expression cutoff values
 logfc.filter: 0.58
