@@ -2,4 +2,5 @@ name: R
 channels:
   - r
 dependencies:
-  - r =3.6.0
+  - r-base ==3.6.0
+  - r-rmarkdown

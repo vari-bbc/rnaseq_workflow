@@ -6,6 +6,7 @@ params:
   rmd: ""
 output:
   html_document:
+    dev: svg
     code_folding: hide
     self_contained: yes
     toc: true
@@ -21,6 +22,7 @@ output:
 Tested in R version `r getRversion()`.
 
 ```{r setup,echo=FALSE}
+.libPaths("/secondary/projects/bbc/tools/dean_R_libraries/x86_64-redhat-linux-gnu-library/3.6/")
 knitr::opts_chunk$set(
 	echo = TRUE,
 	message = FALSE,
@@ -28,7 +30,7 @@ knitr::opts_chunk$set(
 	cache = TRUE
 )
 # look in Dean's library for packages. implemented to avoid a HUGE conda env with all dependencies in this document.
-#.libPaths("/secondary/projects/bbc/tools/dean_R_libraries/x86_64-redhat-linux-gnu-library/3.6/")
+
 ```
 
 ```{r loadlibs}
@@ -1006,3 +1008,4 @@ for (i in 1:length(contrast_list$contrast)){
 
 ```
 
+                                                                     

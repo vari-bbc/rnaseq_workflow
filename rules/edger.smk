@@ -23,7 +23,7 @@ rule edgeR_longReport:
         # HTML report
         "deliverables/edgeR_longReport.html",
     conda:
-        "../envs/edger.yaml"
+        "../envs/R.yaml"
     shell:
         '''
         Rscript -e 'rmarkdown::render("src/edgeR_longReport.Rmd",output_format="html_document")'

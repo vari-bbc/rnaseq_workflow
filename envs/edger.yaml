@@ -4,6 +4,7 @@ channels:
  - bioconda
  - conda-forge
 dependencies:
+ - r-r ==3.6.0
  - r-codetools ==0.2_16
  - r-cowplot ==1.0.0
  - r-dplyr ==0.8.0.1
