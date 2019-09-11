@@ -1,17 +1,24 @@
 # path or URL to sample sheet (TSV format, columns: sample, condition, ...)
-samples: src/samples.tsv
+units: src/units.tsv
 # path or URL to contrast sheet (TSV format, columns: sample, condition, ...)
 contrasts: src/contrasts.tsv
 
 ref:
-  # the STAR index
-  index: /primary/projects/bbc/references/human/indexes/hg38/hg38_STAR/
-  # gtf file with transcripts
-  annotation: /primary/projects/bbc/references/human/annotation/hg38/ensembl/Homo_sapiens.GRCh38.87.chr.gtf
+  # path to STAR index
+  index: /primary/projects/bbc/references/mouse/indexes/mm10/star/star_p1idx
+  # path to gtf file with transcripts
+  annotation: /primary/projects/bbc/references/mouse/annotation/mm10/ensembl/Mus_musculus.GRCm38.86.gtf
+
+### EdgeR Variables ###
 
 # two-letter species annotation for (e.g. "Hs" <- Human)
-org: Hs
-
-# org.db package used for annotation (e.g. "org.eg.Hs.db" for Human)
-# see edger.yaml for supported species packages
-annotation: org.eg.Hs.db
+species:
+  # (e.g. Human -> "hsapiens")
+  short: mmusculus
+  # (e.g. Human -> "Homo sapiens")
+  long: Mus musculus
+# org.db package used for annotation
+annotation: org.Mm.eg.db
+# differential expression cutoff values
+logfc.filter: 0.58
+fdr.filter: 0.05

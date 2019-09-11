@@ -1,7 +1,0 @@
-sample	group	condition	fq1	fq2	strandedness
-65-NB1	Normal	Normal	SL82465_1.fastq.gz	SL82465_2.fastq.gz	reverse
-64-NB1	Normal	Normal	SL82466_1.fastq.gz	SL82466_2.fastq.gz	reverse
-67-NB1	Normal	Normal	SL82469_1.fastq.gz	SL82469_2.fastq.gz	reverse
-12-121	GBM	GBM	HFLYHDSXX_s3_1_GSLv6-8_i7_97-GSLv5-8_i5_192_SetB_SL366040.fastq.gz	HFLYHDSXX_s3_2_GSLv6-8_i7_97-GSLv5-8_i5_192_SetB_SL366040.fastq.gz	reverse
-12-198	GBM	GBM	HFLYHDSXX_s3_1_GSLv6-8_i7_98-GSLv5-8_i5_191_SetB_SL366041.fastq.gz	HFLYHDSXX_s3_2_GSLv6-8_i7_98-GSLv5-8_i5_191_SetB_SL366041.fastq.gz	reverse
-13-453	GBM	GBM	HFLYHDSXX_s3_1_GSLv6-8_i7_99-GSLv5-8_i5_190_SetB_SL366042.fastq.gz	HFLYHDSXX_s3_2_GSLv6-8_i7_99-GSLv5-8_i5_190_SetB_SL366042.fastq.gz	reverse

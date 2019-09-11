@@ -1,21 +1,18 @@
-def get_fastq(wildcards):
-    return expand("raw_reads/"+samples.loc[wildcards.sample, ["sample"]]+"_{read}.fastq.gz", read=[1,2])
-
 rule trim_galore_pe:
     input:
-        # get_fastq
-        "raw_reads/{sample}_1.fastq.gz",
-        "raw_reads/{sample}_2.fastq.gz"
+        reads=["raw_reads/{sample}_{unit}_R1.fastq.gz","raw_reads/{sample}_{unit}_R2.fastq.gz"],
+        # this ensures that fastqc occurs before this step
+        fastqc_html=["qc/fastqc/{sample}_{unit}_R1_fastqc.html","qc/fastqc/{sample}_{unit}_R2_fastqc.html"],
+        fastqc_zip=["qc/fastqc/{sample}_{unit}_R1_fastqc.zip","qc/fastqc/{sample}_{unit}_R2_fastqc.zip"],
     output:
-        "trimmed_data/{sample}_1_val_1.fq.gz",
-        "trimmed_data/{sample}_1.fastq.gz_trimming_report.txt",
-        "trimmed_data/{sample}_2_val_2.fq.gz",
-        "trimmed_data/{sample}_2.fastq.gz_trimming_report.txt"
+        "trimmed_data/{sample}_{unit}_R1_val_1.fq.gz",
+        "trimmed_data/{sample}_{unit}_R1.fastq.gz_trimming_report.txt",
+        "trimmed_data/{sample}_{unit}_R2_val_2.fq.gz",
+        "trimmed_data/{sample}_{unit}_R2.fastq.gz_trimming_report.txt"
     params:
-        extra = "--retain_unpaired -q 20"
+        extra = "-q 20"
     log:
-        "logs/trim_galore.{sample}.log"
-    conda:
-        "../envs/trimgalore.yaml"
+        "logs/trim/trim_galore.{sample}_{unit}.log"
     wrapper:
-        "0.31.1/bio/trim_galore/pe"
+        #"0.31.1/bio/trim_galore/pe"
+        "file:wrappers/trim_galore_pe"

@@ -1,0 +1,16 @@
+$schema: "http://json-schema.org/draft-06/schema#"
+
+description: comparisons for edgeR
+properties:
+
+  contrast:
+    type: string
+    description: name of contrast
+
+  groupRelative:
+    type: string
+    description: the experimental group
+    
+  groupBaseline:
+    type: string
+    description: the control group

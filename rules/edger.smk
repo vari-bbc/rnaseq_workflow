@@ -3,7 +3,7 @@ rule edgeR_longReport:
         "deliverables/UniquelyMappingRates.txt",
         "deliverables/UniquelyMappingReads.txt",
         "deliverables/starMatrix.txt",
-        # species = config["species"]["long"],
+        "deliverables/counts.tsv",
     output:
         # R Objects - also used for edgeR_shortReport
         expand("src/r_objects/topGenes.{contrast}.rds", contrast=contrasts['contrast'].tolist()),
@@ -13,7 +13,6 @@ rule edgeR_longReport:
         "src/r_objects/pca_plot.rds",
         "src/r_objects/var_plot.rds",
         "src/r_objects/mat.rds",
-        "src/r_objects/rowNames_use.rds",
         "src/r_objects/filtered_meta_heatmap.rds",
         # edgeR results
         expand("deliverables/{contrast}.txt", contrast=contrasts['contrast'].tolist()),
@@ -21,40 +20,12 @@ rule edgeR_longReport:
         "deliverables/fpkm.txt",
         directory("src/edgeR_longReport_cache/"),
         directory("src/edgeR_longReport_files/"),
-        # GSEA results
-        expand("deliverables/{contrast}.cls", contrast=contrasts['contrast'].tolist()),
-        expand("deliverables/{contrast}.gct", contrast=contrasts['contrast'].tolist()),
-        #expand("deliverables/{contrast}_GSEA.txt", contrast=contrasts['contrast'].tolist()),
         # HTML report
         "deliverables/edgeR_longReport.html",
-    params:
-        org = config["org"],
     conda:
-        "../envs/edger.yaml"
+        "../envs/R.yaml"
     shell:
         '''
         Rscript -e 'rmarkdown::render("src/edgeR_longReport.Rmd",output_format="html_document")'
         mv src/edgeR_longReport.html deliverables/edgeR_longReport.html
-        '''
-
-rule edgeR_shortReport:
-    input:
-        # heatmap objects
-        "src/r_objects/pca_plot.rds",
-        "src/r_objects/var_plot.rds",
-        "src/r_objects/mat.rds",
-        "src/r_objects/rowNames_use.rds",
-        "src/r_objects/filtered_meta_heatmap.rds",
-        # DE objects
-        expand("src/r_objects/DGE_design.{contrast}.rds", contrast=contrasts['contrast'].tolist()),
-        expand("src/r_objects/topGenes.{contrast}.rds", contrast=contrasts['contrast'].tolist()),
-        expand("src/r_objects/volcano.{contrast}.rds", contrast=contrasts['contrast'].tolist())
-    output:
-        "deliverables/edgeR_shortReport.html",
-    conda:
-        "../envs/edger.yaml"
-    shell:
-        '''
-        Rscript -e 'rmarkdown::render("src/edgeR_shortReport.Rmd",output_format="html_document")'
-        mv src/edgeR_shortReport.html deliverables/edgeR_shortReport.html
         '''

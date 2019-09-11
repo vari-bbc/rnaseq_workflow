@@ -21,6 +21,10 @@ properties:
       - annotation
 
 required:
-  - samples
-  - ref
+  - units
   - contrasts
+  - ref
+  - species
+  - annotation
+  - logfc.filter
+  - fdr.filter

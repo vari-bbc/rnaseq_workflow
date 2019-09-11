@@ -1,19 +1,29 @@
-def get_strandness(samples):
-    if "strandedness" in samples.columns:
-        return samples["strandedness"].tolist()
+def get_strandness(units):
+    if "strandedness" in units.columns:
+        return units["strandedness"].tolist()
     else:
         strand_list=["none"]
-        return strand_list*samples.shape[0]
+        return strand_list*units.shape[0]
 
-rule mapping_summary:
-    # get unique mapping rates to text file from STAR logs
+rule count_matrix:
     input:
-        expand("star/{samples.sample}.ReadsPerGene.out.tab", samples=samples.itertuples())
+        # ask for sorted output to ensure that sort_index_bam occurs first.
+        #expand("analysis/star/{unit.sample}_{unit.unit}.sorted.bam", unit=units.itertuples()),
+        # ReadsPerGene
+        ReadsPerGene = expand("analysis/star/{unit.sample}_{unit.unit}.ReadsPerGene.out.tab", unit=units.itertuples()),
     output:
-        rates = "deliverables/UniquelyMappingRates.txt",
-        reads = "deliverables/UniquelyMappingReads.txt",
-        matrix = "deliverables/starMatrix.txt"
+        "deliverables/counts.tsv",
+        # rates = "deliverables/UniquelyMappingRates.txt",
+        # reads = "deliverables/UniquelyMappingReads.txt",
+        # matrix = "deliverables/starMatrix.txt",
+    params:
+        samples=units["sample"].tolist(),
+        strand=get_strandness(units)
+    conda:
+        "../envs/pandas.yaml"
     log:
         "logs/mapping_summary.log"
-    shell:
-        "bash src/get_star_matrix.sh {output.rates} {output.reads} {output.matrix}"
+    script:
+         "../src/count-matrix.py"
+    # shell:
+    #     "bash src/get_star_matrix.sh {output.rates} {output.reads} {output.matrix}"

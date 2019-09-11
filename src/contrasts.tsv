@@ -1,3 +1,2 @@
-contrast	group1	group2
-Normal_vs_GBM	GBM	Normal
-GBM_vs_Normal	Normal	GBM
+contrast	groupRelative	groupBaseline
+KO_vs_WT	LKB1_KO	LKB1_WT
