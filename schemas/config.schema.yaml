@@ -5,10 +5,13 @@ description: snakemake configuration file
 type: object
 
 properties:
+
   samples:
     type: string
+
   contrasts:
     type: string
+
   ref:
     type: object
     properties:
@@ -19,6 +22,25 @@ properties:
     required:
       - index
       - annotation
+
+  PE_or_SE:
+    type: string
+
+  species:
+    type: object
+    properties:
+      short:
+        type: string
+      long:
+        type: string
+
+  annotation:
+    type: string
+
+  logfc.filter:
+    type: string
+  fdr.filter:
+    type: string
 
 required:
   - units

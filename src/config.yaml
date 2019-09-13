@@ -9,6 +9,7 @@ ref:
   # path to gtf file with transcripts
   annotation: /primary/projects/bbc/references/mouse/annotation/mm10/ensembl/Mus_musculus.GRCm38.86.gtf
 
+# are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: SE
 
 ### EdgeR Variables ###
