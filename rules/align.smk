@@ -1,10 +1,12 @@
-rule align:
+def get_fq(wildcards):
+    if config["PE_or_SE"] == "SE":
+        return "trimmed_data/{sample}-{unit}_trimmed.fq.gz".format(**wildcards)
+    elif config["PE_or_SE"] == "PE":
+        return expand("trimmed_data/{sample}_{unit}_R{read}_val_{read}.fq.gz", read=[1, 2], **wildcards)
+
+rule star_align:
     input:
-        # use a list for multiple fastq files for one sample
-        # usually technical replicates across lanes/flowcells
-        fq1 = "trimmed_data/{sample}_{unit}_R1_val_1.fq.gz",
-        # paired end reads needs to be ordered so each item in the two lists match
-        fq2 = "trimmed_data/{sample}_{unit}_R2_val_2.fq.gz"
+        sample=get_fq
     output:
         # see STAR manual for additional output files
         "analysis/star/{sample}_{unit}.Aligned.out.bam",
@@ -21,7 +23,7 @@ rule align:
         # path to STAR reference genome index
         index=config["ref"]["index"],
         # optional parameters
-        extra="--quantMode GeneCounts"
+        extra="--quantMode GeneCounts "
     threads: 24
     wrapper:
-        "file:wrappers/star"
+        "0.19.4/bio/star/align"

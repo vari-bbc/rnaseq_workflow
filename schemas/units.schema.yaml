@@ -37,9 +37,9 @@ properties:
 
 required:
   - sample
-  - group
-  - condition
+  #- group
+  #- condition
   - unit
   - fq1
-  #- fq2
-  - strandedness
+  - fq2
+  #- strandedness

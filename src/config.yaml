@@ -9,6 +9,8 @@ ref:
   # path to gtf file with transcripts
   annotation: /primary/projects/bbc/references/mouse/annotation/mm10/ensembl/Mus_musculus.GRCm38.86.gtf
 
+PE_or_SE: SE
+
 ### EdgeR Variables ###
 
 # two-letter species annotation for (e.g. "Hs" <- Human)
