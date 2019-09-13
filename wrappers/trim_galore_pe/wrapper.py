@@ -17,9 +17,9 @@ n_reads = len(snakemake.input.reads)
 n_fastqc_html = len(snakemake.input.fastqc_html)
 n_fastqc_zip = len(snakemake.input.fastqc_zip)
 
-assert n_reads == 2, "Input must contain 2 fastq files. Given: %r." % n
-assert n_fastqc_html == 2, "Input must contain 2 fastqc html reports. Given: %r." % n
-assert n_fastqc_zip == 2, "Input must contain 2 fastqc .zip files. Given: %r." % n
+assert n_reads == 2, "Input must contain 2 fastq files. Given: %r." % n_reads
+assert n_fastqc_html == 2, "Input must contain 2 fastqc html reports. Given: %r." % n_fastqc_html
+assert n_fastqc_zip == 2, "Input must contain 2 fastqc .zip files. Given: %r." % n_fastqc_zip
 
 # Don't run with `--fastqc` flag
 if "--fastqc" in snakemake.params.get("extra", ""):

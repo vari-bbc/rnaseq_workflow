@@ -1,12 +1,15 @@
 def get_fq(wildcards):
     if config["PE_or_SE"] == "SE":
-        return "trimmed_data/{sample}-{unit}_trimmed.fq.gz".format(**wildcards)
+        fq1="trimmed_data/{sample}-{unit}_trimmed.fq.gz".format(**wildcards)
+        return fq1
     elif config["PE_or_SE"] == "PE":
-        return expand("trimmed_data/{sample}_{unit}_R{read}_val_{read}.fq.gz", read=[1, 2], **wildcards)
+        fq1 = "trimmed_data/{sample}_{unit}_R1_val_1.fq.gz".format(**wildcards)
+        fq2 = "trimmed_data/{sample}_{unit}_R2_val_2.fq.gz".format(**wildcards)
+        return [fq1,fq2]
 
 rule star_align:
     input:
-        sample=get_fq
+        get_fq
     output:
         # see STAR manual for additional output files
         "analysis/star/{sample}_{unit}.Aligned.out.bam",
@@ -17,6 +20,7 @@ rule star_align:
         "analysis/star/{sample}_{unit}.SJ.out.tab",
         directory("analysis/star/{sample}_{unit}._STARgenome"),
         directory("analysis/star/{sample}_{unit}._STARpass1"),
+
     log:
         "logs/star/{sample}_{unit}.log"
     params:
@@ -26,4 +30,4 @@ rule star_align:
         extra="--quantMode GeneCounts "
     threads: 24
     wrapper:
-        "0.19.4/bio/star/align"
+        "file:wrappers/star/wrapper.py"

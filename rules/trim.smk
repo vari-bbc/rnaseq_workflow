@@ -24,10 +24,10 @@ rule trim_galore_PE:
 
 rule trim_galore_SE:
     input:
-        reads="raw_reads/{sample}-{unit}.fastq.gz",
+        reads=["raw_reads/{sample}-{unit}.fastq.gz"],
         # this ensures that fastqc occurs before this step
-        fastqc_html="qc/fastqc/{sample}-{unit}_fastqc.html",
-        fastqc_zip="qc/fastqc/{sample}-{unit}_fastqc.zip",
+        fastqc_html=["qc/fastqc/{sample}-{unit}_fastqc.html"],
+        fastqc_zip=["qc/fastqc/{sample}-{unit}_fastqc.zip"],
     output:
         "trimmed_data/{sample}-{unit}_trimmed.fq.gz",
         "trimmed_data/{sample}-{unit}.fastq.gz_trimming_report.txt",
