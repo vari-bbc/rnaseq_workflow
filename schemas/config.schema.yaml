@@ -38,9 +38,9 @@ properties:
     type: string
 
   logfc.filter:
-    type: string
+    type: number
   fdr.filter:
-    type: string
+    type: number
 
 required:
   - units
