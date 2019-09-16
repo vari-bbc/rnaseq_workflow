@@ -21,6 +21,6 @@ snakemake \
 --use-conda \
 
 # generate report
-snakemake \
---report logs/runs/rnaseq-workflow_${TIME}.html
+#snakemake \
+#--report logs/runs/rnaseq-workflow_${TIME}.html
 # -o {cluster.std_oe}
