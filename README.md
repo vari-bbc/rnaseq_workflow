@@ -23,28 +23,29 @@ The following recipe provides established best practices for running and extendi
 ### Step 2: Configure the workflow
 * Modify the config, and any necessary sheets, e.g.:
   * src/units.tsv
-    * sample        - ID of biological sample
-    * group         - comparison group for DE contrast
-    * genotype      - description of genotype
-    * condition     - treatment description
-    * unit          - description of sequencing unit ("lane1" or "flowcell1", etc.)
-    * fq1           - name of read1 fastq
-    * fq2           - name of read2 fastq
-    * strandedness  - strandedness of library prep
+    * **sample**        - ID of biological sample
+    * **group**         - comparison group for DE contrast
+    * **genotype**      - description of genotype
+    * **condition**     - treatment description
+    * **unit**          - description of sequencing unit ("lane1" or "flowcell1", etc.)
+    * **fq1**           - name of read1 fastq
+    * **fq2**           - name of read2 fastq
+    * **strandedness**  - strandedness of library prep
       * typically reverse for Illumina
       * used to identify column to count reads from STAR output.
   * src/contrasts.tsv
-    * contrast      - name for edgeR contrast
-    * groupRelative - "group" defined in units.tsv
-    * groupBaseline - other "group" defined in units.tsv
+    * **contrast**      - name for edgeR contrast
+    * **groupRelative** - "group" defined in units.tsv
+    * **groupBaseline** - other "group" defined in units.tsv
   * src/config.yaml
-    * ref
-      * index - absolute path to your STAR index directory
-      * annotation - absolute path to your genome annotation.gtf
-    * species
-      * short - e.g. "hsapiens"
-      * long  - e.g. "Homo sapiens"
-    * annotation - [Bioconductor annotation package](https://www.bioconductor.org/packages/release/BiocViews.html#___OrgDb) (e.g. "org.Hs.eg.db")
+    * **PE_or_SE** - designates the sequencing protocol as paired-end or single-end. (e.g. "PE")
+    * **ref**
+      * **index** - absolute path to your STAR index directory
+      * **annotation** - absolute path to your genome annotation.gtf
+    * **species**
+      * **short** - e.g. "hsapiens"
+      * **long**  - e.g. "Homo sapiens"
+    * **annotation** - [Bioconductor annotation package](https://www.bioconductor.org/packages/release/BiocViews.html#___OrgDb) (e.g. "org.Hs.eg.db")
 * Move your sequencing reads to `raw_reads/`
 
 ### Step 3: Test the workflow
@@ -56,12 +57,12 @@ Execute from within your project directory as a PBS job using BBC nodes via
 
     qsub -q bbc /src/run_snake.sh
 
-This job script will produce DAG (.txt & .png) and .html with run stats for the workflow to be executed in `runs/bulk_rnaseq-workflow_(TIME)`
+This job script will produce DAG (.txt & .png) and .html with run stats for the workflow to be executed in `logs/runs/bulk_rnaseq-workflow_(TIME)`
 
 ### Step 4: Investigate Results
 Review your results including the run stats:
 
-* `runs/rnaseq-workflow_(TIME).html`
+* `logs/runs/rnaseq-workflow_(TIME).html`
 
 and the differential expression results:
 * `deliverables/edgeR_longReport.html`

@@ -6,7 +6,7 @@ params:
   rmd: ""
 output:
   html_document:
-    dev: svg
+    dev: png
     code_folding: hide
     self_contained: yes
     toc: true
@@ -820,7 +820,7 @@ heatmap = pheatmap(mat, cluster_rows=TRUE,
 
 ```{r DGE_analysis, results='asis',}
 
-contrast_list = read.delim(gsub("src/","",config$contrasts),stringsAsFactors = T ,sep='\t')
+contrast_list = read.delim(paste0("../",config$contrasts),stringsAsFactors = T ,sep='\t')
 
 design = model.matrix(~0 + group, data = meta)
 
@@ -848,7 +848,7 @@ for (i in 1:length(contrast_list$contrast)){
 
     # save results to file
     write_delim(list$table,
-                paste0("deliverables/",contrast.name,".txt"),
+                paste0("../deliverables/",contrast.name,".txt"),
                 delim="\t")
   getwd()
   # Functional Enrichment --------------------------------------------------------
@@ -1008,4 +1008,3 @@ for (i in 1:length(contrast_list$contrast)){
 
 ```
 
-                                                                     

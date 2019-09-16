@@ -10,8 +10,8 @@
 cd ${PBS_O_WORKDIR}
 # save DAG job file with time stamp
 TIME=$(date "+%Y-%m-%d_%H.%M.%S")
-snakemake --use-conda -n > runs/rnaseq-workflow_${TIME}.txt
-snakemake --dag | dot -Tpng > runs/rnaseq-workflow_${TIME}.png
+snakemake --use-conda -n > logs/runs/rnaseq-workflow_${TIME}.txt
+snakemake --dag | dot -Tpng > logs/runs/rnaseq-workflow_${TIME}.png
 
 snakemake \
 -s Snakefile \
@@ -22,5 +22,5 @@ snakemake \
 
 # generate report
 snakemake \
---report runs/rnaseq-workflow_${TIME}.html
+--report logs/runs/rnaseq-workflow_${TIME}.html
 # -o {cluster.std_oe}

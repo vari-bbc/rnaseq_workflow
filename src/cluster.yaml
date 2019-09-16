@@ -6,21 +6,35 @@ __default__:
   mem: 16gb
   std_oe: logs/
 
-fastqc:
+fastqc_SE:
   qname: bbc
   time: 10:00:00
   nodes: 1
   ppn: 1
   mem: 64gb
 
-trim_galore_pe:
+fastqc_PE:
+  qname: bbc
+  time: 10:00:00
+  nodes: 1
+  ppn: 1
+  mem: 64gb
+
+trim_galore_PE:
   qname: bbc
   time: 10:00:00
   nodes: 1
   ppn: 4
   mem: 64gb
 
-align:
+trim_galore_SE:
+  qname: bbc
+  time: 10:00:00
+  nodes: 1
+  ppn: 4
+  mem: 64gb
+
+star_align:
   qname: bbc
   time: 10:00:00
   nodes: 1

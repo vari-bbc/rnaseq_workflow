@@ -4,6 +4,7 @@
 test.png
 
 logs/*
+!logs/runs/.keep
 !logs/.keep
 
 qc/*
@@ -38,3 +39,8 @@ src/r_objects/*
 src/._*
 src/._edgeR_longReport.html
 src/edgeR_longReport_v1.html
+src/symlink.R
+
+#testing files
+test.py
+units_se.tsv

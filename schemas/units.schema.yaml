@@ -38,7 +38,7 @@ properties:
 required:
   - sample
   - group
-  - condition
+  #- condition
   - unit
   - fq1
   #- fq2

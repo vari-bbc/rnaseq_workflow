@@ -15,18 +15,24 @@ validate(units, schema="schemas/units.schema.yaml")
 contrasts = pd.read_table(config["contrasts"]).set_index("contrast", drop=False)
 validate(contrasts, schema="schemas/contrasts.schema.yaml")
 
-
 ##### target rules #####
 
 rule all:
     input:
+        # test
+        # expand("trimmed/{units.sample}-{units.unit}.1.fastq.gz", units=units.itertuples()),
+        # expand("trimmed/{units.sample}-{units.unit}.2.fastq.gz", units=units.itertuples()),
+        # expand("trimmed/{units.sample}-{units.unit}.qc.txt", units=units.itertuples()),
         # symlink
+        # expand("raw_reads/{units.sample}-{units.unit}.fastq.gz", units=units.itertuples()), #SE
         # expand("raw_reads/{units.sample}_{units.unit}_R1.fastq.gz", units=units.itertuples()),
         # expand("raw_reads/{units.sample}_{units.unit}_R2.fastq.gz", units=units.itertuples()),
         # fastqc
+        # expand("qc/fastqc/{units.sample}-{units.unit}_fastqc.html", units=units.itertuples()), #SE
         # expand("qc/fastqc/{units.sample}_{units.unit}_R1_fastqc.html", units=units.itertuples()),
         # expand("qc/fastqc/{units.sample}_{units.unit}_R2_fastqc.html", units=units.itertuples()),
         # Trim_Galore
+        # expand("trimmed_data/{units.sample}-{units.unit}_trimmed.fq.gz", units=units.itertuples()), #SE
         # expand("trimmed_data/{units.sample}_{units.unit}_R1_val_1.fq.gz", units=units.itertuples()),
         # expand("trimmed_data/{units.sample}_{units.unit}_R2_val_2.fq.gz", units=units.itertuples()),
         # STAR alignment
@@ -36,14 +42,15 @@ rule all:
         # expand("analysis/star/{units.sample}_{units.unit}.sorted.bam", units=units.itertuples()),
         # expand("analysis/star/{units.sample}_{units.unit}.sorted.bam.bai", units=units.itertuples()),
         # count_matrix
-        # "deliverables/counts.tsv",
-        # "deliverables/UniquelyMappingRates.txt",
-        # "deliverables/UniquelyMappingReads.txt",
-        # "deliverables/starMatrix.txt",
-        # multiqc
+        "deliverables/counts.tsv",
+        "deliverables/UniquelyMappingRates.txt",
+        "deliverables/UniquelyMappingReads.txt",
+        "deliverables/starMatrix.txt",
+        #multiqc
         # "qc/multiqc_report.html",
         # edger
-        "deliverables/edgeR_longReport.html",
+        # "deliverables/edgeR_longReport.html",
+
 
 ##### load rules #####
 include: "rules/align.smk"
