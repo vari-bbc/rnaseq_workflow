@@ -13,13 +13,13 @@ import os.path
 log = snakemake.log_fmt_shell()
 
 # Check that two input files were supplied
-n_reads = len(snakemake.input.reads)
+n_reads = len([snakemake.input.reads])
 n_fastqc_html = len(snakemake.input.fastqc_html)
 n_fastqc_zip = len(snakemake.input.fastqc_zip)
 
-assert n_reads == 2, "Input must contain 2 fastq files. Given: %r." % n_reads
-assert n_fastqc_html == 2, "Input must contain 2 fastqc html reports. Given: %r." % n_fastqc_html
-assert n_fastqc_zip == 2, "Input must contain 2 fastqc .zip files. Given: %r." % n_fastqc_zip
+assert n_reads == 1, "Input must contain 1 fastq files. Given: %r." % [n_reads,snakemake.input.reads]
+assert n_fastqc_html == 1, "Input must contain 1 fastqc html reports. Given: %r." % n_fastqc_html
+assert n_fastqc_zip == 1, "Input must contain 1 fastqc .zip files. Given: %r." % n_fastqc_zip
 
 # Don't run with `--fastqc` flag
 if "--fastqc" in snakemake.params.get("extra", ""):
@@ -31,7 +31,7 @@ if "--fastqc" in snakemake.params.get("extra", ""):
 
 # Check that four output files were supplied
 m = len(snakemake.output)
-assert m == 4, "Output must contain 4 files. Given: %r." % m
+assert m == 2, "Output must contain 2 files. Given: %r." % m
 
 # Check that all output files are in the same directory
 out_dir = os.path.dirname(snakemake.output[0])
@@ -43,7 +43,6 @@ for file_path in snakemake.output[1:]:
 shell(
     "(trim_galore"
     " {snakemake.params.extra}"
-    " --paired"
     " -o {out_dir}"
     " {snakemake.input.reads})"
     " {log}")

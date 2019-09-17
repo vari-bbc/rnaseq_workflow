@@ -9,6 +9,9 @@ ref:
   # path/to/gtf/file/with/transcripts.gtf
   annotation: 
 
+# are the sequencing reads paired-end ('PE') or single-end ('SE')
+PE_or_SE: SE
+
 ### EdgeR Variables ###
 
 # two-letter species annotation for (e.g. "Hs" <- Human)

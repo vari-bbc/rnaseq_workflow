@@ -1,5 +1,5 @@
 def is_single_end(sample):
-    return pd.isnull(samples.loc[sample, "fq2"])
+    return pd.isnull(units.loc[sample, "fq2"])
 
 def get_fastqc_output():
     html = []

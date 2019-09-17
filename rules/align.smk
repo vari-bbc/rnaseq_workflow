@@ -1,10 +1,15 @@
-rule align:
+def get_fq(wildcards):
+    if config["PE_or_SE"] == "SE":
+        fq1="trimmed_data/{sample}-{unit}_trimmed.fq.gz".format(**wildcards)
+        return fq1
+    elif config["PE_or_SE"] == "PE":
+        fq1 = "trimmed_data/{sample}_{unit}_R1_val_1.fq.gz".format(**wildcards)
+        fq2 = "trimmed_data/{sample}_{unit}_R2_val_2.fq.gz".format(**wildcards)
+        return [fq1,fq2]
+
+rule star_align:
     input:
-        # use a list for multiple fastq files for one sample
-        # usually technical replicates across lanes/flowcells
-        fq1 = "trimmed_data/{sample}_{unit}_R1_val_1.fq.gz",
-        # paired end reads needs to be ordered so each item in the two lists match
-        fq2 = "trimmed_data/{sample}_{unit}_R2_val_2.fq.gz"
+        get_fq
     output:
         # see STAR manual for additional output files
         "analysis/star/{sample}_{unit}.Aligned.out.bam",
@@ -15,13 +20,14 @@ rule align:
         "analysis/star/{sample}_{unit}.SJ.out.tab",
         directory("analysis/star/{sample}_{unit}._STARgenome"),
         directory("analysis/star/{sample}_{unit}._STARpass1"),
+
     log:
         "logs/star/{sample}_{unit}.log"
     params:
         # path to STAR reference genome index
         index=config["ref"]["index"],
         # optional parameters
-        extra="--quantMode GeneCounts"
+        extra="--quantMode GeneCounts "
     threads: 24
     wrapper:
-        "file:wrappers/star"
+        "file:wrappers/star/wrapper.py"
