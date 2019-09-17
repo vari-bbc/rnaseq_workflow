@@ -55,7 +55,7 @@ Test your configuration by performing a dry-run via
 
 Execute from within your project directory as a PBS job using BBC nodes via
 
-    qsub -q bbc /src/run_snake.sh
+    qsub -q bbc src/run_snake.sh
 
 This job script will produce DAG (.txt & .png) and .html with run stats for the workflow to be executed in `logs/runs/bulk_rnaseq-workflow_(TIME)`
 
