@@ -42,14 +42,14 @@ rule all:
         # expand("analysis/star/{units.sample}_{units.unit}.sorted.bam", units=units.itertuples()),
         # expand("analysis/star/{units.sample}_{units.unit}.sorted.bam.bai", units=units.itertuples()),
         # count_matrix
-        "deliverables/counts.tsv",
-        "deliverables/UniquelyMappingRates.txt",
-        "deliverables/UniquelyMappingReads.txt",
-        "deliverables/starMatrix.txt",
+        # "deliverables/counts.tsv",
+        # "deliverables/UniquelyMappingRates.txt",
+        # "deliverables/UniquelyMappingReads.txt",
+        # "deliverables/starMatrix.txt",
         #multiqc
         # "qc/multiqc_report.html",
         # edger
-        # "deliverables/edgeR_longReport.html",
+        "deliverables/edgeR_longReport.html",
 
 
 ##### load rules #####
