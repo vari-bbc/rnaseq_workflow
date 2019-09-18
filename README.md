@@ -10,9 +10,13 @@ This workflow performs a differential expression analysis with STAR and edgeR - 
 
 **NOTE** this workflow is optimized for HPC3 @ Van Andel Institute.
 
-### Step 1: Installation
+### Requirements
 
-make sure you are running [![Snakemake](https://img.shields.io/badge/snakemake-≥5.4.4-green.svg)](https://snakemake.bitbucket.io)
+* Functional installation of conda in your `$PATH`.
+  * Snakemake is invoked from within a conda environment, so you must have conda in your path to activate it.
+  * 
+
+### Step 1: Installation
 
 The following recipe provides established best practices for running and extending this workflow in a reproducible way.
 
