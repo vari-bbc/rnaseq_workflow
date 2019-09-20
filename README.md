@@ -13,8 +13,7 @@ This workflow performs a differential expression analysis with STAR and edgeR - 
 ### Requirements
 
 * Functional installation of conda in your `$PATH`.
-  * Snakemake is invoked from within a conda environment, so you must have conda in your path to activate it.
-  * 
+  * Snakemake is invoked from within a conda environment, so you must have your shell initialized for conda.
 
 ### Step 1: Installation
 
