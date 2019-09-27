@@ -912,6 +912,7 @@ for (i in 1:length(contrast_list$contrast)){
     m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:REACTOME") %>%
       dplyr::select(gs_name, gene_symbol)
     # run fGSEA
+    if(any(is.na(geneRanks))){geneRanks=geneRanks[-which(is.na(geneRanks))]} # remove any NAs which breaks clusterProfiler::GSEA
     gsea_res <- clusterProfiler::GSEA(geneRanks, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea")
     # print results
     if (nrow(gsea_res@result) >=1){
@@ -942,6 +943,7 @@ for (i in 1:length(contrast_list$contrast)){
     m_t2g <- msigdbr(species = config$species$long, category = "C2", subcategory = "CP:KEGG") %>%
       dplyr::select(gs_name, gene_symbol)
     # run fGSEA
+    if(any(is.na(geneRanks))){geneRanks=geneRanks[-which(is.na(geneRanks))]} # remove any NAs which breaks clusterProfiler::GSEA
     gsea_res <- clusterProfiler::GSEA(geneRanks, nPerm= 10000, TERM2GENE = m_t2g, by="fgsea", seed = TRUE)
     nrow(gsea_res@result)
     # print results
