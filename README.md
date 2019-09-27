@@ -10,9 +10,12 @@ This workflow performs a differential expression analysis with STAR and edgeR - 
 
 **NOTE** this workflow is optimized for HPC3 @ Van Andel Institute.
 
-### Step 1: Installation
+### Requirements
 
-make sure you are running [![Snakemake](https://img.shields.io/badge/snakemake-≥5.4.4-green.svg)](https://snakemake.bitbucket.io)
+* Functional installation of conda in your `$PATH`.
+  * Snakemake is invoked from within a conda environment, so you must have your shell initialized for conda.
+
+### Step 1: Installation
 
 The following recipe provides established best practices for running and extending this workflow in a reproducible way.
 
@@ -55,7 +58,7 @@ Test your configuration by performing a dry-run via
 
 Execute from within your project directory as a PBS job using BBC nodes via
 
-    qsub -q bbc /src/run_snake.sh
+    qsub -q bbc src/run_snake.sh
 
 This job script will produce DAG (.txt & .png) and .html with run stats for the workflow to be executed in `logs/runs/bulk_rnaseq-workflow_(TIME)`
 

@@ -5,6 +5,5 @@ rule get_mapping_rates:
     output:
         rates = "deliverables/UniquelyMappingRates.txt",
         reads = "deliverables/UniquelyMappingReads.txt",
-        matrix = "deliverables/starMatrix.txt",
     shell:
-        "bash src/get_star_matrix.sh {output.rates} {output.reads} {output.matrix}"
+        "bash src/alignment_stats.sh {output.rates} {output.reads}"
