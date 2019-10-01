@@ -1,13 +1,14 @@
 #PBS -l walltime=100:00:00
 #PBS -l mem=8gb
 #PBS -l nodes=1:ppn=1
-#PBS -M dean.pettinga@vai.org
-#PBS -m ae
 #PBS -N rnaseq_workflow
 #PBS -o logs/rnaseq_workflow.o
-#PBS -e logs/rnaseq_workflow.o
+#PBS -e logs/rnaseq_workflow.e
 
 cd ${PBS_O_WORKDIR}
+conda init bash
+source ~/.bashrc
+conda activate /secondary/projects/bbc/tools/workflow_tools/miniconda3/envs/snakemake
 # save DAG job file with time stamp
 TIME=$(date "+%Y-%m-%d_%H.%M.%S")
 snakemake --use-conda -n > logs/runs/rnaseq-workflow_${TIME}.txt
