@@ -2,7 +2,7 @@ rule edgeR_longReport:
     input:
         "deliverables/UniquelyMappingRates.txt",
         "deliverables/UniquelyMappingReads.txt",
-        "deliverables/starMatrix.txt",
+        #"deliverables/starMatrix.txt",
         "deliverables/counts.tsv",
     output:
         # R Objects - also used for edgeR_shortReport
