@@ -7,12 +7,15 @@
 #PBS -e logs/rnaseq_workflow.e
 
 cd ${PBS_O_WORKDIR}
-
 # export Singularity 3.4.0-1 installed on node065 to $PATH.
 # snakemake should now automatically call Singularity 3.4.0-1
 PATH=/usr/local/bin/:$PATH
 
-conda activate snakemake
+
+conda init bash
+source ~/.bashrc
+conda activate /secondary/projects/bbc/tools/workflow_tools/miniconda3/envs/snakemake
+
 # save DAG job file with time stamp
 TIME=$(date "+%Y-%m-%d_%H.%M.%S")
 snakemake --use-conda -n > logs/runs/rnaseq-workflow_${TIME}.txt
