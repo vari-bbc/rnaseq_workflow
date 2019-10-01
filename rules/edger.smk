@@ -2,7 +2,7 @@ rule edgeR_longReport:
     input:
         "deliverables/UniquelyMappingRates.txt",
         "deliverables/UniquelyMappingReads.txt",
-        "deliverables/starMatrix.txt",
+        #"deliverables/starMatrix.txt",
         "deliverables/counts.tsv",
     output:
         # R Objects - also used for edgeR_shortReport
@@ -22,8 +22,10 @@ rule edgeR_longReport:
         directory("src/edgeR_longReport_files/"),
         # HTML report
         "deliverables/edgeR_longReport.html",
-    conda:
-        "../envs/R.yaml"
+    # conda:
+    #     "../envs/R.yaml"
+    singularity:
+        "shub://deanpettinga/edger-singularity"
     shell:
         '''
         Rscript -e 'rmarkdown::render("src/edgeR_longReport.Rmd",output_format="html_document")'
