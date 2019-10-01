@@ -28,6 +28,8 @@ rule symlink_SE:
         # expand("raw_reads/{sample}_{unit}_R1.fastq.gz", sample=set(units["sample"].tolist()), unit=set(units["unit"].tolist())),
         # expand("raw_reads/{sample}_{unit}_R2.fastq.gz", sample=set(units["sample"].tolist()), unit=set(units["unit"].tolist())),
     priority: 2
+    conda:
+        "../envs/R.yaml"
     shell:
         "Rscript src/symlink_SE.R"
 
@@ -38,5 +40,7 @@ rule symlink_PE:
         expand("raw_reads/{sample}_{unit}_R1.fastq.gz", sample=set(units["sample"].tolist()), unit=set(units["unit"].tolist())),
         expand("raw_reads/{sample}_{unit}_R2.fastq.gz", sample=set(units["sample"].tolist()), unit=set(units["unit"].tolist())),
     priority: 2
+    conda:
+        "../envs/R.yaml"
     shell:
         "Rscript src/symlink.R"

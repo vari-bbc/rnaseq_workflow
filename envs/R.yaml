@@ -4,3 +4,4 @@ channels:
 dependencies:
   - r-base ==3.6.0
   - r-rmarkdown
+  - r-tidyverse
