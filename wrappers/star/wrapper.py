@@ -38,7 +38,7 @@ shell("STAR "
     "--readFilesIn {input_str} "
     "--twopassMode Basic "
     "{readcmd} "
-    "--outSAMtype BAM Unsorted "
+    "--outSAMtype BAM SortedByCoordinate "
     "--outFileNamePrefix {outprefix}. "
     "--outStd Log "
     "{log}")
