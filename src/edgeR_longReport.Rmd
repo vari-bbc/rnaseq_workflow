@@ -368,7 +368,7 @@ return(ranks)
 
 ## Methods
 
-Raw data were quality controlled with FastQC. The reads have high quality for all samples. Adapters were removed with Trimgalore and mapped with STAR[1] which outputs counts for all genomic features/tags/genes (option: --quantMode GeneCounts). These are the raw data imported into this R pipeline which uses the edgeR[2] framework for RNAseq analysis (see 'Differential Expression' for more details). First, however, genes with low counts and unlikely to be translated (biologically meaningful) and also without enough counts for a reliable statistical judgement are removed. We require genes to have greater than (10/minimum sample library size in millions) counts per million.
+Raw data were quality controlled with FastQC. The reads have high quality for all samples. Adapters were removed with Trimgalore and mapped with STAR[1] which outputs counts for all genomic features/tags/genes (option: --quantMode GeneCounts). These are the raw data imported into this R pipeline which uses the edgeR[2] framework for RNAseq analysis (see 'Differential Expression' for more details). First, however, genes with low counts and unlikely to be translated (biologically meaningful) and also without enough counts for a reliable statistical judgement are removed. We require genes to have greater than (1/minimum sample library size in millions) counts per million.
 
 The DGE analysis was performed using the edgeR framework. The TMM normalization for library size and composition bias was applied to the count-filtered data (not the VOOM normalized). This was followed by the models indicated in each contrast tab and tested using the quasi-likelihood t-test relative to a threshold (TREAT)[4] using a log2(1.5) threshold for differential expression between groups. P-values were then adjusted using the BH method. Genes were termed significant with FDR < 0.05. These significant genes were used in the Functional Enrichment using the ClusterProfiler R package. Both the Reactome Pathway and Gene Ontologies were tested for enrichment.
 
@@ -575,8 +575,8 @@ rd %>% ggplot(aes(count)) + geom_histogram(binwidth=1) + ggtitle('Raw Data Gene 
 # Filter 1
 #
 sample.cpm.filter = min(plyr::count(meta$group)$freq) # How many samples must meet the cpm threshhold (# of samples in smallest group)
-cpm.filter = 10/min(lib_sizes$millions_of_counts) # feature cpm threshold
-cat('Derived the cpm filter from a minimum of 10 counts in the smallest library\n')
+cpm.filter = 1/min(lib_sizes$millions_of_counts) # feature cpm threshold
+cat('Derived the cpm filter from a minimum of 1 cpm in the smallest library\n')
 cat('Filters:\nminimum',cpm.filter,'cpm in ',sample.cpm.filter,'sample\n')
 keep <- rowSums(cpm(raw.data.dgelist)>cpm.filter) >= sample.cpm.filter
 filtered.data <- raw.data.dgelist[keep, , keep.lib.sizes=FALSE]
