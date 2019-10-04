@@ -885,19 +885,22 @@ for (i in 1:length(contrast_list$contrast)){
 
   # plot top 30 for each GO category
   cat("\n\n##### GO: Biological Process \n\n")
-  print(enrichplot::dotplot(GO.BP, showCategory=30) + ggtitle("DotPlot - GO:Biological Process"))
-  print(enrichplot::emapplot(GO.BP) + ggtitle("EnrichmentMap - GO:Biological Process"))
-  #print(cnetplot(GO.BP, foldChange=geneList) + ggtitle("GO:Biological Process"))
+  if (nrow(GO.BP@result %>% dplyr::filter(p.adjust < 0.05)) > 0){
+    print(enrichplot::dotplot(GO.BP, showCategory=30) + ggtitle("DotPlot - GO:Biological Process"))
+    print(enrichplot::emapplot(GO.BP) + ggtitle("EnrichmentMap - GO:Biological Process"))
+  }else{print("no significant results")}
 
   cat("\n\n##### GO: Molecular Function \n\n")
-  print(enrichplot::dotplot(GO.MF, showCategory=30) + ggtitle("DotPlot - GO:Molecular Function"))
-  print(enrichplot::emapplot(GO.MF) + ggtitle("EnrichmentMap - GO:Molecular Function"))
-  #cnetplot(GO.MF, foldChange=geneList) + ggtitle("GO:Molecular Function")
+  if (nrow(GO.MF@result %>% dplyr::filter(p.adjust < 0.05)) > 0){
+    print(enrichplot::dotplot(GO.MF, showCategory=30) + ggtitle("DotPlot - GO:Molecular Function"))
+    print(enrichplot::emapplot(GO.MF) + ggtitle("EnrichmentMap - GO:Molecular Function"))
+  }else{print("no significant results")}
 
   cat("\n\n##### GO: Cellular Compartment \n\n")
-  print(enrichplot::dotplot(GO.CC, showCategory=30) + ggtitle("DotPlot - GO:Cellular Compartment"))
-  print(enrichplot::emapplot(GO.CC) + ggtitle("EnrichmentMap - GO:Molecular Function"))
-  #cnetplot(GO.CC, foldChange=geneList) + ggtitle("GO:Molecular Function")
+  if (nrow(GO.CC@result %>% dplyr::filter(p.adjust < 0.05)) > 0){
+    print(enrichplot::dotplot(GO.CC, showCategory=30) + ggtitle("DotPlot - GO:Cellular Compartment"))
+    print(enrichplot::emapplot(GO.CC) + ggtitle("EnrichmentMap - GO:Molecular Function"))
+  }else{print("no significant results")}
 
   ## GSEA: Reactome and KEGG ---------------------------------
   cat("\n\n#### GSEA \n\n")
