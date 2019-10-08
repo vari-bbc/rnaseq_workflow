@@ -49,8 +49,14 @@ rule all:
         #multiqc
         # "qc/multiqc_report.html",
         # edger
-        "deliverables/edgeR_longReport.html",
+        #"deliverables/edgeR_longReport.html",
+        expand("raw_reads/{sample}.fastq.gz", sample=set(units["sample"].tolist()))
 
+rule merge_SE:
+    input:
+        "raw_reads/{sample}-{unit}.fastq.gz",
+    output:
+        "raw_reads/{sample}.fastq.gz"
 
 ##### load rules #####
 include: "rules/align.smk"
