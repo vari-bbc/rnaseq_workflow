@@ -1,15 +1,15 @@
-def get_fq(wildcards):
+def starAlign_input(wildcards):
     if config["PE_or_SE"] == "SE":
-        fq1="trimmed_data/{sample}_trimmed.fq.gz".format(**wildcards)
+        fq1="trimmed_data/{sample}-SE_trimmed.fq.gz".format(**wildcards)
         return fq1
     elif config["PE_or_SE"] == "PE":
-        fq1 = "trimmed_data/{sample}_R1_val_1.fq.gz".format(**wildcards)
-        fq2 = "trimmed_data/{sample}_R2_val_2.fq.gz".format(**wildcards)
+        fq1 = "trimmed_data/{sample}-R1_val_1.fq.gz".format(**wildcards)
+        fq2 = "trimmed_data/{sample}-R2_val_2.fq.gz".format(**wildcards)
         return [fq1,fq2]
 
-rule star_align:
+rule starAlign:
     input:
-        get_fq
+        starAlign_input
     output:
         # see STAR manual for additional output files
         "analysis/star/{sample}.Aligned.out.bam",

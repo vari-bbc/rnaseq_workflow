@@ -19,5 +19,16 @@ for (i in 1:nrow(units)){
                   paste0("raw_reads/",units[i,]$sample,"_",units[i,]$unit, "_R2.fastq.gz")))
     # enable snakemake to delete this link
     system(paste0("touch -h ","raw_reads/",units[i,]$sample,"_",units[i,]$unit, "_R2.fastq.gz"))
-    }
   }
+}
+
+# Now merge lanes
+for (samp in (units %>% dplyr::select("sample") %>% distinct())$sample){
+  print(paste("merging reads for:",samp))
+  system(paste0("cat ",
+                gsub(toString(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq1)),pattern=",", replacement = ""),
+                " > ", "raw_reads/", samp, "R1.fastq.gz"))
+  system(paste0("cat ",
+                gsub(toString(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq2)),pattern=",", replacement = ""),
+                " > ", "raw_reads/", samp, "R2.fastq.gz"))
+}

@@ -20,12 +20,15 @@ validate(contrasts, schema="schemas/contrasts.schema.yaml")
 rule all:
     input:
         # mergeLanesAndRename
-        expand("raw_reads/{sample}-R1.fastq.gz",sample=set(units["sample"].tolist())),
-        expand("raw_reads/{sample}-R2.fastq.gz",sample=set(units["sample"].tolist())),
+            #PE
+        # expand("raw_reads/{sample}-R1.fastq.gz",sample=set(units["sample"].tolist())),
+        # expand("raw_reads/{sample}-R2.fastq.gz",sample=set(units["sample"].tolist())),
+            #SE
+        #expand("raw_reads/{units.sample}.fastq.gz", units=units.itertuples()),
         # fastqc
-        # expand("qc/fastqc/{units.sample}-{units.unit}_fastqc.html", units=units.itertuples()), #SE
-        # expand("qc/fastqc/{units.sample}_{units.unit}_R1_fastqc.html", units=units.itertuples()),
-        # expand("qc/fastqc/{units.sample}_{units.unit}_R2_fastqc.html", units=units.itertuples()),
+        # expand("qc/fastqc/{units.sample}_fastqc.html", units=units.itertuples()),
+        # expand("qc/fastqc/{units.sample}-R1_fastqc.html", units=units.itertuples()),
+        # expand("qc/fastqc/{units.sample}-R2_fastqc.html", units=units.itertuples()),
         # Trim_Galore
         # expand("trimmed_data/{units.sample}-{units.unit}_trimmed.fq.gz", units=units.itertuples()), #SE
         # expand("trimmed_data/{units.sample}_{units.unit}_R1_val_1.fq.gz", units=units.itertuples()),
@@ -33,13 +36,12 @@ rule all:
         # STAR alignment
         # expand("analysis/star/{units.sample}.Aligned.out.bam", units=units.itertuples()),
         # expand("analysis/star/{units.sample}.Log.out", units=units.itertuples()),
-        #expand("raw_reads/{sample}.fastq.gz", sample=set(units["sample"].tolist()))
-
+        # multiQC
+        "qc/multiqc_report.html"
 
 ##### load rules #####
 include: "rules/mergeLanesAndRename.smk"
-include: "rules/align.smk"
-include: "rules/common.smk"
 include: "rules/fastqc.smk"
-include: "rules/multiqc.smk"
 include: "rules/trim.smk"
+include: "rules/align.smk"
+include: "rules/multiqc.smk"

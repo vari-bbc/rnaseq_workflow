@@ -1,14 +1,18 @@
+multiqc_input = []
+if config["PE_or_SE"] =="SE":
+    multiqc_input.append(expand("qc/fastqc/{units.sample}-SE_fastqc.html", units=units.itertuples()))
+    multiqc_input.append(expand("qc/fastqc/{units.sample}-SE_fastqc.zip", units=units.itertuples()))
+    multiqc_input.append(expand("trimmed_data/{units.sample}-SE.fastq.gz_trimming_report.txt", units=units.itertuples()))
+    multiqc_input.append(expand("analysis/star/{units.sample}.Log.final.out", units=units.itertuples()))
+elif config["PE_or_SE"] =="PE":
+    multiqc_input.append(expand("qc/fastqc/{units.sample}-{read}_fastqc.html", units=units.itertuples(), read=["R1","R2"]))
+    multiqc_input.append(expand("qc/fastqc/{units.sample}-{read}_fastqc.zip", units=units.itertuples(), read=["R1","R2"]))
+    multiqc_input.append(expand("trimmed_data/{units.sample}-{read}.fastq.gz_trimming_report.txt", units=units.itertuples(), read=["R1","R2"]))
+    multiqc_input.append(expand("analysis/star/{units.sample}.Log.final.out", units=units.itertuples()))
+
 rule multiqc:
     input:
-        # fastqc raw data
-        expand("qc/fastqc/{units.sample}_{units.unit}_R{read}_fastqc.html", read=["1","2"], units=units.itertuples()),
-        expand("qc/fastqc/{units.sample}_{units.unit}_R{read}_fastqc.zip", read=["1","2"], units=units.itertuples()),
-        # trim_galore data----
-            # cutadapt report from trim_galore
-        expand("trimmed_data/{units.sample}_{units.unit}_R{read}.fastq.gz_trimming_report.txt", read=["1","2"], units=units.itertuples()),
-            # fastqc on trim_galore
-        # STAR alingments
-        expand("analysis/star/{units.sample}_{units.unit}.Log.final.out", units=units.itertuples()),
+        multiqc_input
     params:
         # skip the pass1 from STAR
         "--ignore '*._STARpass1/*'"
