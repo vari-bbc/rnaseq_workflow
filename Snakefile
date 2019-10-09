@@ -19,14 +19,9 @@ validate(contrasts, schema="schemas/contrasts.schema.yaml")
 
 rule all:
     input:
-        # test
-        # expand("trimmed/{units.sample}-{units.unit}.1.fastq.gz", units=units.itertuples()),
-        # expand("trimmed/{units.sample}-{units.unit}.2.fastq.gz", units=units.itertuples()),
-        # expand("trimmed/{units.sample}-{units.unit}.qc.txt", units=units.itertuples()),
-        # symlink
-        # expand("raw_reads/{units.sample}-{units.unit}.fastq.gz", units=units.itertuples()), #SE
-        # expand("raw_reads/{units.sample}_{units.unit}_R1.fastq.gz", units=units.itertuples()),
-        # expand("raw_reads/{units.sample}_{units.unit}_R2.fastq.gz", units=units.itertuples()),
+        # mergeLanesAndRename
+        expand("raw_reads/{sample}-R1.fastq.gz",sample=set(units["sample"].tolist())),
+        expand("raw_reads/{sample}-R2.fastq.gz",sample=set(units["sample"].tolist())),
         # fastqc
         # expand("qc/fastqc/{units.sample}-{units.unit}_fastqc.html", units=units.itertuples()), #SE
         # expand("qc/fastqc/{units.sample}_{units.unit}_R1_fastqc.html", units=units.itertuples()),
@@ -36,36 +31,15 @@ rule all:
         # expand("trimmed_data/{units.sample}_{units.unit}_R1_val_1.fq.gz", units=units.itertuples()),
         # expand("trimmed_data/{units.sample}_{units.unit}_R2_val_2.fq.gz", units=units.itertuples()),
         # STAR alignment
-        # expand("analysis/star/{units.sample}_{units.unit}.Aligned.out.bam", units=units.itertuples()),
-        # expand("analysis/star/{units.sample}_{units.unit}.Log.out", units=units.itertuples()),
-        # sort_index_bam
-        # expand("analysis/star/{units.sample}_{units.unit}.sorted.bam", units=units.itertuples()),
-        # expand("analysis/star/{units.sample}_{units.unit}.sorted.bam.bai", units=units.itertuples()),
-        # count_matrix
-        # "deliverables/counts.tsv",
-        # "deliverables/UniquelyMappingRates.txt",
-        # "deliverables/UniquelyMappingReads.txt",
-        # "deliverables/starMatrix.txt",
-        #multiqc
-        # "qc/multiqc_report.html",
-        # edger
-        #"deliverables/edgeR_longReport.html",
-        expand("raw_reads/{sample}.fastq.gz", sample=set(units["sample"].tolist()))
+        # expand("analysis/star/{units.sample}.Aligned.out.bam", units=units.itertuples()),
+        # expand("analysis/star/{units.sample}.Log.out", units=units.itertuples()),
+        #expand("raw_reads/{sample}.fastq.gz", sample=set(units["sample"].tolist()))
 
-rule merge_SE:
-    input:
-        "raw_reads/{sample}-{unit}.fastq.gz",
-    output:
-        "raw_reads/{sample}.fastq.gz"
 
 ##### load rules #####
+include: "rules/mergeLanesAndRename.smk"
 include: "rules/align.smk"
 include: "rules/common.smk"
-include: "rules/count_matrix.smk"
-include: "rules/edger.smk"
 include: "rules/fastqc.smk"
-include: "rules/get_mapping_rates.smk"
 include: "rules/multiqc.smk"
-include: "rules/sort_index_bam.smk"
-include: "rules/symlink.smk"
 include: "rules/trim.smk"
