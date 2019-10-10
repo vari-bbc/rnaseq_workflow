@@ -12,7 +12,7 @@ rule starAlign:
         starAlign_input
     output:
         # see STAR manual for additional output files
-        "analysis/star/{sample}.Aligned.out.bam",
+        "analysis/star/{sample}.Aligned.sortedByCoord.out.bam",
         "analysis/star/{sample}.Log.final.out",
         "analysis/star/{sample}.Log.out",
         "analysis/star/{sample}.Log.progress.out",

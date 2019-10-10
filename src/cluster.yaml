@@ -34,7 +34,7 @@ trim_galore_SE:
   ppn: 4
   mem: 64gb
 
-star_align:
+starAlign:
   qname: bbc
   time: 10:00:00
   nodes: 1
