@@ -1,4 +1,4 @@
-def starAlign_input(wildcards):
+adef STAR_input(wildcards):
     if config["PE_or_SE"] == "SE":
         fq1="trimmed_data/{sample}-SE_trimmed.fq.gz".format(**wildcards)
         return fq1
@@ -7,9 +7,9 @@ def starAlign_input(wildcards):
         fq2 = "trimmed_data/{sample}-R2_val_2.fq.gz".format(**wildcards)
         return [fq1,fq2]
 
-rule starAlign:
+rule STAR:
     input:
-        starAlign_input
+        STAR_input
     output:
         # see STAR manual for additional output files
         "analysis/star/{sample}.Aligned.sortedByCoord.out.bam",
