@@ -1,4 +1,4 @@
-adef STAR_input(wildcards):
+def STAR_input(wildcards):
     if config["PE_or_SE"] == "SE":
         fq1="trimmed_data/{sample}-SE_trimmed.fq.gz".format(**wildcards)
         return fq1

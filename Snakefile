@@ -42,6 +42,6 @@ rule all:
 ##### load rules #####
 include: "rules/mergeLanesAndRename.smk"
 include: "rules/fastqc.smk"
-include: "rules/trim.smk"
-include: "rules/align.smk"
+include: "rules/trim_galore.smk"
+include: "rules/STAR.smk"
 include: "rules/multiqc.smk"
