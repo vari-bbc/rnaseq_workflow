@@ -16,7 +16,7 @@ rule mergeLanesAndRename_SE:
     conda:
         "../envs/R.yaml"
     script:
-        "src/mergeLanesAndRename.R"
+        "mergeLanesAndRename.R"
 
 rule mergeLanesAndRename_PE:
     input:
