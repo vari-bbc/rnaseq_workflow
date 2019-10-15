@@ -1,2 +1,3 @@
-contrast	groupRelative	groupBaseline
-KO_vs_WT	LKB1_KO	LKB1_WT
+units_column	relative	baseline
+group	LKB1_KO	LKB1_WT
+group	LKB1_WT	LKB1_KO
