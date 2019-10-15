@@ -13,11 +13,9 @@ if (config$PE_or_SE=="SE"){
   # merge SE reads
   system(paste0("cat ",
                 gsub(toString(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq1)),pattern=",", replacement = ""),
-                " > ", "raw_reads/", samp, ".fastq.gz"))
-}
-
+                " > ", "raw_reads/", samp, "-SE.fastq.gz"))
+} else if (config$PE_or_SE=="PE"){
 # if this is a PE experiment
-if (config$PE_or_SE=="PE"){
   # merge R1 reads
   system(paste0("cat ",
                 gsub(toString(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq1)),pattern=",", replacement = ""),
@@ -26,4 +24,6 @@ if (config$PE_or_SE=="PE"){
   system(paste0("cat ",
                 gsub(toString(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq2)),pattern=",", replacement = ""),
                 " > ", "raw_reads/", samp, "-R2.fastq.gz"))
+} else {
+  stop("Error in mergeLanesAndRename.R. Neither SE nor PE specified.")
 }

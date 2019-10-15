@@ -1,25 +1,22 @@
 sample	group	genotype	condition	unit	fq1	fq2	strandedness
-RJ_RNA_1	LKB1_KO	LKB1-/-	LKB1-/-	lane1	RJ_RNA_1_S1_L001_R1_001.fastq.gz	RJ_RNA_1_S1_L001_R2_001.fastq.gz	reverse
-RJ_RNA_1	LKB1_KO	LKB1-/-	LKB1-/-	lane2	RJ_RNA_1_S1_L002_R1_001.fastq.gz	RJ_RNA_1_S1_L002_R2_001.fastq.gz	reverse
-RJ_RNA_1	LKB1_KO	LKB1-/-	LKB1-/-	lane3	RJ_RNA_1_S1_L003_R1_001.fastq.gz	RJ_RNA_1_S1_L003_R2_001.fastq.gz	reverse
-RJ_RNA_1	LKB1_KO	LKB1-/-	LKB1-/-	lane4	RJ_RNA_1_S1_L004_R1_001.fastq.gz	RJ_RNA_1_S1_L004_R2_001.fastq.gz	reverse
-RJ_RNA_6	LKB1_WT	LKB1+/+	LKB1+/+	lane1	RJ_RNA_6_S6_L001_R1_001.fastq.gz	RJ_RNA_6_S6_L001_R2_001.fastq.gz	reverse
-RJ_RNA_6	LKB1_WT	LKB1+/+	LKB1+/+	lane2	RJ_RNA_6_S6_L002_R1_001.fastq.gz	RJ_RNA_6_S6_L002_R2_001.fastq.gz	reverse
-RJ_RNA_6	LKB1_WT	LKB1+/+	LKB1+/+	lane3	RJ_RNA_6_S6_L003_R1_001.fastq.gz	RJ_RNA_6_S6_L003_R2_001.fastq.gz	reverse
-RJ_RNA_6	LKB1_WT	LKB1+/+	LKB1+/+	lane4	RJ_RNA_6_S6_L004_R1_001.fastq.gz	RJ_RNA_6_S6_L004_R2_001.fastq.gz	reverse
-RJ_RNA_11	LKB1_KO	LKB1-/-	LKB1-/-	lane1	RJ_RNA_11_S11_L001_R1_001.fastq.gz	RJ_RNA_11_S11_L001_R2_001.fastq.gz	reverse
-RJ_RNA_11	LKB1_KO	LKB1-/-	LKB1-/-	lane2	RJ_RNA_11_S11_L002_R1_001.fastq.gz	RJ_RNA_11_S11_L002_R2_001.fastq.gz	reverse
-RJ_RNA_11	LKB1_KO	LKB1-/-	LKB1-/-	lane3	RJ_RNA_11_S11_L003_R1_001.fastq.gz	RJ_RNA_11_S11_L003_R2_001.fastq.gz	reverse
-RJ_RNA_11	LKB1_KO	LKB1-/-	LKB1-/-	lane4	RJ_RNA_11_S11_L004_R1_001.fastq.gz	RJ_RNA_11_S11_L004_R2_001.fastq.gz	reverse
-RJ_RNA_16	LKB1_WT	LKB1+/+	LKB1+/+	lane1	RJ_RNA_16_S2_L001_R1_001.fastq.gz	RJ_RNA_16_S2_L001_R2_001.fastq.gz	reverse
-RJ_RNA_16	LKB1_WT	LKB1+/+	LKB1+/+	lane2	RJ_RNA_16_S2_L002_R1_001.fastq.gz	RJ_RNA_16_S2_L002_R2_001.fastq.gz	reverse
-RJ_RNA_16	LKB1_WT	LKB1+/+	LKB1+/+	lane3	RJ_RNA_16_S2_L003_R1_001.fastq.gz	RJ_RNA_16_S2_L003_R2_001.fastq.gz	reverse
-RJ_RNA_16	LKB1_WT	LKB1+/+	LKB1+/+	lane4	RJ_RNA_16_S2_L004_R1_001.fastq.gz	RJ_RNA_16_S2_L004_R2_001.fastq.gz	reverse
-RJ_RNA_21	LKB1_KO	LKB1-/-	LKB1-/-	lane1	RJ_RNA_21_S7_L001_R1_001.fastq.gz	RJ_RNA_21_S7_L001_R2_001.fastq.gz	reverse
-RJ_RNA_21	LKB1_KO	LKB1-/-	LKB1-/-	lane2	RJ_RNA_21_S7_L002_R1_001.fastq.gz	RJ_RNA_21_S7_L002_R2_001.fastq.gz	reverse
-RJ_RNA_21	LKB1_KO	LKB1-/-	LKB1-/-	lane3	RJ_RNA_21_S7_L003_R1_001.fastq.gz	RJ_RNA_21_S7_L003_R2_001.fastq.gz	reverse
-RJ_RNA_21	LKB1_KO	LKB1-/-	LKB1-/-	lane4	RJ_RNA_21_S7_L004_R1_001.fastq.gz	RJ_RNA_21_S7_L004_R2_001.fastq.gz	reverse
-RJ_RNA_26	LKB1_WT	LKB1+/+	LKB1+/+	lane1	RJ_RNA_26_S12_L001_R1_001.fastq.gz	RJ_RNA_26_S12_L001_R2_001.fastq.gz	reverse
-RJ_RNA_26	LKB1_WT	LKB1+/+	LKB1+/+	lane2	RJ_RNA_26_S12_L002_R1_001.fastq.gz	RJ_RNA_26_S12_L002_R2_001.fastq.gz	reverse
-RJ_RNA_26	LKB1_WT	LKB1+/+	LKB1+/+	lane3	RJ_RNA_26_S12_L003_R1_001.fastq.gz	RJ_RNA_26_S12_L003_R2_001.fastq.gz	reverse
-RJ_RNA_26	LKB1_WT	LKB1+/+	LKB1+/+	lane4	RJ_RNA_26_S12_L004_R1_001.fastq.gz	RJ_RNA_26_S12_L004_R2_001.fastq.gz	reverse
+RNANVSA	N_RProx	N_R	Prox	lane1	RNANVSA_L000_R1_001.fastq.gz		reverse
+RNANVSB	N_RProx	N_R	Prox	lane1	RNANVSB_L000_R1_001.fastq.gz		reverse
+RNANVSC	R_wtProx	R_wt	Prox	lane1	RNANVSC_L000_R1_001.fastq.gz		reverse
+RNANVSD	R_wtProx	R_wt	Prox	lane1	RNANVSD_L000_R1_001.fastq.gz		reverse
+RNANVSE	N_RProx	N_R	Prox	lane1	RNANVSE_L000_R1_001.fastq.gz		reverse
+RNANVSF	wt_wtProx	wt_wt	Prox	lane1	RNANVSF_L000_R1_001.fastq.gz		reverse
+RNANVSG	N_wtProx	N_wt	Prox	lane1	RNANVSG_L000_R1_001.fastq.gz		reverse
+RNANVSH	wt_wtProx	wt_wt	Prox	lane1	RNANVSH_L000_R1_001.fastq.gz		reverse
+RNANVSI	N_wtProx	N_wt	Prox	lane1	RNANVSI_L000_R1_001.fastq.gz		reverse
+RNANVSK	N_RProx	N_R	Prox	lane1	RNANVSK_L000_R1_001.fastq.gz		reverse
+RNANVSL	N_RProx	N_R	Prox	lane1	RNANVSL_L000_R1_001.fastq.gz		reverse
+RNANVSM	R_wtProx	R_wt	Prox	lane1	RNANVSM_L000_R1_001.fastq.gz		reverse
+RNANVSN	R_wtProx	R_wt	Prox	lane1	RNANVSN_L000_R1_001.fastq.gz		reverse
+RNANVSO	N_wtProx	N_wt	Prox	lane1	RNANVSO_L000_R1_001.fastq.gz		reverse
+RNANVSP	wt_wtProx	wt_wt	Prox	lane1	RNANVSP_L000_R1_001.fastq.gz		reverse
+RNANVSR	wt_wtProx	wt_wt	Prox	lane1	RNANVSR_L000_R1_001.fastq.gz		reverse
+RNANVSS	N_wtProx	N_wt	Prox	lane1	RNANVSS_L000_R1_001.fastq.gz		reverse
+RNANVST	N_wtProx	N_wt	Prox	lane1	RNANVST_L000_R1_001.fastq.gz		reverse
+RNANVSV	wt_wtMedial	wt_wt	Medial	lane1	RNANVSV_L000_R1_001.fastq.gz		reverse
+RNANVSW	wt_wtMedial	wt_wt	Medial	lane1	RNANVSW_L000_R1_001.fastq.gz		reverse
+RNANVSX	wt_wtMedial	wt_wt	Medial	lane1	RNANVSX_L000_R1_001.fastq.gz		reverse

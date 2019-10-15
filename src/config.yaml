@@ -10,7 +10,7 @@ ref:
   annotation: /primary/projects/bbc/references/mouse/annotation/mm10/ensembl/Mus_musculus.GRCm38.86.gtf
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
-PE_or_SE: PE
+PE_or_SE: SE
 
 ### EdgeR Variables ###
 
@@ -23,5 +23,5 @@ species:
 # org.db package used for annotation (https://www.bioconductor.org/packages/release/BiocViews.html#___OrgDb)
 annotation: org.Mm.eg.db
 # differential expression cutoff values
-logfc.filter: 0.58
+logfc.filter: 1
 fdr.filter: 0.05
