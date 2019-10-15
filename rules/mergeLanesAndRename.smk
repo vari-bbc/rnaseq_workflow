@@ -12,11 +12,9 @@ rule mergeLanesAndRename_SE:
     output:
         "raw_reads/{sample}-SE.fastq.gz"
     log:
-        "logs/mergeLanesAndRename_SE.{sample}.log"
+        "logs/mergeLanesAndRename/mergeLanesAndRename_SE-{sample}.log"
     conda:
         "../envs/R.yaml"
-    log:
-        "logs/mergeLanesAndRename_SE-{sample}.log"
     script:
         "mergeLanesAndRename.R"
 
@@ -26,7 +24,7 @@ rule mergeLanesAndRename_PE:
         "raw_reads/{sample}-R1.fastq.gz",
         "raw_reads/{sample}-R2.fastq.gz"
     log:
-        "logs/mergeLanesAndRename_PE-{sample}.log"
+        "logs/mergeLanesAndRename/mergeLanesAndRename_PE-{sample}.log"
     conda:
         "../envs/R.yaml"
     script:
