@@ -15,6 +15,8 @@ rule mergeLanesAndRename_SE:
         "logs/mergeLanesAndRename_SE.{sample}.log"
     conda:
         "../envs/R.yaml"
+    log:
+        "logs/mergeLanesAndRename_SE-{sample}.log"
     script:
         "mergeLanesAndRename.R"
 
