@@ -1,2 +1,4 @@
 contrast	groupRelative	groupBaseline
-KO_vs_WT	LKB1_KO	LKB1_WT
+NR_vs_WT	N_R	wt_wt
+Nhet_vs_WT	N_wt	wt_wt
+Rhet_vs_WT	R_wt	wt_wt
