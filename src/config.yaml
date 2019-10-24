@@ -23,5 +23,5 @@ species:
 # org.db package used for annotation (https://www.bioconductor.org/packages/release/BiocViews.html#___OrgDb)
 annotation: org.Mm.eg.db
 # differential expression cutoff values
-logfc.filter: 0.58
+logfc.filter: 1
 fdr.filter: 0.05

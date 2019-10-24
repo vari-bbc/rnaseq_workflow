@@ -1,6 +1,5 @@
 #PBS -l walltime=100:00:00
 #PBS -l mem=8gb
-#PBS -l nodes=node065:ppn=1
 #PBS -m ae
 #PBS -N rnaseq_workflow
 #PBS -o logs/rnaseq_workflow.o
@@ -28,7 +27,8 @@ snakemake \
 --cluster-config src/cluster.yaml \
 --cluster 'qsub -q {cluster.qname} -l nodes={cluster.nodes}:ppn={cluster.ppn} -l mem={cluster.mem} -l walltime={cluster.time} -m ea -o error_files/ -e error_files/' \
 --use-conda \
---use-singularity
+--use-singularity \
+--singularity-args "--bind /secondary,/primary"
 
 # generate report
 #snakemake \

@@ -1,0 +1,156 @@
+---
+title: "RNAseq with EdgeR"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+params:
+  rmd: ""
+output:
+  html_document:
+    dev: png
+    code_folding: hide
+    self_contained: yes
+    toc: true
+    toc_depth: 5
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    number_sections: false
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r load_libs}
+# my packages
+library(tidyverse)
+library(yaml)
+
+# for bbcRNA tutorial
+library(bbcRNA)
+library(SummarizedExperiment)
+library(org.Hs.eg.db)# load the org.db for your organism
+library(enrichplot)
+ 
+```
+
+```{r config_and_units}
+config <- yaml.load_file("../src/config.yaml")
+
+units <- read_tsv(paste0("../",config$units)) %>% 
+  dplyr::select(-c(unit,fq1,fq2)) %>%
+  dplyr::distinct() %>%
+  tibble::column_to_rownames("sample")
+
+units
+
+```
+
+```{r get_counts}
+count_matrix <- star_to_mat(dir = "../analysis/star/", 
+                     rgx = "^[^_]+_[^_]+_[^.]+", column = 3)
+head(count_matrix)
+```
+
+``` {r Make_BbcSE_object}
+# bbc_obj <- BbcSE(counts = tcell, granges = granges)
+bbc_obj <- BbcSE(counts = count_matrix)
+# show more information about the BbcSE class
+getClassDef(class(bbc_obj))
+# show object information
+bbc_obj
+# get column metadata
+col_meta <- read_col_meta("bbcRNA_col_meta.tsv")
+# Add column meta data.
+colData(bbc_obj) <- cbind(colData(bbc_obj), units[colnames(bbc_obj), ])
+# view the meta data.
+colnames(colData(bbc_obj))
+col_meta
+```
+
+```{r get_mapping_rates}
+aln_metrics <- read_star_aln_metrics(dir = "../analysis/star/", 
+                                 rgx = "^[^_]+_[^_]+_[^.]+")
+# store the mapping metrics in the BbcSE object
+aln_metrics(bbc_obj) <- aln_metrics
+aln_metrics
+validObject(bbc_obj)
+```
+
+```{r plot_alignment_rates}
+# unique map reads
+plot_aln_metrics(x = bbc_obj,
+                 type = "uniq_aln_reads",
+                 facet_by="group", 
+                 fill="genotype") + 
+  ggplot2::theme(legend.position = "none")
+#unique map rates
+plot_aln_metrics(x = bbc_obj, 
+                 type = "uniq_map_rate", 
+                 facet_by="genotype", 
+                 fill="genotype") + 
+  ggplot2::theme(legend.position = "none")
+
+```
+
+```{r add_gene_annotations}
+# Add gene symbols
+bbc_obj <- ens2sym(bbc_obj, org.Mm.eg.db)
+
+# Get Entrez IDs for gene set analyses after DE genes are identified
+bbc_obj <- ens2entrez(bbc_obj, org.Mm.eg.db)
+rowData(bbc_obj)
+```
+
+```{r make_DGEList_object}
+# by default, low expression genes filtered out, normalization factors
+# calculated, normalized counts calculated
+bbc_obj <- makeDGEList(bbc_obj, group="genotype")
+# what's in the edger slot now?
+str(edger(bbc_obj))
+# number of rows/features/genes in the SE
+nrow(bbc_obj)
+# Number of genes in edger$DGEList
+nrow(dgelist(edger(bbc_obj)))
+```
+
+```{r PCA}
+set.seed(100) # adonis uses permutations. Set seed to make reproducible.
+pca_plots <- plot_PCA(bbc_obj, color_by="genotype", shape_by="genotype", adonis_by=c("genotype"))
+pca_plots[[1]]
+pca_plots[[2]]
+```
+
+```{r edgeR_workflow}
+# import the contrasts.tsv 
+contrasts = read_delim(paste0("../",config$contrasts), delim= "\t")
+
+
+bbc_obj <- findDEGs(bbc_obj, 
+                    de_pkg = "edger",
+                    test = "glmTreat", 
+                    design = "~0+group",
+                    contrasts = list(c("group", "LKB1_KO", "LKB1_WT"),
+                                     c("group", "LKB1_WT", "LKB1_KO")),
+                    lfc = config$logfc.filter)
+
+# plot the P-value distribution
+plot_pval_distrib(bbc_obj)
+```
+
+```{r plot_heatmap}
+# get the most DE genes (by adjust pval)
+top_genes <- rownames(edgeR::topTags(
+  de_results(edger(bbc_obj))[[2]],
+  n=20)
+)
+
+View(de_results(edger(bbc_obj)))
+
+top_genes
+```
+
+
+```{r sessionInfo}
+sessionInfo()
+```
