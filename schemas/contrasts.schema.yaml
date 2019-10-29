@@ -3,14 +3,18 @@ $schema: "http://json-schema.org/draft-06/schema#"
 description: comparisons for edgeR
 properties:
 
-  contrast:
+  name:
     type: string
     description: name of contrast
 
-  groupRelative:
+  meta_col:
+    type: string
+    description: name of meta_col containing relative and baseline identities
+
+  relative:
     type: string
     description: the experimental group
-    
-  groupBaseline:
+
+  baseline:
     type: string
     description: the control group

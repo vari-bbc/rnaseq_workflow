@@ -5,12 +5,12 @@ contrasts: src/contrasts.tsv
 
 ref:
   # path/to/STAR/index/directory
-  index: 
+  index: /primary/projects/bbc/references/mouse/indexes/mm10/star/star_p1idx/
   # path/to/gtf/file/with/transcripts.gtf
-  annotation: 
+  annotation: /primary/projects/bbc/references/mouseannotation/mm10/gencode/gencode.vM13.annotation.gtf
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
-PE_or_SE: SE
+PE_or_SE: PE
 
 ### EdgeR Variables ###
 

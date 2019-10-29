@@ -2,7 +2,7 @@ rule edger:
     input:
         expand("analysis/star/{units.sample}.Aligned.sortedByCoord.out.bam", units=units.itertuples())
     output:
-        "diffExp.html"
+        "rules/diffExp.html"
     singularity:
         "docker://dpettinga/bbcrna"
     script:

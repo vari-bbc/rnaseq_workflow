@@ -45,3 +45,8 @@ src/symlink.R
 #testing files
 test.py
 units_se.tsv
+
+#results
+diffExp_cache
+diffExp_files
+diffExp.html

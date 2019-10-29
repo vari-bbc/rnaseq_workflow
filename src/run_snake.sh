@@ -1,5 +1,6 @@
 #PBS -l walltime=100:00:00
 #PBS -l mem=8gb
+#PBS -l node=
 #PBS -m ae
 #PBS -N rnaseq_workflow
 #PBS -o logs/rnaseq_workflow.o
