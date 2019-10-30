@@ -14,8 +14,6 @@ qc/*
 raw_reads/*
 !raw_reads/.keep
 
-runs/*
-!runs/.keep
 
 analysis/star/*
 !analysis/star/.keep
@@ -42,6 +40,7 @@ src/._edgeR_longReport.html
 src/edgeR_longReport_v1.html
 src/symlink.R
 
+rules/.R
 #testing files
 test.py
 units_se.tsv
