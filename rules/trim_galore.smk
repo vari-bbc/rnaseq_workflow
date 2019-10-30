@@ -18,8 +18,12 @@ rule trim_galore_PE:
         trim_galore_input
     output:
         "trimmed_data/{sample}-R1_val_1.fq.gz",
+        "trimmed_data/{sample}-R1_val_1_fastqc.html",
+        "trimmed_data/{sample}-R1_val_1_fastqc.zip",
         "trimmed_data/{sample}-R1.fastq.gz_trimming_report.txt",
         "trimmed_data/{sample}-R2_val_2.fq.gz",
+        "trimmed_data/{sample}-R2_val_2_fastqc.html",
+        "trimmed_data/{sample}-R2_val_2_fastqc.zip",
         "trimmed_data/{sample}-R2.fastq.gz_trimming_report.txt"
     params:
         extra = "-q 20"

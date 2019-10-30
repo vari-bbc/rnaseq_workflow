@@ -27,7 +27,7 @@ if "--fastqc" in snakemake.params.get("extra", ""):
 
 # Check that four output files were supplied
 m = len(snakemake.output)
-assert m == 4, "Output must contain 4 files. Given: %r." % m
+assert m == 8, "Output must contain 8 files. Given: %r." % m
 
 # Check that all output files are in the same directory
 out_dir = os.path.dirname(snakemake.output[0])
@@ -40,6 +40,7 @@ shell(
     "(trim_galore"
     " {snakemake.params.extra}"
     " --paired"
+    " --fastqc"
     " -o {out_dir}"
     " {reads})"
     " {log}")
