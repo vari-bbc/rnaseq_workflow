@@ -17,11 +17,11 @@ PE_or_SE: PE
 # two-letter species annotation for (e.g. "Hs" <- Human)
 species:
   # (e.g. Human -> "hsapiens")
-  short: sscrofa
+  short: mmusculus
   # (e.g. Human -> "Homo sapiens")
-  long: Sus scrofa
+  long: Mus musculus
 # org.db package used for annotation (https://www.bioconductor.org/packages/release/BiocViews.html#___OrgDb)
-annotation: org.Ss.eg.db
+annotation: org.Mm.eg.db
 # differential expression cutoff values
 logfc.filter: 1
 fdr.filter: 0.05
