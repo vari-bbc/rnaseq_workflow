@@ -1,5 +1,4 @@
 sample	group	genotype	condition	unit	fq1	fq2	strandedness
-<<<<<<< HEAD
 RJ_RNA_1	LKB1_KO	LKB1-/-	LKB1-/-	lane1	RJ_RNA_1_S1_L001_R1_001.fastq.gz	RJ_RNA_1_S1_L001_R2_001.fastq.gz	reverse
 RJ_RNA_1	LKB1_KO	LKB1-/-	LKB1-/-	lane2	RJ_RNA_1_S1_L002_R1_001.fastq.gz	RJ_RNA_1_S1_L002_R2_001.fastq.gz	reverse
 RJ_RNA_1	LKB1_KO	LKB1-/-	LKB1-/-	lane3	RJ_RNA_1_S1_L003_R1_001.fastq.gz	RJ_RNA_1_S1_L003_R2_001.fastq.gz	reverse
@@ -24,9 +23,3 @@ RJ_RNA_26	LKB1_WT	LKB1+/+	LKB1+/+	lane1	RJ_RNA_26_S12_L001_R1_001.fastq.gz	RJ_RN
 RJ_RNA_26	LKB1_WT	LKB1+/+	LKB1+/+	lane2	RJ_RNA_26_S12_L002_R1_001.fastq.gz	RJ_RNA_26_S12_L002_R2_001.fastq.gz	reverse
 RJ_RNA_26	LKB1_WT	LKB1+/+	LKB1+/+	lane3	RJ_RNA_26_S12_L003_R1_001.fastq.gz	RJ_RNA_26_S12_L003_R2_001.fastq.gz	reverse
 RJ_RNA_26	LKB1_WT	LKB1+/+	LKB1+/+	lane4	RJ_RNA_26_S12_L004_R1_001.fastq.gz	RJ_RNA_26_S12_L004_R2_001.fastq.gz	reverse
-=======
-RNANVSA	N_RProx	N_R	Prox	lane1	RNANVSA_L000_R1_001.fastq.gz	RNANVSA_L000_R2_001.fastq.gz	reverse
-RNANVSB	N_RProx	N_R	Prox	lane1	RNANVSB_L000_R1_001.fastq.gz	RNANVSB_L000_R2_001.fastq.gz	reverse
-RNANVSC	R_wtProx	R_wt	Prox	lane1	RNANVSC_L000_R1_001.fastq.gz	RNANVSC_L000_R2_001.fastq.gz	reverse
-RNANVSD	R_wtProx	R_wt	Prox	lane1	RNANVSD_L000_R1_001.fastq.gz	RNANVSD_L000_R2_001.fastq.gz	reverse
->>>>>>> 54d29cdaf1536c8c15a5d0068acfc8136777793f
