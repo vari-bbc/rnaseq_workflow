@@ -1,8 +1,3 @@
-<<<<<<< HEAD
 name	meta_col	relative	baseline
 LKB1_KO_vs_LKB1_WT	group	LKB1_KO	LKB1_WT
 LKB1_WT_vs_LKB1_KO	group	LKB1_WT	LKB1_KO
-=======
-contrast	groupRelative	groupBaseline
-CF_vs_WT	CF	WT
->>>>>>> cc0da00e1de01419cd637eda25a767db030dce82

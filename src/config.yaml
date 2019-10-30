@@ -5,16 +5,9 @@ contrasts: src/contrasts.tsv
 
 ref:
   # path/to/STAR/index/directory
-<<<<<<< HEAD
   index: /primary/projects/bbc/references/mouse/indexes/mm10/star/star_p1idx/
   # path/to/gtf/file/with/transcripts.gtf
   annotation: /primary/projects/bbc/references/mouseannotation/mm10/gencode/gencode.vM13.annotation.gtf
-=======
-  # this is Sscrofa11
-  index: /primary/projects/bbc/references/pig/indexes/star-2.5.2b/
-  # path/to/gtf/file/with/transcripts.gtf
-  annotation: /primary/projects/bbc/references/pig/annotation/Sus_scrofa.Sscrofa11.1.97.gtf
->>>>>>> cc0da00e1de01419cd637eda25a767db030dce82
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
