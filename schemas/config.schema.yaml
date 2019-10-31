@@ -25,6 +25,16 @@ properties:
 
   PE_or_SE:
     type: string
+    enum:
+      - PE
+      - SE
+
+  strandedness:
+    type: string
+    enum:
+      - unstranded
+      - forward
+      - reverse
 
   species:
     type: object
@@ -36,6 +46,9 @@ properties:
 
   annotation:
     type: string
+    enum:
+      - org.Hs.eg.db
+      - org.Mm.eg.db
 
   logfc.filter:
     type: number
@@ -47,6 +60,7 @@ required:
   - contrasts
   - ref
   - species
+  - strandedness
   - annotation
   - logfc.filter
   - fdr.filter

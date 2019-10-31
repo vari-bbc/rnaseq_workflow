@@ -12,6 +12,10 @@ ref:
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
 
+# what is the strandedness of the kit used for library prep?
+# options: "forward", "reverse", "unstranded" (usually reverse)
+strandedness: reverse
+
 ### EdgeR Variables ###
 
 # two-letter species annotation for (e.g. "Hs" <- Human)
