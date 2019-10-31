@@ -36,19 +36,23 @@ properties:
       - forward
       - reverse
 
-  species:
-    type: object
-    properties:
-      short:
-        type: string
-      long:
-        type: string
-
-  annotation:
+  common_name:
     type: string
     enum:
-      - org.Hs.eg.db
-      - org.Mm.eg.db
+      - human
+      - mouse
+      - rat
+      - yeast
+      - fly
+      - arabidopsis
+      - zebrafish
+      - worm
+      - cow
+      - chicken
+      - canine
+      - pig
+      - e.coli_K12
+      - e.coli_Sakai
 
   logfc.filter:
     type: number
@@ -59,8 +63,7 @@ required:
   - units
   - contrasts
   - ref
-  - species
+  - common_name
   - strandedness
-  - annotation
   - logfc.filter
   - fdr.filter

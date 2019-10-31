@@ -18,14 +18,8 @@ strandedness: reverse
 
 ### EdgeR Variables ###
 
-# two-letter species annotation for (e.g. "Hs" <- Human)
-species:
-  # (e.g. Human -> "hsapiens")
-  short: mmusculus
-  # (e.g. Human -> "Homo sapiens")
-  long: Mus musculus
-# org.db package used for annotation (https://www.bioconductor.org/packages/release/BiocViews.html#___OrgDb)
-annotation: org.Mm.eg.db
+# used for annotation. see src/annotation.tsv for common_name options. e.g.:  "mouse", "human", "fly"
+common_name: mouse
 # differential expression cutoff values
 logfc.filter: 1
 fdr.filter: 0.05
