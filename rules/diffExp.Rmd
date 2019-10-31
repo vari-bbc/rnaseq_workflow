@@ -44,13 +44,21 @@ library(enrichplot)
 ```
 
 ```{r config}
-config <- yaml.load_file("src/config.yaml")
-
+config <- yaml.load_file("../src/config.yaml")
+annotation <- read_tsv("../src/annotation.tsv")
 ```
 
 ```{r import_counts}
+if(config$strandedness == "unstranded"){
+  star_col <- 1
+}else if(config$strandedness == "forward"){
+  star_col <- 2
+}else if(config$strandedness == "reverse"){
+  star_col <- 3
+}else{stop("config$strandedness=='",config$strandedness,"'.This is an invalid value. Needs to be one of: 'unstranded','forward','reverse'")}
+
 count_matrix <- star_to_mat(dir = "analysis/star/",
-                     rgx = "^[^_]+_[^_]+_[^.]+", column = 3)
+                     rgx = "^[^_]+_[^_]+_[^.]+", column = star_col)
 #head(count_matrix)
 ```
 
@@ -69,7 +77,7 @@ bbc_obj <- BbcSE(counts = count_matrix)
 # get column metadata
 #col_meta <- read_col_meta("../src/units.tsv")
 col_meta <- read.table(config$units,header=T) %>%
-  dplyr::select(sample,group,genotype,condition) %>%
+  dplyr::select(-c(fq1,fq2,unit)) %>%
   dplyr::distinct() %>%
   remove_rownames() %>%
   column_to_rownames(var="sample")
@@ -141,14 +149,16 @@ cat("*",nrow(dgelist(edger(bbc_obj))),"features/genes assessed after trimming.")
 
 ```{r PCA}
 set.seed(100) # adonis uses permutations. Set seed to make reproducible.
-pca_plots <- plot_PCA(bbc_obj, color_by="genotype", shape_by="condition", adonis_by=c("genotype"))
+pca_plots <- plot_PCA(bbc_obj, color_by="genotype", shape_by="condition", adonis_by=colnames(col_meta))
 pca_plots[[1]] +
   geom_label_repel(aes(label = sample),
                    box.padding   = 0.35, 
                    point.padding = 0.5,
                    segment.color = 'grey50')
 pca_plots[[2]]
-pca_plots
+
+
+
 ```
 
 
@@ -239,8 +249,8 @@ for (i in 1:length(contrast_tbl$name)){
     H_gsea_results_list <- run_gsea(x = bbc_obj,
                                     de_pkg = "edger",
                                     gene_set = "H",
-                                    orgDb = org.Mm.eg.db,
-                                    organism = "Mus musculus")
+                                    orgDb = dplyr::filter(annotation, common_name==config$common_name)$org.db,
+                                    organism = dplyr::filter(annotation, common_name==config$common_name)$species)
 
     if (length(H_gsea_results_list[[1]]@result$ID) > 0){
       enrichplot::dotplot(H_gsea_results_list[[1]],
@@ -254,8 +264,8 @@ for (i in 1:length(contrast_tbl$name)){
     kegg_gsea_results_list <- run_gsea(x = bbc_obj,
                                 de_pkg = "edger",
                                 gene_set = "kegg",
-                                orgDb = org.Mm.eg.db,
-                                organism = "mmu",
+                                orgDb = dplyr::filter(annotation, common_name==config$common_name)$org.db,
+                                organism = dplyr::filter(annotation, common_name==config$common_name)$kegg,
                                 minGSSize = 30,
                                 use_internal_data = FALSE)
 
@@ -272,4 +282,4 @@ for (i in 1:length(contrast_tbl$name)){
 # Session Info
 ```{r sessionInfo}
 sessionInfo()
-```                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+```
