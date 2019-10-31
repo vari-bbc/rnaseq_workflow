@@ -24,18 +24,22 @@ knitr::opts_chunk$set(
 	warning = FALSE,
 	cache = TRUE
 )
+# for knit testing in RStudio server
+# knitr::opts_knit$set(root.dir = "../")
 ```
 
 ```{r load_libs}
 # my packages
 library(tidyverse)
 library(yaml)
-#library(kableExtra)
+library(kableExtra)
+library(ggrepel)
 
 # for bbcRNA tutorial
 library(bbcRNA)
 library(SummarizedExperiment)
 library(org.Mm.eg.db)# load the org.db for your organism
+library(org.Hs.eg.db)
 library(enrichplot)
 ```
 
@@ -64,22 +68,24 @@ bbc_obj <- BbcSE(counts = count_matrix)
 
 # get column metadata
 #col_meta <- read_col_meta("../src/units.tsv")
-col_meta <- read_tsv(config$units) %>%
+col_meta <- read.table(config$units,header=T) %>%
   dplyr::select(sample,group,genotype,condition) %>%
-  dplyr::distinct()
+  dplyr::distinct() %>%
+  remove_rownames() %>%
+  column_to_rownames(var="sample")
 
 # Add column meta data.
-colData(bbc_obj) <- cbind(colData(bbc_obj), units[colnames(bbc_obj), ])
+colData(bbc_obj) <- cbind(colData(bbc_obj), col_meta[colnames(bbc_obj), ])
 
 # view the meta data.
 # colnames(colData(bbc_obj))
-kable(col_meta) %>%
+knitr::kable(colData(bbc_obj)) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 ```
 # Quality Control
 
 ```{r get_mapping_rates}
-aln_metrics <- read_star_aln_metrics(dir = "../analysis/star/",
+aln_metrics <- read_star_aln_metrics(dir = "analysis/star/",
                                  rgx = "^[^_]+_[^_]+_[^.]+")
 # store the mapping metrics in the BbcSE object
 aln_metrics(bbc_obj) <- aln_metrics
@@ -135,16 +141,21 @@ cat("*",nrow(dgelist(edger(bbc_obj))),"features/genes assessed after trimming.")
 
 ```{r PCA}
 set.seed(100) # adonis uses permutations. Set seed to make reproducible.
-pca_plots <- plot_PCA(bbc_obj, color_by="genotype", shape_by="genotype", adonis_by=c("genotype"))
-pca_plots[[1]]
+pca_plots <- plot_PCA(bbc_obj, color_by="genotype", shape_by="condition", adonis_by=c("genotype"))
+pca_plots[[1]] +
+  geom_label_repel(aes(label = sample),
+                   box.padding   = 0.35, 
+                   point.padding = 0.5,
+                   segment.color = 'grey50')
 pca_plots[[2]]
+pca_plots
 ```
 
 
 
 ```{r edgeR_run_contrasts, results='asis'}
 # import the contrasts.tsv
-contrast_tbl = read_tsv(paste0("../",config$contrasts))
+contrast_tbl = read_tsv(config$contrasts)
 
 contrast_list <- list()
 for (i in 1:nrow(contrast_tbl)){
@@ -160,7 +171,7 @@ for (i in 1:length(contrast_tbl$name)){
   cat("## Differential Expression \n\n")
 
   cat("Differential Expression was performed using the `glmTreat` framework in `edgeR`. \n\n")
-  cat("First, we check the distribution of p-values from the performed tests to confirm that the tests ran successfully. For `glmTreat` tests, we expect to see a steep slope downward from p=0 and a rise toward p=1. The rise for very high p-values represents the genes with differential expression values less than our defined cutoff value, log2FC >", config$logfc.filter)
+  cat("First, we check the distribution of p-values from the performed tests to confirm that the tests ran successfully. For `glmTreat` tests, we expect to see a steep slope downward from p=0 and a rise toward p=1. The rise for very high p-values represents the genes with differential expression values less than our defined cutoff value, log2FC >", config$logfc.filter,".\n\n")
 
   # run the comparison
   bbc_obj <- findDEGs(bbc_obj,
@@ -180,7 +191,7 @@ for (i in 1:length(contrast_tbl$name)){
 
     # write the DE table to file
     write_delim(de_res[[1]],
-                paste0("../deliverables/DE_",contrast_tbl$name[i],".tsv"),
+                paste0("deliverables/DE_",contrast_tbl$name[i],".tsv"),
                 delim="\t")
     # print 20 top_genes from DE table
     top_genes <- edgeR::topTags(
@@ -261,5 +272,4 @@ for (i in 1:length(contrast_tbl$name)){
 # Session Info
 ```{r sessionInfo}
 sessionInfo()
-```
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+```                                                                                                                                                                                                                                                                                                                                       
