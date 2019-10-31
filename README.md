@@ -1,6 +1,6 @@
 # Bulk RNAseq Workflow
 
-This workflow performs a differential expression analysis with STAR and edgeR - strongly inspired by https://github.com/snakemake-workflows/rna-seq-star-deseq2
+This workflow performs a differential expression analysis with STAR and edgeR - inspired by https://github.com/snakemake-workflows/rna-seq-star-deseq2
 
 ## Authors
 
@@ -14,6 +14,8 @@ This workflow performs a differential expression analysis with STAR and edgeR - 
 
 * You need to have an installation of [conda](https://docs.conda.io/en/latest/miniconda.html#linux-installers) in your `$PATH`
   * Snakemake is invoked from within a conda environment, so you must have your shell initialized for conda.
+* You need to have [Singularity](https://sylabs.io/guides/3.4/user-guide/) installed and callable in your `$PATH`.
+  * *Recommended*: by default, Singularity will cache containers in your `$HOME`. As user storage is limited on HPC3, please set the environmental variable in your `~/.bash_profile` `$SINGULARITY_CACHEDIR` to a different, non-limited directory to ensure that Singularity doesn't fail due to lack of cache space.
 
 ### Step 1: Installation
 
@@ -28,11 +30,9 @@ The following recipe provides established best practices for running and extendi
   * src/units.tsv
     * **sample**        - ID of biological sample
     * **group**         - comparison group for DE contrast
-    * **genotype**      - description of genotype
-    * **condition**     - treatment description
     * **unit**          - description of sequencing unit ("lane1" or "flowcell1", etc.)
     * **fq1**           - name of read1 fastq
-    * **fq2**           - name of read2 fastq
+    * **fq2***           - name of read2 fastq
     * **strandedness**  - strandedness of library prep
       * typically reverse for Illumina
       * used to identify column to count reads from STAR output.
