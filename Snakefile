@@ -36,7 +36,7 @@ rule all:
         # expand("analysis/star/{units.sample}.Aligned.out.bam", units=units.itertuples()),
         # expand("analysis/star/{units.sample}.Log.out", units=units.itertuples()),
         # multiQC
-        "qc/multiqc_report.html",
+        #"qc/multiqc_report.html",
         "rules/diffExp.html"
 
 ##### load rules #####
