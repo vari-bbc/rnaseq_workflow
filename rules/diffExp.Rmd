@@ -24,6 +24,8 @@ knitr::opts_chunk$set(
 	warning = FALSE,
 	cache = TRUE
 )
+# for knit testing in RStudio server
+# knitr::opts_knit$set(root.dir = "../")
 ```
 
 ```{r load_libs}
@@ -36,17 +38,26 @@ library(kableExtra)
 library(bbcRNA)
 library(SummarizedExperiment)
 library(org.Mm.eg.db)# load the org.db for your organism
+library(org.Hs.eg.db)
 library(enrichplot)
 ```
 
 ```{r config}
-config <- yaml.load_file("src/config.yaml")
-
+config <- yaml.load_file("../src/config.yaml")
+annotation <- read_tsv("../src/annotation.tsv")
 ```
 
 ```{r import_counts}
+if(config$strandedness == "unstranded"){
+  star_col <- 1
+}else if(config$strandedness == "forward"){
+  star_col <- 2
+}else if(config$strandedness == "reverse"){
+  star_col <- 3
+}else{stop("config$strandedness=='",config$strandedness,"'.This is an invalid value. Needs to be one of: 'unstranded','forward','reverse'")}
+
 count_matrix <- star_to_mat(dir = "analysis/star/",
-                     rgx = "^[^_]+_[^_]+_[^.]+", column = 3)
+                     rgx = "^[^_]+_[^_]+_[^.]+", column = star_col)
 #head(count_matrix)
 ```
 
@@ -64,22 +75,24 @@ bbc_obj <- BbcSE(counts = count_matrix)
 
 # get column metadata
 #col_meta <- read_col_meta("../src/units.tsv")
-col_meta <- read_tsv(config$units) %>%
-  dplyr::select(sample,group,genotype,condition) %>%
-  dplyr::distinct()
+col_meta <- read.table(config$units,header=T) %>%
+  dplyr::select(-c(fq1,fq2,unit)) %>%
+  dplyr::distinct() %>%
+  remove_rownames() %>%
+  column_to_rownames(var="sample")
 
 # Add column meta data.
-colData(bbc_obj) <- cbind(colData(bbc_obj), units[colnames(bbc_obj), ])
+colData(bbc_obj) <- cbind(colData(bbc_obj), col_meta[colnames(bbc_obj), ])
 
 # view the meta data.
 # colnames(colData(bbc_obj))
-kable(col_meta) %>%
+knitr::kable(colData(bbc_obj)) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 ```
 # Quality Control
 
 ```{r get_mapping_rates}
-aln_metrics <- read_star_aln_metrics(dir = "../analysis/star/",
+aln_metrics <- read_star_aln_metrics(dir = "analysis/star/",
                                  rgx = "^[^_]+_[^_]+_[^.]+")
 # store the mapping metrics in the BbcSE object
 aln_metrics(bbc_obj) <- aln_metrics
@@ -135,16 +148,23 @@ cat("*",nrow(dgelist(edger(bbc_obj))),"features/genes assessed after trimming.")
 
 ```{r PCA}
 set.seed(100) # adonis uses permutations. Set seed to make reproducible.
-pca_plots <- plot_PCA(bbc_obj, color_by="genotype", shape_by="genotype", adonis_by=c("genotype"))
-pca_plots[[1]]
+pca_plots <- plot_PCA(bbc_obj, color_by="genotype", shape_by="condition", adonis_by=colnames(col_meta))
+pca_plots[[1]] +
+  geom_label_repel(aes(label = sample),
+                   box.padding   = 0.35,
+                   point.padding = 0.5,
+                   segment.color = 'grey50')
 pca_plots[[2]]
+
+
+
 ```
 
 
 
 ```{r edgeR_run_contrasts, results='asis'}
 # import the contrasts.tsv
-contrast_tbl = read_tsv(paste0("../",config$contrasts))
+contrast_tbl = read_tsv(config$contrasts)
 
 contrast_list <- list()
 for (i in 1:nrow(contrast_tbl)){
@@ -160,7 +180,7 @@ for (i in 1:length(contrast_tbl$name)){
   cat("## Differential Expression \n\n")
 
   cat("Differential Expression was performed using the `glmTreat` framework in `edgeR`. \n\n")
-  cat("First, we check the distribution of p-values from the performed tests to confirm that the tests ran successfully. For `glmTreat` tests, we expect to see a steep slope downward from p=0 and a rise toward p=1. The rise for very high p-values represents the genes with differential expression values less than our defined cutoff value, log2FC >", config$logfc.filter)
+  cat("First, we check the distribution of p-values from the performed tests to confirm that the tests ran successfully. For `glmTreat` tests, we expect to see a steep slope downward from p=0 and a rise toward p=1. The rise for very high p-values represents the genes with differential expression values less than our defined cutoff value, log2FC >", config$logfc.filter,".\n\n")
 
   # run the comparison
   bbc_obj <- findDEGs(bbc_obj,
@@ -180,7 +200,7 @@ for (i in 1:length(contrast_tbl$name)){
 
     # write the DE table to file
     write_delim(de_res[[1]],
-                paste0("../deliverables/DE_",contrast_tbl$name[i],".tsv"),
+                paste0("deliverables/DE_",contrast_tbl$name[i],".tsv"),
                 delim="\t")
     # print 20 top_genes from DE table
     top_genes <- edgeR::topTags(
@@ -228,8 +248,8 @@ for (i in 1:length(contrast_tbl$name)){
     H_gsea_results_list <- run_gsea(x = bbc_obj,
                                     de_pkg = "edger",
                                     gene_set = "H",
-                                    orgDb = org.Mm.eg.db,
-                                    organism = "Mus musculus")
+                                    orgDb = dplyr::filter(annotation, common_name==config$common_name)$org.db,
+                                    organism = dplyr::filter(annotation, common_name==config$common_name)$species)
 
     if (length(H_gsea_results_list[[1]]@result$ID) > 0){
       enrichplot::dotplot(H_gsea_results_list[[1]],
@@ -243,8 +263,8 @@ for (i in 1:length(contrast_tbl$name)){
     kegg_gsea_results_list <- run_gsea(x = bbc_obj,
                                 de_pkg = "edger",
                                 gene_set = "kegg",
-                                orgDb = org.Mm.eg.db,
-                                organism = "mmu",
+                                orgDb = dplyr::filter(annotation, common_name==config$common_name)$org.db,
+                                organism = dplyr::filter(annotation, common_name==config$common_name)$kegg,
                                 minGSSize = 30,
                                 use_internal_data = FALSE)
 
@@ -262,4 +282,3 @@ for (i in 1:length(contrast_tbl$name)){
 ```{r sessionInfo}
 sessionInfo()
 ```
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
