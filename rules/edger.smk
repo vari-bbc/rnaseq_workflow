@@ -5,6 +5,6 @@ rule edger:
     output:
         "rules/diffExp.html"
     singularity:
-        "docker://dpettinga/bbcrna:3.6.0"
+        "docker://dpettinga/bbcrna:latest"
     script:
         "diffExp.Rmd"
