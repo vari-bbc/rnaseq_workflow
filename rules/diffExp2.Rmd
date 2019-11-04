@@ -1,0 +1,408 @@
+---
+title: "RNAseq with EdgeR"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+params:
+  rmd: ""
+output:
+  html_document:
+    dev: png
+    code_folding: hide
+    self_contained: yes
+    toc: true
+    toc_depth: 5
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    number_sections: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE,
+	cache = TRUE
+)
+# for knit testing in RStudio server
+knitr::opts_knit$set(root.dir = "../")
+```
+
+```{r load_libs}
+# my packages
+library(tidyverse)
+library(yaml)
+library(kableExtra)
+library(ggrepel)
+
+# for bbcRNA tutorial
+library(bbcRNA)
+library(SummarizedExperiment)
+library(org.Mm.eg.db)# load the org.db for your organism
+library(org.Hs.eg.db)
+library(enrichplot)
+```
+
+```{r config}
+config <- yaml.load_file("src/config.yaml")
+annotation <- read_tsv("src/annotation.tsv")
+units <- read_tsv(config$units)
+```
+
+```{r import_counts}
+if(config$strandedness == "unstranded"){
+  star_col <- 1
+}else if(config$strandedness == "forward"){
+  star_col <- 2
+}else if(config$strandedness == "reverse"){
+  star_col <- 3
+}else{stop("config$strandedness=='",config$strandedness,"'.This is an invalid value. Needs to be one of: 'unstranded','forward','reverse'")}
+
+count_matrix <- star_to_mat(dir = "analysis/star/",
+                     rgx = "^[^.]+", column = star_col)
+#head(count_matrix)
+```
+
+# Experimental Design
+
+``` {r Make_BbcSE_object}
+# bbc_obj <- BbcSE(counts = tcell, granges = granges)
+bbc_obj <- BbcSE(counts = count_matrix)
+
+# show more information about the BbcSE class
+#getClassDef(class(bbc_obj))
+
+# show object information
+# bbc_obj
+
+# get column metadata
+#col_meta <- read_col_meta("../src/units.tsv")
+col_meta <- read.table(config$units,header=T) %>%
+  dplyr::select(-c(fq1,fq2,unit)) %>%
+  dplyr::distinct() %>%
+  remove_rownames() %>%
+  column_to_rownames(var="sample")
+
+# Add column meta data.
+colData(bbc_obj) <- cbind(colData(bbc_obj), col_meta[colnames(bbc_obj), ])
+
+# view the meta data.
+# colnames(colData(bbc_obj))
+knitr::kable(colData(bbc_obj)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+# Quality Control
+
+## Alignment Rates
+
+```{r get_mapping_rates}
+aln_metrics <- read_star_aln_metrics(dir = "analysis/star/",
+                                 rgx = "^[^.]+")
+# store the mapping metrics in the BbcSE object
+aln_metrics(bbc_obj) <- aln_metrics
+if (!validObject(bbc_obj)){
+  knitr::knit_exit("ERROR: bbc_obj was no longer valid after adding aln_metrics")
+}
+# kable(aln_metrics) %>%
+#   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+```
+
+```{r plot_alignment_rates}
+# unique map reads
+plot_aln_metrics(x = bbc_obj,
+                 type = "uniq_aln_reads",
+                 facet_by="group",
+                 fill="group") +
+  ggplot2::theme(legend.position = "none")
+#unique map rates
+plot_aln_metrics(x = bbc_obj,
+                 type = "uniq_map_rate",
+                 facet_by="group",
+                 fill="group") +
+  ggplot2::theme(legend.position = "none")
+
+```
+
+```{r add_gene_annotations}
+# Add gene symbols
+bbc_obj <- ens2sym(bbc_obj, org.Mm.eg.db)
+
+# Get Entrez IDs for gene set analyses after DE genes are identified
+bbc_obj <- ens2entrez(bbc_obj, org.Mm.eg.db)
+#rowData(bbc_obj)
+
+if (!validObject(bbc_obj)){
+  knitr::knit_exit("ERROR: bbc_obj was no longer valid after adding gene annotations")
+}
+```
+
+```{r make_DGEList_object}
+# by default, low expression genes filtered out, normalization factors
+# calculated, normalized counts calculated
+bbc_obj <- makeDGEList(bbc_obj, group="group")
+#colData(bbc_obj)
+
+# what's in the edger slot now?
+# str(edger(bbc_obj))
+# number of rows/features/genes in the SE
+cat("*",nrow(bbc_obj),"total features/genes in the genome. \n\n")
+# Number of genes in edger$DGEList
+cat("*",nrow(dgelist(edger(bbc_obj))),"features/genes assessed after trimming.")
+```
+
+## PCA
+
+```{r PCA}
+set.seed(100) # adonis uses permutations. Set seed to make reproducible.
+pca_plots <- plot_PCA(bbc_obj, color_by="group", shape_by="group", adonis_by=c("group","treatment","extraction"))
+pca_plots[[1]] + 
+  geom_label_repel(aes(label = sample),
+                   box.padding   = 0.35,
+                   point.padding = 0.5,
+                   segment.color = 'grey50')
+pca_plots[[2]]
+```
+
+### Pairwise
+
+#### LCMV Only 
+
+```{r LCMV_PCA}
+# LCMV sample names
+LCMV <- (units %>% dplyr::filter(treatment == "LCMV"))$sample
+# subset count matrix to only LCMV samples
+LCMV_matrix <- count_matrix[,LCMV]
+# subset metadata to only LCMV samples
+LCMV_col_meta <- col_meta[LCMV,]
+# make BbcSE obj with only LCMV samples
+LCMV_bbc_obj <- BbcSE(counts = LCMV_matrix)
+# Add column meta data
+colData(LCMV_bbc_obj) <- cbind(colData(LCMV_bbc_obj), LCMV_col_meta[colnames(LCMV_bbc_obj), ])
+
+# by default, low expression genes filtered out, normalization factors
+# calculated, normalized counts calculated
+LCMV_bbc_obj <- makeDGEList(LCMV_bbc_obj, group="group")
+
+set.seed(100) # adonis uses permutations. Set seed to make reproducible.
+pca_plots <- plot_PCA(LCMV_bbc_obj, color_by="group", shape_by="group", adonis_by=c("extraction"))
+pca_plots[[1]] + 
+  geom_label_repel(aes(label = sample),
+                   box.padding   = 0.35,
+                   point.padding = 0.5,
+                   segment.color = 'grey50')
+pca_plots[[2]]
+
+```
+
+#### Vehicle Only
+
+```{r Vehicle_PCA}
+# Veh sample names
+Veh <- (units %>% dplyr::filter(treatment == "Veh"))$sample
+# subset count matrix to only Veh samples
+Veh_matrix <- count_matrix[,Veh]
+# subset metadata to only Veh samples
+Veh_col_meta <- col_meta[Veh,]
+# make BbcSE obj with only Veh samples
+Veh_bbc_obj <- BbcSE(counts = Veh_matrix)
+# Add column meta data
+colData(Veh_bbc_obj) <- cbind(colData(Veh_bbc_obj), Veh_col_meta[colnames(Veh_bbc_obj), ])
+
+# by default, low expression genes filtered out, normalization factors
+# calculated, normalized counts calculated
+Veh_bbc_obj <- makeDGEList(Veh_bbc_obj, group="group")
+
+set.seed(100) # adonis uses permutations. Set seed to make reproducible.
+pca_plots <- plot_PCA(Veh_bbc_obj, color_by="group", shape_by="group", adonis_by=c("extraction"))
+pca_plots[[1]] + 
+  geom_label_repel(aes(label = sample),
+                   box.padding   = 0.35,
+                   point.padding = 0.5,
+                   segment.color = 'grey50')
+pca_plots[[2]]
+
+```
+
+#### RNA Only
+
+```{r RNA_PCA}
+# RNA sample names
+RNA <- (units %>% dplyr::filter(extraction == "RNA"))$sample
+# subset count matrix to only RNA samples
+RNA_matrix <- count_matrix[,RNA]
+# subset metadata to only RNA samples
+RNA_col_meta <- col_meta[RNA,]
+# make BbcSE obj with only RNA samples
+RNA_bbc_obj <- BbcSE(counts = RNA_matrix)
+# Add column meta data
+colData(RNA_bbc_obj) <- cbind(colData(RNA_bbc_obj), RNA_col_meta[colnames(RNA_bbc_obj), ])
+
+# by default, low expression genes filtered out, normalization factors
+# calculated, normalized counts calculated
+RNA_bbc_obj <- makeDGEList(RNA_bbc_obj, group="group")
+
+set.seed(100) # adonis uses permutations. Set seed to make reproducible.
+pca_plots <- plot_PCA(RNA_bbc_obj, color_by="group", shape_by="group", adonis_by=c("treatment"))
+pca_plots[[1]] + 
+  geom_label_repel(aes(label = sample),
+                   box.padding   = 0.35,
+                   point.padding = 0.5,
+                   segment.color = 'grey50')
+pca_plots[[2]]
+
+```
+
+#### MetRNA Only
+
+```{r Met_PCA}
+# RNA sample names
+MetRNA <- (units %>% dplyr::filter(extraction == "MetRNA"))$sample
+# subset count matrix to only MetRNA samples
+MetRNA_matrix <- count_matrix[,MetRNA]
+# subset metadata to only MetRNA samples
+MetRNA_col_meta <- col_meta[MetRNA,]
+# make BbcSE obj with only MetRNA samples
+MetRNA_bbc_obj <- BbcSE(counts = MetRNA_matrix)
+# Add column meta data
+colData(MetRNA_bbc_obj) <- cbind(colData(MetRNA_bbc_obj), MetRNA_col_meta[colnames(MetRNA_bbc_obj), ])
+
+# by default, low expression genes filtered out, normalization factors
+# calculated, normalized counts calculated
+MetRNA_bbc_obj <- makeDGEList(MetRNA_bbc_obj, group="group")
+
+set.seed(100) # adonis uses permutations. Set seed to make reproducible.
+pca_plots <- plot_PCA(MetRNA_bbc_obj, color_by="group", shape_by="group", adonis_by=c("treatment"))
+pca_plots[[1]] + 
+  geom_label_repel(aes(label = sample),
+                   box.padding   = 0.35,
+                   point.padding = 0.5,
+                   segment.color = 'grey50')
+pca_plots[[2]]
+
+```
+
+
+```{r edgeR_run_contrasts, results='asis'}
+# import the contrasts.tsv
+contrast_tbl = read_tsv(config$contrasts)
+
+contrast_list <- list()
+for (i in 1:nrow(contrast_tbl)){
+  contrast_list[[i]] <- c(contrast_tbl[i,]$meta_col,
+                          contrast_tbl[i,]$relative,
+                          contrast_tbl[i,]$baseline)
+}
+
+# loop through the comparisons
+for (i in 1:length(contrast_tbl$name)){
+  cat("# ",contrast_tbl$name[i],"\n\n")
+
+  cat("## Differential Expression \n\n")
+
+  cat("Differential Expression was performed using the `glmTreat` framework in `edgeR`. \n\n")
+  cat("First, we check the distribution of p-values from the performed tests to confirm that the tests ran successfully. For `glmTreat` tests, we expect to see a steep slope downward from p=0 and a rise toward p=1. The rise for very high p-values represents the genes with differential expression values less than our defined cutoff value, log2FC >", config$logfc.filter,".\n\n")
+
+  # run the comparison
+  bbc_obj <- findDEGs(bbc_obj,
+                      de_pkg = "edger",
+                      test = "glmTreat",
+                      design = "~0+group",
+                      contrasts = contrast_list[i],
+                      lfc = config$logfc.filter)
+
+    # plot p-val distribution -------------------------------------------------------------
+
+    print(plot_pval_distrib(bbc_obj))
+    cat("\n\n")
+
+    # get DE table------------------------------------------------------------------------
+    de_res <- get_de_table(bbc_obj, de_pkg = "edger")
+
+    # write the DE table to file
+    write_delim(de_res[[1]],
+                paste0("deliverables/DE_",contrast_tbl$name[i],".tsv"),
+                delim="\t")
+    # print 20 top_genes from DE table
+    top_genes <- edgeR::topTags(
+      de_results(edger(bbc_obj))[[2]],
+      n=20)
+
+
+
+    print(kable(de_res[[1]] %>%
+                  dplyr::filter(ensembl_id %in% rownames(top_genes$table)),
+                caption="Top 20 Differentially Expressed Genes") %>%
+      kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")))
+
+    # plot heatmap-------------------------------------------------------------------------
+    cat("### Heatmap \n\n")
+
+    cat("Clustered Heatmap of Top 20 Differentially Expressed Genes. \n\n")
+    # # get the sign of the LFC and store in rowData
+    # ## get the de_results slot of the BbcEdgeR object
+    # bbc_de_res <- de_results(edger(bbc_obj))
+    # ## get contrast results
+    # de_table <- bbc_de_res[[2]]$table
+    # ## get the LFC sign
+    # contrast_sign <- ifelse(de_table$logFC > 0, "up", "down")
+    # names(contrast_sign) <- rownames(de_table)
+    # ## store LFC sign in rowData. Genes with no matches will be NA.
+    # rowData(bbc_obj)$mut_vs_WT_sign <- contrast_sign[match(rownames(bbc_obj), names(contrast_sign))]
+    # paste0(contrast_tbl[i,]$relative,"_vs_",contrast_tbl[i,]$baseline,"_sign")
+    # plot Zscores of normalized log2 cpms
+    print(plot_heatmap(x = bbc_obj,
+                       genes = rownames(top_genes$table),
+                       zscores=TRUE,
+                       # rowdata_annot = paste0(contrast_tbl[i,]$relative,"_vs_",
+                       #                        contrast_tbl[i,]$baseline,"_sign"),
+                       coldata_annot = c("treatment","extraction"),
+                       # rowdata_split = paste0(contrast_tbl[i,]$relative,"_vs_",
+                       #                        contrast_tbl[i,]$baseline,"_sign"),
+                       # coldata_split="",
+                       gene_labels = "uniq_syms"))
+    cat("\n\n")
+    # Enrichment Analysis-------------------------------------------------------------------------
+    cat("### Enrichment Analysis \n\n")
+    # set seed to make GSEA deterministic
+    set.seed(42)
+
+    # Hallmarks
+    H_gsea_results_list <- run_gsea(x = bbc_obj,
+                                    de_pkg = "edger",
+                                    gene_set = "H",
+                                    orgDb = dplyr::filter(annotation, common_name==config$common_name)$org.db,
+                                    organism = dplyr::filter(annotation, common_name==config$common_name)$species)
+
+    if (length(H_gsea_results_list[[1]]@result$ID) > 0){
+      enrichplot::dotplot(H_gsea_results_list[[1]],
+                          showCategory=10,
+                          title="Top gene sets",
+                          split=".sign") +
+        facet_grid(.~.sign)
+    } else{cat("No significant enrichment of Hallmark Gene Sets. \n\n")}
+
+    # KEGG
+    kegg_gsea_results_list <- run_gsea(x = bbc_obj,
+                                de_pkg = "edger",
+                                gene_set = "kegg",
+                                orgDb = dplyr::filter(annotation, common_name==config$common_name)$org.db,
+                                organism = dplyr::filter(annotation, common_name==config$common_name)$kegg,
+                                minGSSize = 30,
+                                use_internal_data = FALSE)
+
+      if (length(kegg_gsea_results_list[[1]]@result$ID) > 0){
+        enrichplot::dotplot(kegg_gsea_results_list[[1]],
+                            showCategory=10,
+                            title="Top gene sets",
+                            split=".sign") +
+          facet_grid(.~.sign)
+    } else{cat("No significant enrichment of KEGG Gene Sets. \n\n")}
+}
+```
+
+
+# Session Info
+```{r sessionInfo}
+sessionInfo()
+```

@@ -47,6 +47,8 @@ test.py
 units_se.tsv
 
 #results
-diffExp_cache
-diffExp_files
 diffExp.html
+diffExp2.html
+diffExp_*
+diffExp2_*
+._diffE*
