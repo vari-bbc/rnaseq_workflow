@@ -106,7 +106,7 @@ kable(aln_metrics) %>%
 
 ```
 
-```{r plot_alignment_rates}
+```{r plot_alignment_rates, results='asis'}
 cat("## Uniquely Mapping Read Count\n\n")
 # unique map reads
 plot <- plot_aln_metrics(x = bbc_obj,
@@ -156,6 +156,7 @@ cat("*",nrow(bbc_obj),"total features/genes in the genome. \n\n")
 # Number of genes in edger$DGEList
 cat("*",nrow(dgelist(edger(bbc_obj))),"features/genes assessed after trimming.")
 ```
+## PCA
 
 ```{r PCA}
 # prepare color palette with number of unique values in the color_by metadata column.
@@ -180,7 +181,6 @@ counts <- as_tibble(count_matrix, rownames="ensembl_id") %>%
   dplyr::select("ensembl_id","uniq_syms","entrez_ids",everything())
 
 write_tsv(counts,"../deliverables/GeneCounts.tsv")
-vroom("../deliverables/GeneCounts.tsv")
 ```
 
 

@@ -61,3 +61,10 @@ makeIndex:
   nodes: 1
   ppn: 32
   mem: 256gb
+
+BAMindex:
+  qname: bbc
+  time: 10:00:00
+  nodes: 1
+  ppn: 1
+  mem: 64gb

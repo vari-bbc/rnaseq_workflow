@@ -47,3 +47,13 @@ rule STAR:
     threads: 24
     wrapper:
         "file:wrappers/star/wrapper.py"
+
+rule BAMindex:
+    input:
+        "analysis/star/{sample}.Aligned.sortedByCoord.out.bam",
+    output:
+        "analysis/star/{sample}.Aligned.sortedByCoord.out.bam.bai",
+    conda:
+        "../envs/samtools.yaml"
+    shell:
+        "samtools index {input}"
