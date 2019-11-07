@@ -3,7 +3,6 @@ from snakemake.utils import validate, min_version
 ##### set minimum snakemake version #####
 min_version("5.4.4")
 
-
 ##### load config and sample sheets #####
 
 configfile: "src/config.yaml"
@@ -12,7 +11,7 @@ validate(config, schema="schemas/config.schema.yaml")
 units = pd.read_table(config["units"]).set_index("sample", drop=False)
 validate(units, schema="schemas/units.schema.yaml")
 
-contrasts = pd.read_table(config["contrasts"]).set_index("contrast", drop=False)
+contrasts = pd.read_table(config["contrasts"]).set_index("name", drop=False)
 validate(contrasts, schema="schemas/contrasts.schema.yaml")
 
 ##### target rules #####
@@ -37,7 +36,8 @@ rule all:
         # expand("analysis/star/{units.sample}.Aligned.out.bam", units=units.itertuples()),
         # expand("analysis/star/{units.sample}.Log.out", units=units.itertuples()),
         # multiQC
-        "qc/multiqc_report.html"
+        #"qc/multiqc_report.html",
+        "rules/diffExp.html"
 
 ##### load rules #####
 include: "rules/mergeLanesAndRename.smk"
@@ -45,3 +45,4 @@ include: "rules/fastqc.smk"
 include: "rules/trim_galore.smk"
 include: "rules/STAR.smk"
 include: "rules/multiqc.smk"
+include: "rules/edger.smk"

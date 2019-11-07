@@ -41,6 +41,13 @@ src/edgeR_longReport_v1.html
 src/symlink.R
 
 rules/.R
+rules/r_objects
 #testing files
 test.py
 units_se.tsv
+
+#results
+rules/diffExp_cache
+rules/diffExp_files
+rules/diffExp.html
+rules/._*

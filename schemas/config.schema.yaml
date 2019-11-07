@@ -25,17 +25,34 @@ properties:
 
   PE_or_SE:
     type: string
+    enum:
+      - PE
+      - SE
 
-  species:
-    type: object
-    properties:
-      short:
-        type: string
-      long:
-        type: string
-
-  annotation:
+  strandedness:
     type: string
+    enum:
+      - unstranded
+      - forward
+      - reverse
+
+  common_name:
+    type: string
+    enum:
+      - human
+      - mouse
+      - rat
+      - yeast
+      - fly
+      - arabidopsis
+      - zebrafish
+      - worm
+      - cow
+      - chicken
+      - canine
+      - pig
+      - e.coli_K12
+      - e.coli_Sakai
 
   logfc.filter:
     type: number
@@ -46,7 +63,7 @@ required:
   - units
   - contrasts
   - ref
-  - species
-  - annotation
+  - common_name
+  - strandedness
   - logfc.filter
   - fdr.filter

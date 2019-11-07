@@ -8,6 +8,8 @@ elif config["PE_or_SE"] =="PE":
     multiqc_input.append(expand("qc/fastqc/{units.sample}-{read}_fastqc.html", units=units.itertuples(), read=["R1","R2"]))
     multiqc_input.append(expand("qc/fastqc/{units.sample}-{read}_fastqc.zip", units=units.itertuples(), read=["R1","R2"]))
     multiqc_input.append(expand("trimmed_data/{units.sample}-{read}.fastq.gz_trimming_report.txt", units=units.itertuples(), read=["R1","R2"]))
+    multiqc_input.append(expand("trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.html", units=units.itertuples(), read=["1","2"]))
+    multiqc_input.append(expand("trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.zip", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("analysis/star/{units.sample}.Log.final.out", units=units.itertuples()))
 
 rule multiqc:
