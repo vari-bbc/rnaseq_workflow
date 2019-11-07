@@ -1,8 +1,13 @@
 name: R
 channels:
   - r
+  - conda-forge
+  - bioconda
 dependencies:
+  - pandoc
+  - bioconductor-biomart
   - r-base ==3.6.0
   - r-rmarkdown
+  - r-vroom
   - r-tidyverse
   - r-yaml

@@ -40,3 +40,24 @@ STAR:
   nodes: 1
   ppn: 8
   mem: 120gb
+
+starTEs:
+  qname: bbc
+  time: 10:00:00
+  nodes: 1
+  ppn: 8
+  mem: 120gb
+
+TEcount:
+  qname: bbc
+  time: 10:00:00
+  nodes: 1
+  ppn: 1
+  mem: 64gb
+
+makeIndex:
+  qname: bbc
+  time: 10:00:00
+  nodes: 1
+  ppn: 32
+  mem: 256gb

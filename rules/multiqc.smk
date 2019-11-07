@@ -11,6 +11,7 @@ elif config["PE_or_SE"] =="PE":
     multiqc_input.append(expand("trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.html", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.zip", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("analysis/star/{units.sample}.Log.final.out", units=units.itertuples()))
+    multiqc_input.append(expand("analysis/starTE/{units.sample}.Log.final.out", units=units.itertuples()))
 
 rule multiqc:
     input:

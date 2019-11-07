@@ -3,7 +3,8 @@ rule edger:
         expand("analysis/star/{units.sample}.Aligned.sortedByCoord.out.bam", units=units.itertuples()),
         "qc/multiqc_report.html" # require multiQC to be run before this analysis
     output:
-        "rules/diffExp.html"
+        "rules/diffExp.html",
+        "deliverables/GeneCounts.tsv"
     singularity:
         "docker://dpettinga/bbcrna:latest"
     script:

@@ -33,16 +33,25 @@ rule all:
         # expand("trimmed_data/{units.sample}_{units.unit}_R1_val_1.fq.gz", units=units.itertuples()),
         # expand("trimmed_data/{units.sample}_{units.unit}_R2_val_2.fq.gz", units=units.itertuples()),
         # STAR alignment
-        # expand("analysis/star/{units.sample}.Aligned.out.bam", units=units.itertuples()),
-        # expand("analysis/star/{units.sample}.Log.out", units=units.itertuples()),
+        #expand("analysis/star/{units.sample}.Aligned.sortedByDoord.out.bam", units=units.itertuples()),
+        #expand("analysis/star/{units.sample}.Log.out", units=units.itertuples()),
+        # te_count
+        # expand("analysis/TEcount/{units.sample}.cntTable", units=units.itertuples()),
         # multiQC
-        #"qc/multiqc_report.html",
-        "rules/diffExp.html"
+        "qc/multiqc_report.html",
+        #"rules/diffExp.html"
+        # mergeCounts
+        # "deliverables/GeneTEcounts.tsv",
+        "deliverables/GeneCounts.tsv"
 
 ##### load rules #####
 include: "rules/mergeLanesAndRename.smk"
 include: "rules/fastqc.smk"
 include: "rules/trim_galore.smk"
+include: "rules/makeIndex.smk"
 include: "rules/STAR.smk"
+include: "rules/starTEs.smk"
+include: "rules/TEcount.smk"
+include: "rules/mergeTEcounts.smk"
 include: "rules/multiqc.smk"
 include: "rules/edger.smk"

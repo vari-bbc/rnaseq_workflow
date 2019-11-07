@@ -5,13 +5,17 @@ contrasts: src/contrasts.tsv
 
 ref:
   # path/to/STAR/index/directory
-  index: /primary/projects/bbc/references/mouse/indexes/mm10/star/star_p1idx/
+  index: ref/gencode/
   # path/to/gtf/file/with/transcripts.gtf
-  annotation: /primary/projects/bbc/references/mouseannotation/mm10/gencode/gencode.vM13.annotation.gtf
+  annotation: ref/gencode/gencode.v32.annotation.gtf
+
+TEref:
+  annotation: ref/gencode/GRCh38_rmsk_TE_edit.gtf
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
-
+readLength: 100
+regex: ^[^.]+
 # what is the strandedness of the kit used for library prep?
 # options: "forward", "reverse", "unstranded" (usually reverse)
 strandedness: reverse
@@ -19,7 +23,7 @@ strandedness: reverse
 ### EdgeR Variables ###
 
 # used for annotation. see src/annotation.tsv for common_name options. e.g.:  "mouse", "human", "fly"
-common_name: mouse
+common_name: human
 # differential expression cutoff values
 logfc.filter: 1
 fdr.filter: 0.05

@@ -1,0 +1,15 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+```
+
+```{r cars}
+rmsk <- read_tsv("ref/gencode/GRCh38_rmsk_TE.gtf",col_names=F) %>%
+  dplyr::mutate(X1 = paste0("chr",X1))
+write_delim(rmsk,"ref/gencode/GRCh38_rmsk_TE_edit.gtf",col_names = FALSE, delim="\t")
+```

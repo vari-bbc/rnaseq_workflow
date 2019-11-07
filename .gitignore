@@ -17,8 +17,12 @@ raw_reads/*
 
 analysis/star/*
 !analysis/star/.keep
-star/*
 !star/.keep
+analysis/TEcount/*
+!analysis/TEcount/.keep
+analysis/starTE/*
+!analysis/starTE/.keep
+!starTE/.keep
 
 trimmed_data/*
 !trimmed_data/.keep
@@ -42,12 +46,19 @@ src/symlink.R
 
 rules/.R
 rules/r_objects
+rules/seqStats*
 #testing files
 test.py
 units_se.tsv
+.RData
+mergeCounts.RData
 
 #results
 rules/diffExp_cache
 rules/diffExp_files
 rules/diffExp.html
 rules/._*
+
+#ref
+!ref/gencode/.keep
+ref/gencode/*

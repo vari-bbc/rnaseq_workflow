@@ -9,7 +9,23 @@ def STAR_input(wildcards):
 
 rule STAR:
     input:
-        STAR_input
+        STAR_input,
+        "ref/gencode/Genome",
+        "ref/gencode/Log.out",
+        "ref/gencode/SA",
+        "ref/gencode/SAindex",
+        "ref/gencode/chrLength.txt",
+        "ref/gencode/chrName.txt",
+        "ref/gencode/chrNameLength.txt",
+        "ref/gencode/chrStart.txt",
+        "ref/gencode/exonGeTrInfo.tab",
+        "ref/gencode/exonInfo.tab",
+        "ref/gencode/geneInfo.tab",
+        "ref/gencode/genomeParameters.txt",
+        "ref/gencode/sjdbInfo.txt",
+        "ref/gencode/sjdbList.fromGTF.out.tab",
+        "ref/gencode/sjdbList.out.tab",
+        "ref/gencode/transcriptInfo.tab",
     output:
         # see STAR manual for additional output files
         "analysis/star/{sample}.Aligned.sortedByCoord.out.bam",
