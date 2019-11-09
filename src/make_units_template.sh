@@ -4,6 +4,7 @@ set -e
 set -u
 set -o pipefail
 
+# declare variables for options
 raw_data_dir="../raw_reads/"
 sample_rgx='^[^_]+'
 group_rgx="$sample_rgx"
@@ -13,21 +14,25 @@ unit_rgx="$sample_rgx"
 strandedness='reverse'
 out_file='units_template.tsv'
 
+# help message
 print_usage() {
-  printf "Usage: ./make_units_template.sh [options]\n"
-  printf "Regex flavor is Perl. If multiple matches, only the first match will be used.\n"
-  printf "PE reads are automatically inferred by having two fastq files matching the sample regex.\n"
-  printf "\t-d raw data directory [${raw_data_dir}]\n"
-  printf "\t-s sample regex [${sample_rgx}]\n"
-  printf "\t-p group regex [${sample_rgx}]\n"
-  printf "\t-g genotype regex [${sample_rgx}]\n"
-  printf "\t-c condition regex [${sample_rgx}]\n"
-  printf "\t-u unit regex [${sample_rgx}]\n"
-  printf "\t-o output file name [${out_file}]\n"
-  printf "\t-x strandedness [${strandedness}]\n"
-  printf "\t-h help page\n"
+  usage_msg="Usage: ./make_units_template.sh [options]\n"
+  usage_msg="${usage_msg}Regex flavor is Perl. If multiple matches, only the first match will be used.\n"
+  usage_msg="${usage_msg}PE reads are automatically inferred by having two fastq files matching the sample regex.\n"
+  usage_msg="${usage_msg}\t-d raw data directory [${raw_data_dir}]\n"
+  usage_msg="${usage_msg}\t-s sample regex [${sample_rgx}]\n"
+  usage_msg="${usage_msg}\t-p group regex [${sample_rgx}]\n"
+  usage_msg="${usage_msg}\t-g genotype regex [${sample_rgx}]\n"
+  usage_msg="${usage_msg}\t-c condition regex [${sample_rgx}]\n"
+  usage_msg="${usage_msg}\t-u unit regex [${sample_rgx}]\n"
+  usage_msg="${usage_msg}\t-o output file name [${out_file}]\n"
+  usage_msg="${usage_msg}\t-x strandedness [${strandedness}]\n"
+  usage_msg="${usage_msg}\t-h help page\n"
+
+  printf "$usage_msg"
 }
 
+# read in options
 while getopts 'd:s:p:g:c:u:o:x:h' flag; do
   case "${flag}" in
     d) raw_data_dir="${OPTARG}" ;; 
@@ -43,6 +48,7 @@ while getopts 'd:s:p:g:c:u:o:x:h' flag; do
   esac
 done
 
+# get the names of all the fastq files
 fastq_files=$(ls "${raw_data_dir}" | grep -P '.*\bfq\b.*|.*\bfastq\b.*') # the \b accounts for for example .fastqc files
 
 # check that output file does not exist
@@ -51,10 +57,10 @@ if [ -f ${out_file} ]; then
     exit
 fi
 
-# print header and output to new file
-printf "sample\tgroup\tgenotype\tcondition\tunit\tfq1\tfq2\tstrandedness\n" > $out_file
+# store header in variable to  output to new file at the end
+out_file_contents="sample\tgroup\tgenotype\tcondition\tunit\tfq1\tfq2\tstrandedness\n"
 
-# get sample ids
+# get sample ids based on sample regex
 sample_ids=$(echo "$fastq_files" | grep -Po "${sample_rgx}" | sort | uniq)
 
 # loop through each sample
@@ -81,10 +87,15 @@ do
     sample_condition=$(echo "$sample_id" | grep -Po "$condition_rgx" | head -n 1)
     sample_unit=$(echo "$sample_id" | grep -Po "$unit_rgx" | head -n 1)
 
+    # assemble the info for this sample
     out_line="${sample_id}\t${sample_group}\t${sample_genotype}\t${sample_condition}\t"
     out_line="${out_line}${sample_unit}\t${fq1}\t${fq2}\t${strandedness}\n"
 
-    printf "$out_line" >> $out_file
+    # append info for this sample to the output
+    out_file_contents="${out_file_contents}${out_line}"
 done
+
+# output to output file
+printf "$out_file_contents" > $out_file
 
 
