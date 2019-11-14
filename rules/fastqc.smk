@@ -6,7 +6,7 @@ rule fastqc_PE:
         zip="qc/fastqc/{sample}-R{read}_fastqc.zip",
     params: ""
     wrapper:
-        "0.35.1/bio/fastqc"
+        "file:wrappers/fastqc"
 
 rule fastqc_SE:
     input:
@@ -16,4 +16,4 @@ rule fastqc_SE:
         zip="qc/fastqc/{sample}-SE_fastqc.zip",
     params: ""
     wrapper:
-        "0.35.1/bio/fastqc"
+        "file:wrappers/fastqc"
