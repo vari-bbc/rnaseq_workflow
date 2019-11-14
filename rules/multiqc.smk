@@ -29,4 +29,4 @@ rule multiqc:
     log:
         "logs/multiqc.log"
     wrapper:
-        "0.31.1/bio/multiqc"
+        "file:wrappers/multiqc"
