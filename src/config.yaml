@@ -10,7 +10,7 @@ ref:
   annotation: /primary/projects/bbc/references/mouseannotation/mm10/gencode/gencode.vM13.annotation.gtf
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
-PE_or_SE: PE
+PE_or_SE: SE
 
 # what is the strandedness of the kit used for library prep?
 # options: "forward", "reverse", "unstranded" (usually reverse)
