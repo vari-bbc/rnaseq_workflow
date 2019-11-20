@@ -18,13 +18,8 @@ This workflow performs a differential expression analysis with STAR and edgeR - 
   * *Recommended*: by default, Singularity will cache containers in your `$HOME`. As user storage is limited on HPC3, please assign the environmental variables `$SINGULARITY_CACHEDIR` and `$SINGULARITY_TEMPDIR` to a different, non-limited directory to ensure that Singularity doesn't fail due to lack of cache space. E.g. (in your `~/.bash_profile`):
     ```
     # Set Singularity Cache to new location (default is $HOME/.singularity)
-<<<<<<< HEAD
     export SINGULARITY_CACHEDIR=/path/to/singularity/cache/
     export SINGULARITY_TEMPDIR=/path/to/singularity/cache/
-=======
-    export SINGULARITY_CACHEDIR=/secondary/projects/bbc/tools/dean_singularity_cache/
-    export SINGULARITY_TEMPDIR=/secondary/projects/bbc/tools/dean_singularity_cache/
->>>>>>> 80b10df8ac292a5134cfae09d96255af518cf039
     ```
 
 ### Step 1: Installation
