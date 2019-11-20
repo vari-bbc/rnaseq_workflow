@@ -30,4 +30,4 @@ rule STAR:
         extra="--quantMode GeneCounts "
     threads: 24
     wrapper:
-        "file:wrappers/star/wrapper.py"
+        "file:wrappers/star"
