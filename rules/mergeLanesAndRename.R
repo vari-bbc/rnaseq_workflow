@@ -11,6 +11,21 @@ samp = snakemake@output[[1]] %>% gsub("raw_reads/","",.) %>% gsub("(-.{2}).fastq
 # samp = "RNANVSA"
 # units <- read_tsv("../src/units.tsv")
 
+# check that fastq files are gzipped (have .gz suffix)
+fq1_ends_with_gz <- (units %>% dplyr::filter(sample==samp))$fq1 %>% stringr::str_detect(".gz$")
+if(!fq1_ends_with_gz){
+    stop(paste0("fq1 for ", samp, " not a gzipped file"))
+}
+
+# check fq2 similarly only if the config file indicates PE reads
+if (config$PE_or_SE=="PE"){
+    fq2_ends_with_gz <- (units %>% dplyr::filter(sample==samp))$fq2 %>% stringr::str_detect(".gz$")
+    if(!fq2_ends_with_gz){
+        stop(paste0("fq2 for ", samp, " not a gzipped file"))
+    }
+}
+
+
 # Now merge lanes
 
 # if this is a SE experiment

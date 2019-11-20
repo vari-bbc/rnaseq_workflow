@@ -33,7 +33,6 @@ knitr::opts_chunk$set(
 library(tidyverse)
 library(yaml)
 library(kableExtra)
-library(ggrepel)
 
 # for bbcRNA tutorial
 library(bbcRNA)
@@ -152,7 +151,7 @@ set.seed(100) # adonis uses permutations. Set seed to make reproducible.
 pca_plots <- plot_PCA(bbc_obj, color_by="genotype", shape_by="condition", adonis_by=colnames(col_meta))
 pca_plots[[1]] +
   geom_label_repel(aes(label = sample),
-                   box.padding   = 0.35, 
+                   box.padding   = 0.35,
                    point.padding = 0.5,
                    segment.color = 'grey50')
 pca_plots[[2]]

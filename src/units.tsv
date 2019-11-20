@@ -1,25 +1,61 @@
 sample	group	genotype	condition	unit	fq1	fq2	strandedness
-RJ_RNA_1	LKB1_KO	LKB1-/-	LKB1-/-	lane1	RJ_RNA_1_S1_L001_R1_001.fastq.gz	RJ_RNA_1_S1_L001_R2_001.fastq.gz	reverse
-RJ_RNA_1	LKB1_KO	LKB1-/-	LKB1-/-	lane2	RJ_RNA_1_S1_L002_R1_001.fastq.gz	RJ_RNA_1_S1_L002_R2_001.fastq.gz	reverse
-RJ_RNA_1	LKB1_KO	LKB1-/-	LKB1-/-	lane3	RJ_RNA_1_S1_L003_R1_001.fastq.gz	RJ_RNA_1_S1_L003_R2_001.fastq.gz	reverse
-RJ_RNA_1	LKB1_KO	LKB1-/-	LKB1-/-	lane4	RJ_RNA_1_S1_L004_R1_001.fastq.gz	RJ_RNA_1_S1_L004_R2_001.fastq.gz	reverse
-RJ_RNA_6	LKB1_WT	LKB1+/+	LKB1+/+	lane1	RJ_RNA_6_S6_L001_R1_001.fastq.gz	RJ_RNA_6_S6_L001_R2_001.fastq.gz	reverse
-RJ_RNA_6	LKB1_WT	LKB1+/+	LKB1+/+	lane2	RJ_RNA_6_S6_L002_R1_001.fastq.gz	RJ_RNA_6_S6_L002_R2_001.fastq.gz	reverse
-RJ_RNA_6	LKB1_WT	LKB1+/+	LKB1+/+	lane3	RJ_RNA_6_S6_L003_R1_001.fastq.gz	RJ_RNA_6_S6_L003_R2_001.fastq.gz	reverse
-RJ_RNA_6	LKB1_WT	LKB1+/+	LKB1+/+	lane4	RJ_RNA_6_S6_L004_R1_001.fastq.gz	RJ_RNA_6_S6_L004_R2_001.fastq.gz	reverse
-RJ_RNA_11	LKB1_KO	LKB1-/-	LKB1-/-	lane1	RJ_RNA_11_S11_L001_R1_001.fastq.gz	RJ_RNA_11_S11_L001_R2_001.fastq.gz	reverse
-RJ_RNA_11	LKB1_KO	LKB1-/-	LKB1-/-	lane2	RJ_RNA_11_S11_L002_R1_001.fastq.gz	RJ_RNA_11_S11_L002_R2_001.fastq.gz	reverse
-RJ_RNA_11	LKB1_KO	LKB1-/-	LKB1-/-	lane3	RJ_RNA_11_S11_L003_R1_001.fastq.gz	RJ_RNA_11_S11_L003_R2_001.fastq.gz	reverse
-RJ_RNA_11	LKB1_KO	LKB1-/-	LKB1-/-	lane4	RJ_RNA_11_S11_L004_R1_001.fastq.gz	RJ_RNA_11_S11_L004_R2_001.fastq.gz	reverse
-RJ_RNA_16	LKB1_WT	LKB1+/+	LKB1+/+	lane1	RJ_RNA_16_S2_L001_R1_001.fastq.gz	RJ_RNA_16_S2_L001_R2_001.fastq.gz	reverse
-RJ_RNA_16	LKB1_WT	LKB1+/+	LKB1+/+	lane2	RJ_RNA_16_S2_L002_R1_001.fastq.gz	RJ_RNA_16_S2_L002_R2_001.fastq.gz	reverse
-RJ_RNA_16	LKB1_WT	LKB1+/+	LKB1+/+	lane3	RJ_RNA_16_S2_L003_R1_001.fastq.gz	RJ_RNA_16_S2_L003_R2_001.fastq.gz	reverse
-RJ_RNA_16	LKB1_WT	LKB1+/+	LKB1+/+	lane4	RJ_RNA_16_S2_L004_R1_001.fastq.gz	RJ_RNA_16_S2_L004_R2_001.fastq.gz	reverse
-RJ_RNA_21	LKB1_KO	LKB1-/-	LKB1-/-	lane1	RJ_RNA_21_S7_L001_R1_001.fastq.gz	RJ_RNA_21_S7_L001_R2_001.fastq.gz	reverse
-RJ_RNA_21	LKB1_KO	LKB1-/-	LKB1-/-	lane2	RJ_RNA_21_S7_L002_R1_001.fastq.gz	RJ_RNA_21_S7_L002_R2_001.fastq.gz	reverse
-RJ_RNA_21	LKB1_KO	LKB1-/-	LKB1-/-	lane3	RJ_RNA_21_S7_L003_R1_001.fastq.gz	RJ_RNA_21_S7_L003_R2_001.fastq.gz	reverse
-RJ_RNA_21	LKB1_KO	LKB1-/-	LKB1-/-	lane4	RJ_RNA_21_S7_L004_R1_001.fastq.gz	RJ_RNA_21_S7_L004_R2_001.fastq.gz	reverse
-RJ_RNA_26	LKB1_WT	LKB1+/+	LKB1+/+	lane1	RJ_RNA_26_S12_L001_R1_001.fastq.gz	RJ_RNA_26_S12_L001_R2_001.fastq.gz	reverse
-RJ_RNA_26	LKB1_WT	LKB1+/+	LKB1+/+	lane2	RJ_RNA_26_S12_L002_R1_001.fastq.gz	RJ_RNA_26_S12_L002_R2_001.fastq.gz	reverse
-RJ_RNA_26	LKB1_WT	LKB1+/+	LKB1+/+	lane3	RJ_RNA_26_S12_L003_R1_001.fastq.gz	RJ_RNA_26_S12_L003_R2_001.fastq.gz	reverse
-RJ_RNA_26	LKB1_WT	LKB1+/+	LKB1+/+	lane4	RJ_RNA_26_S12_L004_R1_001.fastq.gz	RJ_RNA_26_S12_L004_R2_001.fastq.gz	reverse
+AC_rep1	AC	A	C	lane1	AC_rep1.fq.gz		reverse
+AC_rep2	AC	A	C	lane1	AC_rep2.fq.gz		reverse
+AC_rep3	AC	A	C	lane1	AC_rep3.fq.gz		reverse
+AD_rep1	AD	A	D	lane1	AD_rep1.fq.gz		reverse
+AD_rep2	AD	A	D	lane1	AD_rep2.fq.gz		reverse
+AD_rep3	AD	A	D	lane1	AD_rep3.fq.gz		reverse
+AE_rep1	AE	A	E	lane1	AE_rep1.fq.gz		reverse
+AE_rep2	AE	A	E	lane1	AE_rep2.fq.gz		reverse
+AE_rep3	AE	A	E	lane1	AE_rep3.fq.gz		reverse
+AN_rep1	AN	A	N	lane1	AN_rep1.fq.gz		reverse
+AN_rep2	AN	A	N	lane1	AN_rep2.fq.gz		reverse
+AN_rep3	AN	A	N	lane1	AN_rep3.fq.gz		reverse
+AT_rep1	AT	A	T	lane1	AT_rep1.fq.gz		reverse
+AT_rep2	AT	A	T	lane1	AT_rep2.fq.gz		reverse
+AT_rep3	AT	A	T	lane1	AT_rep3.fq.gz		reverse
+DC_rep1	DC	D	C	lane1	DC_rep1.fq.gz		reverse
+DC_rep2	DC	D	C	lane1	DC_rep2.fq.gz		reverse
+DC_rep3	DC	D	C	lane1	DC_rep3.fq.gz		reverse
+DD_rep1	DD	D	D	lane1	DD_rep1.fq.gz		reverse
+DD_rep2	DD	D	D	lane1	DD_rep2.fq.gz		reverse
+DD_rep3	DD	D	D	lane1	DD_rep3.fq.gz		reverse
+DE_rep1	DE	D	E	lane1	DE_rep1.fq.gz		reverse
+DE_rep2	DE	D	E	lane1	DE_rep2.fq.gz		reverse
+DE_rep3	DE	D	E	lane1	DE_rep3.fq.gz		reverse
+DN_rep1	DN	D	N	lane1	DN_rep1.fq.gz		reverse
+DN_rep2	DN	D	N	lane1	DN_rep2.fq.gz		reverse
+DN_rep3	DN	D	N	lane1	DN_rep3.fq.gz		reverse
+DT_rep1	DT	D	T	lane1	DT_rep1.fq.gz		reverse
+DT_rep2	DT	D	T	lane1	DT_rep2.fq.gz		reverse
+DT_rep3	DT	D	T	lane1	DT_rep3.fq.gz		reverse
+FC_rep1	FC	F	C	lane1	FC_rep1.fq.gz		reverse
+FC_rep2	FC	F	C	lane1	FC_rep2.fq.gz		reverse
+FC_rep3	FC	F	C	lane1	FC_rep3.fq.gz		reverse
+FD_rep1	FD	F	D	lane1	FD_rep1.fq.gz		reverse
+FD_rep2	FD	F	D	lane1	FD_rep2.fq.gz		reverse
+FD_rep3	FD	F	D	lane1	FD_rep3.fq.gz		reverse
+FE_rep1	FE	F	E	lane1	FE_rep1.fq.gz		reverse
+FE_rep2	FE	F	E	lane1	FE_rep2.fq.gz		reverse
+FE_rep3	FE	F	E	lane1	FE_rep3.fq.gz		reverse
+FN_rep1	FN	F	N	lane1	FN_rep1.fq.gz		reverse
+FN_rep2	FN	F	N	lane1	FN_rep2.fq.gz		reverse
+FN_rep3	FN	F	N	lane1	FN_rep3.fq.gz		reverse
+FT_rep1	FT	F	T	lane1	FT_rep1.fq.gz		reverse
+FT_rep2	FT	F	T	lane1	FT_rep2.fq.gz		reverse
+FT_rep3	FT	F	T	lane1	FT_rep3.fq.gz		reverse
+PC_rep1	PC	P	C	lane1	PC_rep1.fq.gz		reverse
+PC_rep2	PC	P	C	lane1	PC_rep2.fq.gz		reverse
+PC_rep3	PC	P	C	lane1	PC_rep3.fq.gz		reverse
+PD_rep1	PD	P	D	lane1	PD_rep1.fq.gz		reverse
+PD_rep2	PD	P	D	lane1	PD_rep2.fq.gz		reverse
+PD_rep3	PD	P	D	lane1	PD_rep3.fq.gz		reverse
+PE_rep1	PE	P	E	lane1	PE_rep1.fq.gz		reverse
+PE_rep2	PE	P	E	lane1	PE_rep2.fq.gz		reverse
+PE_rep3	PE	P	E	lane1	PE_rep3.fq.gz		reverse
+PN_rep1	PN	P	N	lane1	PN_rep1.fq.gz		reverse
+PN_rep2	PN	P	N	lane1	PN_rep2.fq.gz		reverse
+PN_rep3	PN	P	N	lane1	PN_rep3.fq.gz		reverse
+PT_rep1	PT	P	T	lane1	PT_rep1.fq.gz		reverse
+PT_rep2	PT	P	T	lane1	PT_rep2.fq.gz		reverse
+PT_rep3	PT	P	T	lane1	PT_rep3.fq.gz		reverse
