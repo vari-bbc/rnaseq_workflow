@@ -15,7 +15,12 @@ This workflow performs a differential expression analysis with STAR and edgeR - 
 * You need to have an installation of [conda](https://docs.conda.io/en/latest/miniconda.html#linux-installers) in your `$PATH`
   * Snakemake is invoked from within a conda environment, so you must have your shell initialized for conda.
 * You need to have [Singularity](https://sylabs.io/guides/3.4/user-guide/) installed and callable in your `$PATH`.
-  * *Recommended*: by default, Singularity will cache containers in your `$HOME`. As user storage is limited on HPC3, please set the environmental variable in your `~/.bash_profile` `$SINGULARITY_CACHEDIR` to a different, non-limited directory to ensure that Singularity doesn't fail due to lack of cache space.
+  * *Recommended*: by default, Singularity will cache containers in your `$HOME`. As user storage is limited on HPC3, please assign the environmental variables `$SINGULARITY_CACHEDIR` and `$SINGULARITY_TEMPDIR` to a different, non-limited directory to ensure that Singularity doesn't fail due to lack of cache space. E.g. (in your `~/.bash_profile`):
+    ```
+    # Set Singularity Cache to new location (default is $HOME/.singularity)
+    export SINGULARITY_CACHEDIR=/path/to/singularity/cache/
+    export SINGULARITY_TEMPDIR=/path/to/singularity/cache/
+    ```
 
 ### Step 1: Installation
 
