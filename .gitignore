@@ -14,7 +14,6 @@ qc/*
 raw_reads/*
 !raw_reads/.keep
 
-
 analysis/star/*
 !analysis/star/.keep
 star/*
@@ -26,12 +25,9 @@ trimmed_data/*
 deliverables/*
 !deliverables/.keep
 
-src/edgeR_longReport_cache
-src/edgeR_longReport_files
-src/edgeR_longReport.html
-src/edgeR_shortReport_cache
-src/edgeR_shortReport_files
-src/edgeR_shortReport.html
+src/diffExp_cache
+src/diffExp_files
+src/diffExp.html
 src/ensembl_go.txt
 src/r_objects/*
 !src/r_objects/.keep

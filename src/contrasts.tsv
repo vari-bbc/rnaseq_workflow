@@ -1,3 +1,2 @@
 name	meta_col	relative	baseline
-LKB1_KO_vs_LKB1_WT	group	LKB1_KO	LKB1_WT
-LKB1_WT_vs_LKB1_KO	group	LKB1_WT	LKB1_KO
+treatment_vs_control	group	treatment	control

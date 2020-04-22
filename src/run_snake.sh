@@ -25,8 +25,13 @@ snakemake --dag | dot -Tpng > logs/runs/rnaseq-workflow_${TIME}.png
 snakemake \
 -s Snakefile \
 -j 48 \
---cluster-config src/cluster.yaml \
---cluster 'qsub -q {cluster.qname} -l nodes={cluster.nodes}:ppn={cluster.ppn} -l mem={cluster.mem} -l walltime={cluster.time} -m ea -o error_files/ -e error_files/' \
+--cluster 'qsub \
+-q bbc \
+-l nodes=1:ppn={threads} \
+-l mem={resources.mem_gb}gb \
+-l walltime=10:00:00 \
+-o error_files/ \
+-e error_files/' \
 --use-conda \
 --use-singularity \
 --singularity-args "--bind /secondary,/primary"

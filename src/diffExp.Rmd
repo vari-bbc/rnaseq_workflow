@@ -16,6 +16,11 @@ output:
     number_sections: true
     df_print: paged
 ---
+```{r logging}
+log <- file(snakemake@log[[1]], open="wt")
+sink(log)
+sink(log, type="message")
+```
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -25,7 +30,7 @@ knitr::opts_chunk$set(
 	cache = TRUE
 )
 # for knit testing in RStudio server
-# knitr::opts_knit$set(root.dir = "../")
+#knitr::opts_knit$set(root.dir = "../")
 ```
 
 ```{r load_libs}
@@ -33,6 +38,7 @@ knitr::opts_chunk$set(
 library(tidyverse)
 library(yaml)
 library(kableExtra)
+library(ggrepel)
 
 # for bbcRNA tutorial
 library(bbcRNA)
@@ -43,8 +49,8 @@ library(enrichplot)
 ```
 
 ```{r config}
-config <- yaml.load_file("../src/config.yaml")
-annotation <- read_tsv("../src/annotation.tsv")
+config <- yaml.load_file("src/config.yaml")
+annotation <- read_tsv("src/annotation.tsv")
 ```
 
 ```{r import_counts}
@@ -57,8 +63,7 @@ if(config$strandedness == "unstranded"){
 }else{stop("config$strandedness=='",config$strandedness,"'.This is an invalid value. Needs to be one of: 'unstranded','forward','reverse'")}
 
 count_matrix <- star_to_mat(dir = "analysis/star/",
-                     rgx = "^[^_]+_[^_]+_[^.]+", column = star_col)
-#head(count_matrix)
+                     rgx = "^[0-9]*", column = star_col)
 ```
 
 # Experimental Design
@@ -82,18 +87,20 @@ col_meta <- read.table(config$units,header=T) %>%
   column_to_rownames(var="sample")
 
 # Add column meta data.
-colData(bbc_obj) <- cbind(colData(bbc_obj), col_meta[colnames(bbc_obj), ])
+colData(bbc_obj) <- cbind(colData(bbc_obj), col_meta[colnames(bbc_obj),])
 
 # view the meta data.
 # colnames(colData(bbc_obj))
 knitr::kable(colData(bbc_obj)) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
 ```
+
 # Quality Control
 
 ```{r get_mapping_rates}
 aln_metrics <- read_star_aln_metrics(dir = "analysis/star/",
-                                 rgx = "^[^_]+_[^_]+_[^.]+")
+                                 rgx = "^[0-9]*")
 # store the mapping metrics in the BbcSE object
 aln_metrics(bbc_obj) <- aln_metrics
 if (!validObject(bbc_obj)){
@@ -110,13 +117,13 @@ kable(aln_metrics) %>%
 plot_aln_metrics(x = bbc_obj,
                  type = "uniq_aln_reads",
                  facet_by="group",
-                 fill="genotype") +
+                 fill="group") +
   ggplot2::theme(legend.position = "none")
 #unique map rates
 plot_aln_metrics(x = bbc_obj,
                  type = "uniq_map_rate",
                  facet_by="group",
-                 fill="genotype") +
+                 fill="group") +
   ggplot2::theme(legend.position = "none")
 
 ```
@@ -137,7 +144,7 @@ if (!validObject(bbc_obj)){
 ```{r make_DGEList_object}
 # by default, low expression genes filtered out, normalization factors
 # calculated, normalized counts calculated
-bbc_obj <- makeDGEList(bbc_obj, group="genotype")
+bbc_obj <- makeDGEList(bbc_obj, group="group")
 # what's in the edger slot now?
 # str(edger(bbc_obj))
 # number of rows/features/genes in the SE
@@ -148,15 +155,13 @@ cat("*",nrow(dgelist(edger(bbc_obj))),"features/genes assessed after trimming.")
 
 ```{r PCA}
 set.seed(100) # adonis uses permutations. Set seed to make reproducible.
-pca_plots <- plot_PCA(bbc_obj, color_by="genotype", shape_by="condition", adonis_by=colnames(col_meta))
+pca_plots <- plot_PCA(bbc_obj, color_by="group", shape_by="group", adonis_by="group")
 pca_plots[[1]] +
   geom_label_repel(aes(label = sample),
                    box.padding   = 0.35,
                    point.padding = 0.5,
                    segment.color = 'grey50')
 pca_plots[[2]]
-
-
 
 ```
 
@@ -215,6 +220,7 @@ for (i in 1:length(contrast_tbl$name)){
       kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")))
 
     # plot heatmap-------------------------------------------------------------------------
+
     cat("### Heatmap \n\n")
 
     cat("Clustered Heatmap of Top 20 Differentially Expressed Genes. \n\n")

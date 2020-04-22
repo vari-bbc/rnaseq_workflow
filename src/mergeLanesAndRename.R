@@ -31,39 +31,39 @@ if (config$PE_or_SE=="PE"){
 # if this is a SE experiment
 if (config$PE_or_SE=="SE"){
   print(paste("merging SE reads for:", samp))
-  if (file.exists(toString(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq1)))){
+  if (file.exists(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq1))){
     # merge SE reads
     system(paste0("cat ",
-                gsub(toString(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq1)),pattern=",", replacement = ""),
+                gsub(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq1),pattern=",", replacement = ""),
                 " > ", "raw_reads/", samp, "-SE.fastq.gz"))
     print("R1 units merged")
     save.image(file=paste0("logs/mergeLanesAndRename/mergeLanesAndRename_SE-",samp,".RData"))
   } else {
     stop(paste("Error in mergeLanesAndRename.R: fq1 file for", samp, "listed in src/units.tsv not present in raw_reads/."))
   }
-  
+
 } else if (config$PE_or_SE=="PE"){
 # if this is a PE experiment
   # merge R1 reads
   print(paste("merging PE reads for:", samp))
-  if (file.exists(toString(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq1)))){
+  if (file.exists(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq1))){
     system(paste0("cat ",
-                gsub(toString(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq1)),pattern=",", replacement = ""),
+                gsub(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq1),pattern=",", replacement = ""),
                 " > ", "raw_reads/", samp, "-R1.fastq.gz"))
     print("R1 units merged")
   } else {
     stop(paste("Error in mergeLanesAndRename.R: fq1 file for", samp, "listed in src/units.tsv not present in raw_reads/."))
   }
   # merge R2 reads
-  if (file.exists(toString(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq2)))){
+  if (file.exists(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq2))){
     system(paste0("cat ",
-                gsub(toString(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq2)),pattern=",", replacement = ""),
+                gsub(paste0("raw_reads/",(units %>% dplyr::filter(sample==samp))$fq2),pattern=",", replacement = ""),
                 " > ", "raw_reads/", samp, "-R2.fastq.gz"))
     print("R2 units merged")
     save.image(file=paste0("logs/mergeLanesAndRename/mergeLanesAndRename_PE-",samp,".RData"))
   } else {
     stop(paste("Error in mergeLanesAndRename.R: fq2 file for", samp, "listed in src/units.tsv not present in raw_reads/."))
-  } 
+  }
   } else {
   stop("Error in mergeLanesAndRename.R: Neither SE nor PE specified.")
 }
