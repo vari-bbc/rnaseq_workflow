@@ -12,31 +12,22 @@ cd ${PBS_O_WORKDIR}
 PATH=/usr/local/bin/:$PATH
 
 
-conda init bash
-source ~/.bashrc
-conda activate /secondary/projects/bbc/tools/workflow_tools/miniconda3/envs/snakemake
+module load bbc/snakemake/snakemake-5.14.0
 
 # save DAG job file with time stamp
 TIME=$(date "+%Y-%m-%d_%H.%M.%S")
-snakemake --use-conda -n > logs/runs/rnaseq-workflow_${TIME}.txt
-snakemake --dag | dot -Tpng > logs/runs/rnaseq-workflow_${TIME}.png
 
-# run snakemake
+snakemake --use-envmodules -n > logs/runs/workflow_${TIME}.txt
+snakemake --dag | dot -Tpng > logs/runs/workflow_${TIME}.png
+
 snakemake \
--s Snakefile \
--j 48 \
---cluster 'qsub \
+--use-envmodules \
+--jobs 100 \
+--cluster "qsub \
 -q bbc \
+-V \
 -l nodes=1:ppn={threads} \
 -l mem={resources.mem_gb}gb \
--l walltime=10:00:00 \
--o error_files/ \
--e error_files/' \
---use-conda \
---use-singularity \
---singularity-args "--bind /secondary,/primary"
-
-# generate report
-#snakemake \
-#--report logs/runs/rnaseq-workflow_${TIME}.html
-# -o {cluster.std_oe}
+-l walltime=100:00:00 \
+-o logs/runs/ \
+-e logs/runs/"

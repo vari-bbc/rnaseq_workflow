@@ -1,7 +1,7 @@
 import pandas as pd
 from snakemake.utils import validate, min_version
 ##### set minimum snakemake version #####
-min_version("5.10.0")
+min_version("5.14.0")
 
 ##### load config and sample sheets #####
 
@@ -19,24 +19,28 @@ contrasts = pd.read_table(config["contrasts"]).set_index("name", drop=False)
 rule all:
     input:
         # mergeLanesAndRename
-            #PE
-        # expand("raw_reads/{sample}-R1.fastq.gz",sample=set(units["sample"].tolist())),
-        # expand("raw_reads/{sample}-R2.fastq.gz",sample=set(units["sample"].tolist())),
-            #SE
-        #expand("raw_reads/{units.sample}.fastq.gz", units=units.itertuples()),
-        # fastqc
-        # expand("qc/fastqc/{units.sample}_fastqc.html", units=units.itertuples()),
-        # expand("qc/fastqc/{units.sample}-R1_fastqc.html", units=units.itertuples()),
-        # expand("qc/fastqc/{units.sample}-R2_fastqc.html", units=units.itertuples()),
+            # SE
+        # expand("raw_reads/{units.sample}-SE.fastq.gz", units=units.itertuples()),
+            # PE
+        # expand("raw_reads/{units.sample}-R1.fastq.gz", units=units.itertuples()),
+        # expand("raw_reads/{units.sample}-R2.fastq.gz", units=units.itertuples()),
         # Trim_Galore
-        # expand("trimmed_data/{units.sample}-{units.unit}_trimmed.fq.gz", units=units.itertuples()), #SE
-        # expand("trimmed_data/{units.sample}_{units.unit}_R1_val_1.fq.gz", units=units.itertuples()),
-        # expand("trimmed_data/{units.sample}_{units.unit}_R2_val_2.fq.gz", units=units.itertuples()),
+            # SE
+        # expand("analysis/trimmed_data/{units.sample}-SE_trimmed.fq.gz", units=units.itertuples()),
+        # expand("analysis/trimmed_data/{units.sample}-SE_fastqc.html", units=units.itertuples()),
+        # expand("analysis/trimmed_data/{units.sample}-SE_fastqc.zip", units=units.itertuples()),
+        # expand("analysis/trimmed_data/{units.sample}-SE.fastq.gz_trimming_report.txt", units=units.itertuples()),
+            # PE
+        # expand("analysis/trimmed_data/{units.sample}_R{read}_val_{read}.fq.gz", read=[1,2], units=units.itertuples()),
+        # expand("analysis/trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.html", read=[1,2], units=units.itertuples()),
+        # expand("analysis/trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.zip", read=[1,2], units=units.itertuples()),
+        # expand("analysis/trimmed_data/{units.sample}-R{read}.fastq.gz_trimming_report.txt", read=[1,2], units=units.itertuples()),
         # STAR alignment
         # expand("analysis/star/{units.sample}.Aligned.sortedByCoord.out.bam", units=units.itertuples()),
         # expand("analysis/star/{units.sample}.Log.out", units=units.itertuples()),
         # multiQC
-        #"qc/multiqc_report.html",
+        "analysis/multiqc/multiqc_report.html",
+        # edgeR
         "src/diffExp.html"
 
 rule mergeLanesAndRename_SE:
@@ -48,8 +52,8 @@ rule mergeLanesAndRename_SE:
     threads: 1
     resources:
         mem_gb = 16
-    conda:
-        "envs/R.yaml"
+    envmodules:
+        "bbc/R/R-3.6.0"
     script:
         "src/mergeLanesAndRename.R"
 
@@ -63,99 +67,94 @@ rule mergeLanesAndRename_PE:
     threads: 1
     resources:
         mem_gb = 16
-    conda:
-        "envs/R.yaml"
+    envmodules:
+        "bbc/R/R-3.6.0"
     script:
         "src/mergeLanesAndRename.R"
-
-rule fastqc_PE:
-    input:
-        "raw_reads/{sample}-R{read}.fastq.gz",
-    output:
-        html="qc/fastqc/{sample}-R{read}_fastqc.html",
-        zip="qc/fastqc/{sample}-R{read}_fastqc.zip",
-    params: ""
-    threads: 1
-    resources:
-        mem_gb = 64
-    wrapper:
-        "file:wrappers/fastqc"
-
-rule fastqc_SE:
-    input:
-        "raw_reads/{sample}-SE.fastq.gz",
-    output:
-        html="qc/fastqc/{sample}-SE_fastqc.html",
-        zip="qc/fastqc/{sample}-SE_fastqc.zip",
-    params: ""
-    threads: 1
-    resources:
-        mem_gb = 64
-    wrapper:
-        "file:wrappers/fastqc"
 
 def trim_galore_input(wildcards):
     if config["PE_or_SE"] == "SE":
         reads = "raw_reads/{sample}-SE.fastq.gz".format(**wildcards)
-        fastqc_html = "qc/fastqc/{sample}-SE_fastqc.html".format(**wildcards)
-        fastqc_zip = "qc/fastqc/{sample}-SE_fastqc.zip".format(**wildcards)
-        return [reads,fastqc_html,fastqc_zip]
+        return reads
     elif config["PE_or_SE"] == "PE":
         R1 = "raw_reads/{sample}-R1.fastq.gz".format(**wildcards)
         R2 = "raw_reads/{sample}-R2.fastq.gz".format(**wildcards)
-        fastqc_html_1 = "qc/fastqc/{sample}-R1_fastqc.html".format(**wildcards)
-        fastqc_html_2 = "qc/fastqc/{sample}-R2_fastqc.html".format(**wildcards)
-        fastqc_zip_1 = "qc/fastqc/{sample}-R1_fastqc.zip".format(**wildcards)
-        fastqc_zip_2 = "qc/fastqc/{sample}-R2_fastqc.zip".format(**wildcards)
-        return [R1,R2,fastqc_html_1,fastqc_html_2,fastqc_zip_1,fastqc_zip_2]
+        return [R1,R2]
 
 rule trim_galore_PE:
     input:
         trim_galore_input
     output:
-        "trimmed_data/{sample}-R1_val_1.fq.gz",
-        "trimmed_data/{sample}-R1_val_1_fastqc.html",
-        "trimmed_data/{sample}-R1_val_1_fastqc.zip",
-        "trimmed_data/{sample}-R1.fastq.gz_trimming_report.txt",
-        "trimmed_data/{sample}-R2_val_2.fq.gz",
-        "trimmed_data/{sample}-R2_val_2_fastqc.html",
-        "trimmed_data/{sample}-R2_val_2_fastqc.zip",
-        "trimmed_data/{sample}-R2.fastq.gz_trimming_report.txt"
+        "analysis/trimmed_data/{sample}-R1_val_1.fq.gz",
+        "analysis/trimmed_data/{sample}-R1_val_1_fastqc.html",
+        "analysis/trimmed_data/{sample}-R1_val_1_fastqc.zip",
+        "analysis/trimmed_data/{sample}-R1.fastq.gz_trimming_report.txt",
+        "analysis/trimmed_data/{sample}-R2_val_2.fq.gz",
+        "analysis/trimmed_data/{sample}-R2_val_2_fastqc.html",
+        "analysis/trimmed_data/{sample}-R2_val_2_fastqc.zip",
+        "analysis/trimmed_data/{sample}-R2.fastq.gz_trimming_report.txt"
     params:
-        extra = "-q 20"
+        outdir="analysis/trimmed_data/"
     log:
-        "logs/trim/trim_galore.{sample}.log"
+        stdout="logs/trim_galore/{sample}.o",
+        stderr="logs/trim_galore/{sample}.e"
+    benchmark:
+        "benchmarks/trim_galore/{sample}.txt"
+    envmodules:
+        "bbc/trim_galore/trim_galore-0.6.0"
     threads: 4
     resources:
-        mem_gb = 64
-    wrapper:
-        #"0.31.1/bio/trim_galore/pe"
-        "file:wrappers/trim_galore_pe"
+        mem_gb=80
+    shell:
+        """
+        trim_galore \
+        --paired \
+        {input} \
+        --output_dir {params.outdir} \
+        --cores {threads} \
+        -q 20 \
+        --fastqc \
+        2> {log.stderr} 1> {log.stdout}
+        """
 
 rule trim_galore_SE:
     input:
         trim_galore_input
     output:
-        "trimmed_data/{sample}-SE_trimmed.fq.gz",
-        "trimmed_data/{sample}-SE.fastq.gz_trimming_report.txt",
+        "analysis/trimmed_data/{sample}-SE_trimmed.fq.gz",
+        "analysis/trimmed_data/{sample}-SE_trimmed_fastqc.zip",
+        "analysis/trimmed_data/{sample}-SE_trimmed_fastqc.html",
+        "analysis/trimmed_data/{sample}-SE.fastq.gz_trimming_report.txt",
     params:
-        extra = "--illumina -q 20"
+        outdir="analysis/trimmed_data/"
     log:
-        "logs/trim/trim_galore.{sample}.log"
+        stdout="logs/trim_galore/{sample}.o",
+        stderr="logs/trim_galore/{sample}.e"
+    benchmark:
+        "benchmarks/trim_galore/{sample}.txt"
+    envmodules:
+        "bbc/trim_galore/trim_galore-0.6.0"
     threads: 4
     resources:
-        mem_gb = 64
-    wrapper:
-        #"0.31.1/bio/trim_galore/pe"
-        "file:wrappers/trim_galore_se"
+        mem_gb=80
+    shell:
+        """
+        trim_galore \
+        {input} \
+        --output_dir {params.outdir} \
+        --cores {threads} \
+        -q 20 \
+        --fastqc \
+        2> {log.stderr} 1> {log.stdout}
+        """
 
 def STAR_input(wildcards):
     if config["PE_or_SE"] == "SE":
-        fq1="trimmed_data/{sample}-SE_trimmed.fq.gz".format(**wildcards)
+        fq1="analysis/trimmed_data/{sample}-SE_trimmed.fq.gz".format(**wildcards)
         return fq1
     elif config["PE_or_SE"] == "PE":
-        fq1 = "trimmed_data/{sample}-R1_val_1.fq.gz".format(**wildcards)
-        fq2 = "trimmed_data/{sample}-R2_val_2.fq.gz".format(**wildcards)
+        fq1 = "analysis/trimmed_data/{sample}-R1_val_1.fq.gz".format(**wildcards)
+        fq2 = "analysis/trimmed_data/{sample}-R2_val_2.fq.gz".format(**wildcards)
         return [fq1,fq2]
 
 rule STAR:
@@ -171,66 +170,89 @@ rule STAR:
         "analysis/star/{sample}.SJ.out.tab",
         directory("analysis/star/{sample}._STARgenome"),
         directory("analysis/star/{sample}._STARpass1"),
-
-    log:
-        "logs/star/{sample}.log"
     params:
         # path to STAR reference genome index
-        index=config["ref"]["index"],
-        # optional parameters
-        extra="--quantMode GeneCounts "
+        index = config["ref"]["index"],
+        outprefix = "analysis/star/{sample}."
+    log:
+        "logs/star/{sample}.log"
+    benchmark:
+        "benchmarks/star/{sample}.txt"
+    envmodules:
+        "bbc/STAR/STAR-2.7.3a"
     threads: 8
     resources:
         mem_gb = 120
-    wrapper:
-        "file:wrappers/star"
+    shell:
+        """
+        STAR \
+        --runThreadN {threads} \
+        --genomeDir {params.index} \
+        --readFilesIn {input} \
+        --twopassMode Basic \
+        --readFilesCommand zcat \
+        --outSAMtype BAM SortedByCoordinate \
+        --outFileNamePrefix {params.outprefix} \
+        --quantMode GeneCounts \
+        --outStd Log 2> {log}
+        """
 
 multiqc_input = []
 if config["PE_or_SE"] =="SE":
-    multiqc_input.append(expand("qc/fastqc/{units.sample}-SE_fastqc.html", units=units.itertuples()))
-    multiqc_input.append(expand("qc/fastqc/{units.sample}-SE_fastqc.zip", units=units.itertuples()))
-    multiqc_input.append(expand("trimmed_data/{units.sample}-SE.fastq.gz_trimming_report.txt", units=units.itertuples()))
+    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-SE_trimmed.fq.gz", units=units.itertuples()))
+    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-SE_trimmed_fastqc.zip", units=units.itertuples()))
+    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-SE_trimmed_fastqc.html", units=units.itertuples()))
     multiqc_input.append(expand("analysis/star/{units.sample}.Log.final.out", units=units.itertuples()))
 elif config["PE_or_SE"] =="PE":
-    multiqc_input.append(expand("qc/fastqc/{units.sample}-{read}_fastqc.html", units=units.itertuples(), read=["R1","R2"]))
-    multiqc_input.append(expand("qc/fastqc/{units.sample}-{read}_fastqc.zip", units=units.itertuples(), read=["R1","R2"]))
-    multiqc_input.append(expand("trimmed_data/{units.sample}-{read}.fastq.gz_trimming_report.txt", units=units.itertuples(), read=["R1","R2"]))
-    multiqc_input.append(expand("trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.html", units=units.itertuples(), read=["1","2"]))
-    multiqc_input.append(expand("trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.zip", units=units.itertuples(), read=["1","2"]))
+    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-R{read}_val_{read}.fq.gz", units=units.itertuples(), read=["1","2"]))
+    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.html", units=units.itertuples(), read=["1","2"]))
+    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.zip", units=units.itertuples(), read=["1","2"]))
+    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-R{read}.fastq.gz_trimming_report.txt", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("analysis/star/{units.sample}.Log.final.out", units=units.itertuples()))
 
 rule multiqc:
     input:
         multiqc_input
     params:
-        # skip the pass1 from STAR
-        "--ignore '*._STARpass1/*'"
+        "analysis/star/",
+        "analysis/trimmed_data/",
     output:
-        "qc/multiqc_report.html",
-        "qc/multiqc_report_data/multiqc.log",
-        "qc/multiqc_report_data/multiqc_cutadapt.txt",
-        "qc/multiqc_report_data/multiqc_fastqc.txt",
-        "qc/multiqc_report_data/multiqc_general_stats.txt",
-        "qc/multiqc_report_data/multiqc_sources.txt",
-        "qc/multiqc_report_data/multiqc_star.txt",
+        "analysis/multiqc/multiqc_report.html",
+        "analysis/multiqc/multiqc_report_data/multiqc.log",
+        "analysis/multiqc/multiqc_report_data/multiqc_cutadapt.txt",
+        "analysis/multiqc/multiqc_report_data/multiqc_fastqc.txt",
+        "analysis/multiqc/multiqc_report_data/multiqc_general_stats.txt",
+        "analysis/multiqc/multiqc_report_data/multiqc_sources.txt",
+        "analysis/multiqc/multiqc_report_data/multiqc_star.txt",
     log:
         "logs/multiqc.log"
+    benchmark:
+        "benchmarks/multiqc/multiqc.txt"
     threads: 1
     resources:
-        mem_gb = 16
-    wrapper:
-        "file:wrappers/multiqc"
+        mem_gb = 32
+    envmodules:
+        "bbc/multiqc/multiqc-1.8"
+    shell:
+        """
+        multiqc -f {params} \
+        -o analysis/multiqc \
+        --ignore '*._STARpass1/*' \
+        -n multiqc_report.html 2> {log}
+        """
 
 rule edgeR:
     input:
         expand("analysis/star/{units.sample}.Aligned.sortedByCoord.out.bam", units=units.itertuples()),
-        "qc/multiqc_report.html" # require multiQC to be run before this analysis
+        "analysis/multiqc/multiqc_report.html" # require multiQC to be run before this analysis
     output:
         "src/diffExp.html"
     log:
         "logs/edgeR.log"
-    singularity:
-        "docker://dpettinga/bbcrna:latest"
+    benchmark:
+        "benchmarks/edgeR/edgeR.txt"
+    envmodules:
+        "bbc/R/R-3.6.0"
     threads: 1
     resources:
         mem_gb = 16

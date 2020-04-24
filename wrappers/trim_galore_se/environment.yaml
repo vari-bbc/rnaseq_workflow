@@ -1,8 +1,0 @@
-name: trimGalore
-channels:
-  - conda-forge
-  - bioconda
-  - defaults
-dependencies:
-  - trim-galore ==0.4.5
-  - pigz

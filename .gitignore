@@ -8,19 +8,11 @@ logs/*
 !logs/runs/.keep
 !logs/.keep
 
-qc/*
-!qc/.keep
-
 raw_reads/*
 !raw_reads/.keep
 
-analysis/star/*
-!analysis/star/.keep
-star/*
-!star/.keep
-
-trimmed_data/*
-!trimmed_data/.keep
+analysis/*
+benchmarks/*
 
 deliverables/*
 !deliverables/.keep
