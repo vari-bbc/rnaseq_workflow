@@ -5,11 +5,11 @@ min_version("5.14.0")
 
 ##### load config and sample sheets #####
 
-configfile: "src/config.yaml"
+configfile: "bin/config.yaml"
 #validate(config, schema="schemas/config.schema.yaml")
 
+# units = pd.read_table("bin/units_test.tsv").set_index("sample", drop=False)
 units = pd.read_table(config["units"]).set_index("sample", drop=False)
-#validate(units, schema="schemas/units.schema.yaml")
 
 contrasts = pd.read_table(config["contrasts"]).set_index("name", drop=False)
 #validate(contrasts, schema="schemas/contrasts.schema.yaml")
@@ -20,10 +20,19 @@ rule all:
     input:
         # mergeLanesAndRename
             # SE
-        # expand("raw_reads/{units.sample}-SE.fastq.gz", units=units.itertuples()),
+        # expand("raw_data/{units.sample}-SE.fastq.gz", units=units.itertuples()),
             # PE
-        # expand("raw_reads/{units.sample}-R1.fastq.gz", units=units.itertuples()),
-        # expand("raw_reads/{units.sample}-R2.fastq.gz", units=units.itertuples()),
+        # expand("raw_data/{units.sample}-R1.fastq.gz", units=units.itertuples()),
+        # expand("raw_data/{units.sample}-R2.fastq.gz", units=units.itertuples()),
+        # fastq_screen
+            # PE
+        # expand("analysis/fastq_screen/{units.sample}-R1_screen.html", units=units.itertuples()),
+        # expand("analysis/fastq_screen/{units.sample}-R1_screen.txt", units=units.itertuples()),
+        # expand("analysis/fastq_screen/{units.sample}-R2_screen.html", units=units.itertuples()),
+        # expand("analysis/fastq_screen/{units.sample}-R2_screen.txt", units=units.itertuples()),
+            # SE
+        # expand("analysis/fastq_screen/{units.sample}-SE_screen.html", units=units.itertuples()),
+        # expand("analysis/fastq_screen/{units.sample}-SE_screen.txt", units=units.itertuples()),
         # Trim_Galore
             # SE
         # expand("analysis/trimmed_data/{units.sample}-SE_trimmed.fq.gz", units=units.itertuples()),
@@ -41,44 +50,93 @@ rule all:
         # multiQC
         "analysis/multiqc/multiqc_report.html",
         # edgeR
-        "src/diffExp.html"
+        #"bin/diffExp.html",
 
 rule mergeLanesAndRename_SE:
     input:
-    output:
-        "raw_reads/{sample}-SE.fastq.gz"
-    log:
-        "logs/mergeLanesAndRename/mergeLanesAndRename_SE-{sample}.log"
-    threads: 1
+    output:      "raw_data/{sample}-SE.fastq.gz"
+    log:         "logs/mergeLanesAndRename/mergeLanesAndRename_SE-{sample}.log"
+                 "logs/mergeLanesAndRename/mergeLanesAndRename_PE-{sample}.log"
     resources:
-        mem_gb = 16
-    envmodules:
-        "bbc/R/R-3.6.0"
-    script:
-        "src/mergeLanesAndRename.R"
+        nodes =   1,
+        threads = 1,
+        mem_gb =  16,
+    envmodules:  "bbc/R/R-3.6.0"
+    script:      "bin/mergeLanesAndRename.R"
 
 rule mergeLanesAndRename_PE:
     input:
-    output:
-        "raw_reads/{sample}-R1.fastq.gz",
-        "raw_reads/{sample}-R2.fastq.gz"
+    output:      "raw_data/{sample}-R1.fastq.gz",
+                 "raw_data/{sample}-R2.fastq.gz"
     log:
-        "logs/mergeLanesAndRename/mergeLanesAndRename_PE-{sample}.log"
-    threads: 1
+                 "logs/mergeLanesAndRename/mergeLanesAndRename_PE-{sample}.log"
     resources:
-        mem_gb = 16
-    envmodules:
-        "bbc/R/R-3.6.0"
-    script:
-        "src/mergeLanesAndRename.R"
+        nodes =   1,
+        threads = 1,
+        mem_gb =  16,
+    envmodules:  "bbc/R/R-3.6.0"
+    script:      "bin/mergeLanesAndRename.R"
+
+def fastq_screen_input(wildcards):
+    if config["PE_or_SE"] == "SE":
+        reads = "raw_data/{sample}-SE.fastq.gz".format(**wildcards)
+        return reads
+    elif config["PE_or_SE"] == "PE":
+        R1 =    "raw_data/{sample}-R1.fastq.gz".format(**wildcards)
+        R2 =    "raw_data/{sample}-R2.fastq.gz".format(**wildcards)
+        return [R1,R2]
+
+rule fastq_screen_PE:
+    input:
+        R1 =      "raw_data/{sample}-R1.fastq.gz",
+        R2 =      "raw_data/{sample}-R2.fastq.gz",
+    output:
+        R1_html = "analysis/fastq_screen/{sample}-R1_screen.html",
+        R1_txt =  "analysis/fastq_screen/{sample}-R1_screen.txt",
+        R2_html = "analysis/fastq_screen/{sample}-R2_screen.html",
+        R2_txt =  "analysis/fastq_screen/{sample}-R2_screen.txt",
+    log:
+        R1 =      "logs/fastq_screen/fastq_screen.{sample}-R1.log",
+        R2 =      "logs/fastq_screen/fastq_screen.{sample}-R2.log",
+    benchmark:    "benchmarks/fastq_screen/{sample}.bmk"
+    resources:
+        nodes =   1,
+        threads = 8,
+        mem_gb =  64,
+    envmodules:   "bbc/fastq_screen/fastq_screen-0.14.0"
+    shell:
+        """
+        fastq_screen --outdir analysis/fastq_screen/ {input.R1} 2> {log.R1}
+        fastq_screen --outdir analysis/fastq_screen/ {input.R2} 2> {log.R2}
+        """
+
+rule fastq_screen_SE:
+    input:
+                    "raw_data/{sample}-SE.fastq.gz",
+    output:
+        html =      "analysis/fastq_screen/{sample}-SE_screen.html",
+        txt =       "analysis/fastq_screen/{sample}-SE_screen.txt",
+    log:
+                    "logs/fastq_screen/fastq_screen.{sample}-SE.log",
+    benchmark:
+                    "benchmarks/fastq_screen/fastq_screen.{sample}.bmk"
+    resources:
+        nodes =     1,
+        threads =   8,
+        mem_gb =    64,
+    envmodules:     "bbc/fastq_screen/fastq_screen-0.14.0"
+    shell:
+        """
+        fastq_screen --outdir analysis/fastq_screen/ {input} 2> {log.R1}
+        """
 
 def trim_galore_input(wildcards):
     if config["PE_or_SE"] == "SE":
-        reads = "raw_reads/{sample}-SE.fastq.gz".format(**wildcards)
+        reads = "raw_data/{sample}-SE.fastq.gz".format(**wildcards)
         return reads
     elif config["PE_or_SE"] == "PE":
-        R1 = "raw_reads/{sample}-R1.fastq.gz".format(**wildcards)
-        R2 = "raw_reads/{sample}-R2.fastq.gz".format(**wildcards)
+        R1 = "raw_data/{sample}-R1.fastq.gz".format(**wildcards)
+        R2 = "raw_data/{sample}-R2.fastq.gz".format(**wildcards)
         return [R1,R2]
 
 rule trim_galore_PE:
@@ -102,9 +160,10 @@ rule trim_galore_PE:
         "benchmarks/trim_galore/{sample}.txt"
     envmodules:
         "bbc/trim_galore/trim_galore-0.6.0"
-    threads: 4
     resources:
-        mem_gb=80
+        nodes =   1,
+        threads = 4,
+        mem_gb =  80,
     shell:
         """
         trim_galore \
@@ -134,9 +193,10 @@ rule trim_galore_SE:
         "benchmarks/trim_galore/{sample}.txt"
     envmodules:
         "bbc/trim_galore/trim_galore-0.6.0"
-    threads: 4
     resources:
-        mem_gb=80
+        nodes =   1,
+        threads = 4,
+        mem_gb =  80,
     shell:
         """
         trim_galore \
@@ -162,14 +222,14 @@ rule STAR:
         STAR_input
     output:
         # see STAR manual for additional output files
-        "analysis/star/{sample}.Aligned.sortedByCoord.out.bam",
-        "analysis/star/{sample}.Log.final.out",
-        "analysis/star/{sample}.Log.out",
-        "analysis/star/{sample}.Log.progress.out",
-        "analysis/star/{sample}.ReadsPerGene.out.tab",
-        "analysis/star/{sample}.SJ.out.tab",
-        directory("analysis/star/{sample}._STARgenome"),
-        directory("analysis/star/{sample}._STARpass1"),
+        bam =                 "analysis/star/{sample}.Aligned.sortedByCoord.out.bam",
+        bai =                 "analysis/star/{sample}.Aligned.sortedByCoord.out.bam.bai",
+        log_final =           "analysis/star/{sample}.Log.final.out",
+        log =                 "analysis/star/{sample}.Log.out",
+        rpg =                 "analysis/star/{sample}.ReadsPerGene.out.tab",
+        sj =                  "analysis/star/{sample}.SJ.out.tab",
+        g_dir =     directory("analysis/star/{sample}._STARgenome"),
+        pass1_dir = directory("analysis/star/{sample}._STARpass1"),
     params:
         # path to STAR reference genome index
         index = config["ref"]["index"],
@@ -179,10 +239,12 @@ rule STAR:
     benchmark:
         "benchmarks/star/{sample}.txt"
     envmodules:
-        "bbc/STAR/STAR-2.7.3a"
-    threads: 8
+        "bbc/STAR/STAR-2.7.3a",
+        "bbc/samtools/samtools-1.9"
     resources:
-        mem_gb = 120
+        nodes =   1,
+        threads = 8,
+        mem_gb =  120,
     shell:
         """
         STAR \
@@ -195,15 +257,19 @@ rule STAR:
         --outFileNamePrefix {params.outprefix} \
         --quantMode GeneCounts \
         --outStd Log 2> {log}
+
+        samtools index {output.bam}
         """
 
 multiqc_input = []
 if config["PE_or_SE"] =="SE":
+    multiqc_input.append(expand("analysis/fastq_screen/{units.sample}-SE_screen.txt", units=units.itertuples()))
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-SE_trimmed.fq.gz", units=units.itertuples()))
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-SE_trimmed_fastqc.zip", units=units.itertuples()))
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-SE_trimmed_fastqc.html", units=units.itertuples()))
     multiqc_input.append(expand("analysis/star/{units.sample}.Log.final.out", units=units.itertuples()))
 elif config["PE_or_SE"] =="PE":
+    multiqc_input.append(expand("analysis/fastq_screen/{units.sample}-R{read}_screen.txt", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-R{read}_val_{read}.fq.gz", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.html", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.zip", units=units.itertuples(), read=["1","2"]))
@@ -216,6 +282,7 @@ rule multiqc:
     params:
         "analysis/star/",
         "analysis/trimmed_data/",
+        "analysis/fastq_screen/",
     output:
         "analysis/multiqc/multiqc_report.html",
         "analysis/multiqc/multiqc_report_data/multiqc.log",
@@ -228,9 +295,10 @@ rule multiqc:
         "logs/multiqc.log"
     benchmark:
         "benchmarks/multiqc/multiqc.txt"
-    threads: 1
     resources:
-        mem_gb = 32
+        nodes = 1,
+        threads = 1,
+        mem_gb = 32,
     envmodules:
         "bbc/multiqc/multiqc-1.8"
     shell:
@@ -238,7 +306,8 @@ rule multiqc:
         multiqc -f {params} \
         -o analysis/multiqc \
         --ignore '*._STARpass1/*' \
-        -n multiqc_report.html 2> {log}
+        -n multiqc_report.html \
+        2> {log}
         """
 
 rule edgeR:
@@ -246,15 +315,16 @@ rule edgeR:
         expand("analysis/star/{units.sample}.Aligned.sortedByCoord.out.bam", units=units.itertuples()),
         "analysis/multiqc/multiqc_report.html" # require multiQC to be run before this analysis
     output:
-        "src/diffExp.html"
+        "bin/diffExp.html"
     log:
         "logs/edgeR.log"
     benchmark:
         "benchmarks/edgeR/edgeR.txt"
     envmodules:
-        "bbc/R/R-3.6.0"
-    threads: 1
+        #use node095 RStudio Server R install
     resources:
-        mem_gb = 16
+        nodes = "node095",
+        threads = 1,
+        mem_gb = 16,
     script:
-        "src/diffExp.Rmd"
+        "bin/diffExp.Rmd"

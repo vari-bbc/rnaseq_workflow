@@ -1,14 +1,17 @@
 # path or URL to sample sheet (TSV format, columns: sample, condition, ...)
-units: src/units.tsv
+units: bin/units.tsv
 # path or URL to contrast sheet (TSV format, columns: sample, condition, ...)
-contrasts: src/contrasts.tsv
+contrasts: bin/contrasts.tsv
 
 ref:
+  # path/to/reference/gDNA.fasta
+  sequence:       /secondary/projects/bbc/research/prep_bbc_shared/data/hg38_gencode/sequence/hg38_gencode.fa
   # path/to/STAR/index/directory
-  index:
+  index:          /secondary/projects/bbc/research/prep_bbc_shared/data/hg38_gencode/indexes/star
   # path/to/gtf/file/with/transcripts.gtf
-  annotation: 
-
+  annotation:     /secondary/projects/bbc/research/prep_bbc_shared/data/hg38_gencode/annotation/hg38_gencode.gtf
+  # known variants (Broad resource downloaded here: https://console.cloud.google.com/storage/browser/genomics-public-data/resources/broad/hg38/v0/)
+  known_variants: /secondary/projects/bbc/research/prep_bbc_shared/data/hg38_gencode/variants/hg38_gencode.dbsnp.vcf.gz
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
 

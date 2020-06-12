@@ -1,26 +1,15 @@
 # Bulk RNAseq Workflow
 
-This workflow performs a differential expression analysis with STAR and edgeR - inspired by https://github.com/snakemake-workflows/rna-seq-star-deseq2
+This workflow performs a differential expression analysis with STAR and edgeR
 
 ## Authors
 
 * Dean Pettinga [@deanpettinga](https://github.com/deanpettinga)
 
+
 ## Usage
 
 **NOTE** this workflow is optimized for HPC3 @ Van Andel Institute.
-
-### Requirements
-
-* You need to have an installation of [conda](https://docs.conda.io/en/latest/miniconda.html#linux-installers) in your `$PATH`
-  * Snakemake is invoked from within a conda environment, so you must have your shell initialized for conda.
-* You need to have [Singularity](https://sylabs.io/guides/3.4/user-guide/) installed and callable in your `$PATH`.
-  * *Recommended*: by default, Singularity will cache containers in your `$HOME`. As user storage is limited on HPC3, please assign the environmental variables `$SINGULARITY_CACHEDIR` and `$SINGULARITY_TEMPDIR` to a different, non-limited directory to ensure that Singularity doesn't fail due to lack of cache space. E.g. (in your `~/.bash_profile`):
-    ```
-    # Set Singularity Cache to new location (default is $HOME/.singularity)
-    export SINGULARITY_CACHEDIR=/path/to/singularity/cache/
-    export SINGULARITY_TEMPDIR=/path/to/singularity/cache/
-    ```
 
 ### Step 1: Installation
 
@@ -32,7 +21,7 @@ The following recipe provides established best practices for running and extendi
 
 ### Step 2: Configure the workflow
 * Modify the config, and any necessary sheets, e.g.:
-  * src/units.tsv
+  * bin/units.tsv
     * **sample**        - ID of biological sample
     * **group**         - comparison group for DE contrast
     * **unit**          - description of sequencing unit ("lane1" or "flowcell1", etc.)
@@ -41,11 +30,11 @@ The following recipe provides established best practices for running and extendi
     * **strandedness**  - strandedness of library prep
       * typically reverse for Illumina
       * used to identify column to count reads from STAR output.
-  * src/contrasts.tsv
+  * bin/contrasts.tsv
     * **contrast**      - name for edgeR contrast
     * **groupRelative** - "group" defined in units.tsv
     * **groupBaseline** - other "group" defined in units.tsv
-  * src/config.yaml
+  * bin/config.yaml
     * **PE_or_SE** - designates the sequencing protocol as paired-end or single-end. (e.g. "PE")
     * **ref**
       * **index** - absolute path to your STAR index directory
@@ -63,7 +52,7 @@ Test your configuration by performing a dry-run via
 
 Execute from within your project directory as a PBS job using BBC nodes via
 
-    $ qsub -q bbc src/run_snake.sh
+    $ qsub -q bbc bin/run_snake.sh
 
 This job script will produce DAG (.txt & .png) and .html with run stats for the workflow to be executed in `logs/runs/bulk_rnaseq-workflow_(TIME)`
 
