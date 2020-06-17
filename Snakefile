@@ -323,7 +323,7 @@ rule edgeR:
     envmodules:
         #use node095 RStudio Server R install
     resources:
-        nodes = "node095",
+        nodes = 1,
         threads = 1,
         mem_gb = 16,
     script:
