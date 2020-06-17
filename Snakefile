@@ -57,9 +57,9 @@ rule mergeLanesAndRename_SE:
     output:      "raw_data/{sample}-SE.fastq.gz"
     log:         "logs/mergeLanesAndRename/mergeLanesAndRename_SE-{sample}.log"
                  "logs/mergeLanesAndRename/mergeLanesAndRename_PE-{sample}.log"
+    threads: 1
     resources:
         nodes =   1,
-        threads = 1,
         mem_gb =  16,
     envmodules:  "bbc/R/R-3.6.0"
     script:      "bin/mergeLanesAndRename.R"
@@ -70,9 +70,9 @@ rule mergeLanesAndRename_PE:
                  "raw_data/{sample}-R2.fastq.gz"
     log:
                  "logs/mergeLanesAndRename/mergeLanesAndRename_PE-{sample}.log"
+    threads: 1
     resources:
         nodes =   1,
-        threads = 1,
         mem_gb =  16,
     envmodules:  "bbc/R/R-3.6.0"
     script:      "bin/mergeLanesAndRename.R"
@@ -99,9 +99,9 @@ rule fastq_screen_PE:
         R1 =      "logs/fastq_screen/fastq_screen.{sample}-R1.log",
         R2 =      "logs/fastq_screen/fastq_screen.{sample}-R2.log",
     benchmark:    "benchmarks/fastq_screen/{sample}.bmk"
+    threads: 8
     resources:
         nodes =   1,
-        threads = 8,
         mem_gb =  64,
     envmodules:   "bbc/fastq_screen/fastq_screen-0.14.0"
     shell:
@@ -120,9 +120,9 @@ rule fastq_screen_SE:
                     "logs/fastq_screen/fastq_screen.{sample}-SE.log",
     benchmark:
                     "benchmarks/fastq_screen/fastq_screen.{sample}.bmk"
+    threads: 8
     resources:
         nodes =     1,
-        threads =   8,
         mem_gb =    64,
     envmodules:     "bbc/fastq_screen/fastq_screen-0.14.0"
     shell:
@@ -160,9 +160,9 @@ rule trim_galore_PE:
         "benchmarks/trim_galore/{sample}.txt"
     envmodules:
         "bbc/trim_galore/trim_galore-0.6.0"
+    threads: 4
     resources:
         nodes =   1,
-        threads = 4,
         mem_gb =  80,
     shell:
         """
@@ -193,9 +193,9 @@ rule trim_galore_SE:
         "benchmarks/trim_galore/{sample}.txt"
     envmodules:
         "bbc/trim_galore/trim_galore-0.6.0"
+    threads: 4
     resources:
         nodes =   1,
-        threads = 4,
         mem_gb =  80,
     shell:
         """
@@ -241,9 +241,9 @@ rule STAR:
     envmodules:
         "bbc/STAR/STAR-2.7.3a",
         "bbc/samtools/samtools-1.9"
+    threads: 8
     resources:
         nodes =   1,
-        threads = 8,
         mem_gb =  120,
     shell:
         """
@@ -295,9 +295,9 @@ rule multiqc:
         "logs/multiqc.log"
     benchmark:
         "benchmarks/multiqc/multiqc.txt"
+    threads: 1
     resources:
         nodes = 1,
-        threads = 1,
         mem_gb = 32,
     envmodules:
         "bbc/multiqc/multiqc-1.8"
@@ -322,9 +322,9 @@ rule edgeR:
         "benchmarks/edgeR/edgeR.txt"
     envmodules:
         #use node095 RStudio Server R install
+    threads: 1
     resources:
         nodes = 1,
-        threads = 1,
         mem_gb = 16,
     script:
         "bin/diffExp.Rmd"
