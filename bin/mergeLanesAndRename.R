@@ -39,7 +39,7 @@ if (config$PE_or_SE=="SE"){
   if (file.exists(paste0("raw_data/", samp_units$fq1))){
     # merge SE reads
     system(paste0("cat ",
-                gsub(paste0("raw_data/", samp_units$fq1), pattern=",", replacement = ""),
+                gsub(toString(paste0("raw_data/", samp_units$fq1)), pattern=",", replacement = ""),
                 " > ", "raw_data/", samp, "-SE.fastq.gz"))
     print("R1 units merged")
     save.image(file=paste0("logs/mergeLanesAndRename/mergeLanesAndRename_SE-",samp,".RData"))
@@ -55,7 +55,7 @@ if (config$PE_or_SE=="SE"){
 
   if (file.exists(paste0("raw_data/", samp_units$fq1))){
     system(paste0("cat ",
-                gsub(paste0("raw_data/", samp_units$fq1), pattern=",", replacement = ""),
+                gsub(toString(paste0("raw_data/", samp_units$fq1)), pattern=",", replacement = ""),
                 " > ", "raw_data/", samp, "-R1.fastq.gz"))
     print("R1 units merged")
   } else {
@@ -64,7 +64,7 @@ if (config$PE_or_SE=="SE"){
   # merge R2 reads
   if (file.exists(paste0("raw_data/", samp_units$fq2))){
     system(paste0("cat ",
-                gsub(paste0("raw_data/", samp_units$fq2),pattern=",", replacement = ""),
+                gsub(toString(paste0("raw_data/", samp_units$fq2)),pattern=",", replacement = ""),
                 " > ", "raw_data/", samp, "-R2.fastq.gz"))
     print("R2 units merged")
     save.image(file=paste0("logs/mergeLanesAndRename/mergeLanesAndRename_PE-",samp,".RData"))
