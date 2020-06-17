@@ -5,7 +5,7 @@ set -u
 set -o pipefail
 
 # declare variables for options
-raw_data_dir="../raw_reads/"
+raw_data_dir="../raw_data/"
 sample_rgx='^[^_]+'
 group_rgx="$sample_rgx"
 genotype_rgx="$sample_rgx"

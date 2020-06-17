@@ -43,7 +43,7 @@ The following recipe provides established best practices for running and extendi
       * **short** - e.g. "hsapiens"
       * **long**  - e.g. "Homo sapiens"
     * **annotation** - [Bioconductor annotation package](https://www.bioconductor.org/packages/release/BiocViews.html#___OrgDb) (e.g. "org.Hs.eg.db")
-* Move your sequencing reads to `raw_reads/`
+* Move your sequencing reads to `raw_data/`
 
 ### Step 3: Test the workflow
 Test your configuration by performing a dry-run via

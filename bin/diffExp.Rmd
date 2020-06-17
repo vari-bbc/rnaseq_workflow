@@ -49,8 +49,8 @@ library(enrichplot)
 ```
 
 ```{r config}
-config <- yaml.load_file("src/config.yaml")
-annotation <- read_tsv("src/annotation.tsv")
+config <- yaml.load_file("bin/config.yaml")
+annotation <- read_tsv("bin/annotation.tsv")
 ```
 
 ```{r import_counts}
@@ -79,7 +79,7 @@ bbc_obj <- BbcSE(counts = count_matrix)
 # bbc_obj
 
 # get column metadata
-#col_meta <- read_col_meta("../src/units.tsv")
+#col_meta <- read_col_meta("../bin/units.tsv")
 col_meta <- read.table(config$units,header=T) %>%
   dplyr::select(-c(fq1,fq2,unit)) %>%
   dplyr::distinct() %>%
