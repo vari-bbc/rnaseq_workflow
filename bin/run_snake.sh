@@ -17,6 +17,10 @@ module load bbc/snakemake/snakemake-5.14.0
 # save DAG job file with time stamp
 TIME=$(date "+%Y-%m-%d_%H.%M.%S")
 
+# make logs dir if it does not exist already. Without this, logs/ is automatically generate only after the first run of the pipeline
+logs_dir="logs/runs"
+[[ -d $logs_dir ]] || mkdir -p $logs_dir
+
 snakemake --use-envmodules -n > logs/runs/workflow_${TIME}.txt
 snakemake --dag | dot -Tpng > logs/runs/workflow_${TIME}.png
 
