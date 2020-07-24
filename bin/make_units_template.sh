@@ -66,7 +66,7 @@ sample_ids=$(echo "$fastq_files" | grep -Po "${sample_rgx}" | sort | uniq)
 # loop through each sample
 for sample_id in ${sample_ids}
 do
-    sample_fastqs=$(echo "$fastq_files" | grep -P "$sample_id")
+    sample_fastqs=$(echo "$fastq_files" | perl -e "while (<STDIN>) {/(\$ARGV[0])/; print \$_ if \$1 eq \$ARGV[1]}" "${sample_rgx}" "${sample_id}")
     num_sample_fastqs=$(echo "$sample_fastqs" | wc -l)
     fq1=$(echo "$sample_fastqs" | head -n 1)
     fq2=""
