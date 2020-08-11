@@ -20,7 +20,7 @@ The following recipe provides established best practices for running and extendi
 3. [Create a new branch](https://git-scm.com/docs/gittutorial#_managing_branches) (the project-branch) within the clone and switch to it. The branch will contain any project-specific modifications (e.g. to configuration, but also to code).
 
 ### Step 2: Configure the workflow
-* Modify the config.yaml, and any necessary sheets, e.g.:
+* Modify the config and any necessary sheets, e.g.:
   * bin/units.tsv
     * **sample**        - ID of biological sample
     * **group**         - comparison group for DE contrast
