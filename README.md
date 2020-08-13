@@ -2,15 +2,15 @@
 
 This workflow performs a differential expression analysis with STAR and edgeR
 
-- [Bulk RNAseq Workflow](#bulk-rnaseq-workflow)
-  * [Authors](#authors)
-  * [Usage](#usage)
-    + [Step 1: Installation](#step-1--installation)
-    + [Step 2: Configure the workflow](#step-2--configure-the-workflow)
-    + [Step 3: Test the workflow](#step-3--test-the-workflow)
-    + [Step 4: Investigate Results](#step-4--investigate-results)
-    + [Step 5:](#step-5-)
-    + [Optional: Variant calling](#optional--variant-calling)
+* [Bulk RNAseq Workflow](#bulk-rnaseq-workflow)
+   * [Authors](#authors)
+   * [Usage](#usage)
+      * [Step 1: Installation](#step-1-installation)
+      * [Step 2: Configure the workflow](#step-2-configure-the-workflow)
+      * [Step 3: Test the workflow](#step-3-test-the-workflow)
+      * [Step 4: Investigate Results](#step-4-investigate-results)
+      * [Step 5: 'Housekeeping'](#step-5-housekeeping)
+      * [Optional: Variant calling](#optional-variant-calling)
 
 ## Authors
 
