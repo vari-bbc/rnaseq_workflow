@@ -6,12 +6,14 @@ contrasts: bin/contrasts.tsv
 ref:
   # path/to/reference/gDNA.fasta
   sequence:       /secondary/projects/bbc/research/prep_bbc_shared/data/hg38_gencode/sequence/hg38_gencode.fa
+  fai:            /secondary/projects/bbc/research/prep_bbc_shared/data/hg38_gencode/sequence/hg38_gencode.fa.fai
   # path/to/STAR/index/directory
   index:          /secondary/projects/bbc/research/prep_bbc_shared/data/hg38_gencode/indexes/star
   # path/to/gtf/file/with/transcripts.gtf
   annotation:     /secondary/projects/bbc/research/prep_bbc_shared/data/hg38_gencode/annotation/hg38_gencode.gtf
   # known variants (Broad resource downloaded here: https://console.cloud.google.com/storage/browser/genomics-public-data/resources/broad/hg38/v0/)
-  known_variants: /secondary/projects/bbc/research/prep_bbc_shared/data/hg38_gencode/variants/hg38_gencode.dbsnp.vcf.gz
+  known_snps: /secondary/projects/bbc/research/broad_resource_bundle_hg38/Homo_sapiens_assembly38.dbsnp138.vcf
+  known_indels: /secondary/projects/bbc/research/broad_resource_bundle_hg38/Homo_sapiens_assembly38.known_indels.vcf.gz
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
 
@@ -22,7 +24,10 @@ strandedness: reverse
 ### EdgeR Variables ###
 
 # used for annotation. see src/annotation.tsv for common_name options. e.g.:  "mouse", "human", "fly"
-common_name: mouse
+common_name: human
 # differential expression cutoff values
 logfc.filter: 1
 fdr.filter: 0.05
+
+# Boolean for whether to call variants. Requires 'variant_calling_units.tsv'
+call_variants: true
