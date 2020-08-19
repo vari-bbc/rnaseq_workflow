@@ -14,6 +14,7 @@ ref:
   # known variants (Broad resource downloaded here: https://console.cloud.google.com/storage/browser/genomics-public-data/resources/broad/hg38/v0/)
   known_snps: /secondary/projects/bbc/research/broad_resource_bundle_hg38/Homo_sapiens_assembly38.dbsnp138.vcf
   known_indels: /secondary/projects/bbc/research/broad_resource_bundle_hg38/Homo_sapiens_assembly38.known_indels.vcf.gz
+  snpeff_db_id: "GRCh38.86"
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
 
@@ -30,4 +31,5 @@ logfc.filter: 1
 fdr.filter: 0.05
 
 # Boolean for whether to call variants. Requires 'variant_calling_units.tsv'
+# snpRelate html report only generated if conda is callable. Otherwise, the snpRelate rule is not run.
 call_variants: true

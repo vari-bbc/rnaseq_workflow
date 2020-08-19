@@ -1,8 +1,12 @@
 import pandas as pd
 import os
+from shutil import which
 from snakemake.utils import validate, min_version
 ##### set minimum snakemake version #####
 min_version("5.14.0")
+
+##### check if conda is available. If not, we don't run rules requiring conda envs. Applies to dryruns and actual runs.
+conda_avail = (which('conda') is not None)
 
 ##### load config and sample sheets #####
 
@@ -22,9 +26,12 @@ if not os.path.exists('tmp'):
 fai_file = config["ref"]["fai"]
 contigs_file = "bin/grouped_contigs.tsv"
 
-# if config set to run variants component of pipeline, read in file with col1 as contig group name and col2 as a commma separated list of contigs. This was written for use with GATK for splitting the variant calling steps by chromosome/contig. We group the unplaced contigs together since those tend to be small.
+# read in file with col1 as contig group name and col2 as a commma separated list of contigs. This was written for use with GATK for splitting the variant calling steps by chromosome/contig. We group the unplaced contigs together since those tend to be small.
+# we read in this file even if not calling variants. Otherwise variant-calling rules relying on this file will cause an error.
+contig_groups = pd.read_table(contigs_file)
+
+# if config set to run variants component of pipeline,  check that chromosomes were parsed correctly in the grouped_Contigs.tsv file. 
 if config["call_variants"]:
-    contig_groups = pd.read_table(contigs_file)
 
     # check chromosomes/contigs parsed correctly.
     chroms = contig_groups['contigs'].values[0:(contig_groups.shape[0]-1)].tolist()
@@ -42,6 +49,8 @@ rule all:
         #lambda wildcards: expand("analysis/05_haplotypecaller/{units.sample}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.baserecal.vcf.gz", units=var_calling_units.itertuples()) if config["call_variants"] else [],
         #lambda wildcards: expand("analysis/07_jointgeno/all.{contig_group}.vcf.gz", contig_group=contig_groups.name) if config["call_variants"] else [],
         lambda wildcards: "analysis/08_merge_and_filter/all.merged.filt.vcf.gz" if config["call_variants"] else [],
+        lambda wildcards: "analysis/09_variant_annot/all.merged.filt.snpeff.vcf.gz.tbi" if config["call_variants"] else [],
+        "analysis/10_snp_pca_and_dendro/report.html" if (config["call_variants"] and conda_avail) else [],
         # mergeLanesAndRename
             # SE
         # expand("raw_data/{units.sample}-SE.fastq.gz", units=units.itertuples()),
@@ -655,3 +664,74 @@ rule merge_and_filter_vcf:
         echo "VariantFiltration done." >> {log.err}
         """
 
+rule variant_annot:
+    input:
+        "analysis/08_merge_and_filter/all.merged.filt.vcf.gz"
+    output:
+        html="analysis/09_variant_annot/all.merged.filt.snpeff.html",
+        vcf="analysis/09_variant_annot/all.merged.filt.snpeff.vcf.gz",
+        tbi="analysis/09_variant_annot/all.merged.filt.snpeff.vcf.gz.tbi",
+        html_canon="analysis/09_variant_annot/all.merged.filt.snpeff_canonical.html",
+        vcf_canon="analysis/09_variant_annot/all.merged.filt.snpeff_canonical.vcf.gz",
+        tbi_canon="analysis/09_variant_annot/all.merged.filt.snpeff_canonical.vcf.gz.tbi",
+    log:
+        out="logs/09_variant_annot/out.o",
+        err="logs/09_variant_annot/out.e"
+    benchmark:
+        "benchmarks/09_variant_annot/benchmark.txt"
+    params:
+        db_id=config["ref"]["snpeff_db_id"],
+    envmodules:
+        "bbc/SnpEff/SnpEff-4.3t",
+        "bbc/htslib/htslib-1.10.2"
+    threads: 4
+    resources: 
+        mem_gb = 80
+    shell:
+        """
+        zcat {input} 2>>{log.err} | \
+        java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $SNPEFF/snpEff.jar eff \
+        -v \
+        -canon \
+        -onlyProtein \
+        -stats {output.html_canon} \
+        {params.db_id} \
+        - \
+        2>>{log.err} | \
+        bgzip > {output.vcf_canon}
+
+        tabix {output.vcf_canon} 2>>{log.err} 1>>{log.out}
+
+
+        zcat {input} 2>>{log.err} | \
+        java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $SNPEFF/snpEff.jar eff \
+        -v \
+        -onlyProtein \
+        -stats {output.html} \
+        {params.db_id} \
+        - \
+        2>>{log.err} | \
+        bgzip > {output.vcf}
+
+        tabix {output.vcf} 2>>{log.err} 1>>{log.out}
+        """
+
+
+rule snprelate:
+    input:
+        "analysis/08_merge_and_filter/all.merged.filt.vcf.gz"
+    output:
+        "analysis/10_snp_pca_and_dendro/report.html"
+    params:
+        gds="analysis/10_snp_pca_and_dendro/all.gds"
+    conda:
+        "envs/R.yaml"
+    #envmodules:
+    #    "bbc/cairo/cairo-1.16.0",
+    #    "bbc/R/R-3.6.0",
+    #    "bbc/pandoc/pandoc-2.7.3",
+    threads: 1
+    resources:
+        mem_gb = 60
+    script:
+        "bin/snprelate.Rmd"

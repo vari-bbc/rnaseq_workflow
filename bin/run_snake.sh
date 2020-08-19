@@ -9,10 +9,15 @@
 cd ${PBS_O_WORKDIR}
 # export Singularity 3.4.0-1 installed on node065 to $PATH.
 # snakemake should now automatically call Singularity 3.4.0-1
-PATH=/usr/local/bin/:$PATH
+#PATH=/usr/local/bin/:$PATH
 
+module load bbc/snakemake/snakemake-5.20.1
 
-module load bbc/snakemake/snakemake-5.14.0
+# specify which conda installation to use
+conda_setup='/secondary/projects/bbc/tools/miniconda3/etc/profile.d/conda.sh'
+
+# this make 'conda' callable and allows conda environments to be created.
+source $conda_setup
 
 # save DAG job file with time stamp
 TIME=$(date "+%Y-%m-%d_%H.%M.%S")
@@ -24,8 +29,10 @@ logs_dir="logs/runs"
 snakemake --use-envmodules -n > logs/runs/workflow_${TIME}.txt
 snakemake --dag | dot -Tpng > logs/runs/workflow_${TIME}.png
 
+
 snakemake \
 --use-envmodules \
+--use-conda \
 --jobs 100 \
 --cluster "qsub \
 -q bbc \
