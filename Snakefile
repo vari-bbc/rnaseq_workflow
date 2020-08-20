@@ -48,9 +48,9 @@ rule all:
     input:
         #lambda wildcards: expand("analysis/05_haplotypecaller/{units.sample}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.baserecal.vcf.gz", units=var_calling_units.itertuples()) if config["call_variants"] else [],
         #lambda wildcards: expand("analysis/07_jointgeno/all.{contig_group}.vcf.gz", contig_group=contig_groups.name) if config["call_variants"] else [],
-        lambda wildcards: "analysis/08_merge_and_filter/all.merged.filt.vcf.gz" if config["call_variants"] else [],
-        lambda wildcards: "analysis/09_variant_annot/all.merged.filt.snpeff.vcf.gz.tbi" if config["call_variants"] else [],
-        "analysis/10_snp_pca_and_dendro/report.html" if (config["call_variants"] and conda_avail) else [],
+        #lambda wildcards: "analysis/08_merge_and_filter/all.merged.filt.vcf.gz" if config["call_variants"] else [],
+        lambda wildcards: "analysis/09a_variant_annot/all.merged.filt.PASS.snpeff.vcf.gz.tbi" if config["call_variants"] else [],
+        "analysis/09b_snp_pca_and_dendro/report.html" if (config["call_variants"] and conda_avail) else [],
         # mergeLanesAndRename
             # SE
         # expand("raw_data/{units.sample}-SE.fastq.gz", units=units.itertuples()),
@@ -616,8 +616,9 @@ rule merge_and_filter_vcf:
     output:
         raw="analysis/08_merge_and_filter/all.merged.vcf.gz",
         filt="analysis/08_merge_and_filter/all.merged.filt.vcf.gz",
+        pass_only="analysis/08_merge_and_filter/all.merged.filt.PASS.vcf.gz",
         vt_peek_raw="analysis/08_merge_and_filter/all.merged.vcf.gz.vt_peek.txt",
-        vt_peek_filt="analysis/08_merge_and_filter/all.merged.filt.vcf.gz.vt_peek.txt"
+        vt_peek_pass="analysis/08_merge_and_filter/all.merged.filt.PASS.vcf.gz.vt_peek.txt"
     log:
         out="logs/08_merge_and_filter/out.o",
         err="logs/08_merge_and_filter/out.e"
@@ -658,27 +659,38 @@ rule merge_and_filter_vcf:
         -O {output.filt} \
         1>>{log.out} 2>>{log.err}
         
-        vt peek -r {params.ref_fasta} {output.filt} 2> {output.vt_peek_filt} 1>>{log.out}
-        
         echo "VariantFiltration done." >> {log.out}
         echo "VariantFiltration done." >> {log.err}
+
+        gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
+        SelectVariants \
+        -R {params.ref_fasta} \
+        -V {output.filt} \
+        --exclude-filtered \
+        -O {output.pass_only} \
+        1>>{log.out} 2>>{log.err}
+        
+        echo "SelectVariants done." >> {log.out}
+        echo "SelectVariants done." >> {log.err}
+
+        vt peek -r {params.ref_fasta} {output.pass_only} 2> {output.vt_peek_pass} 1>>{log.out}
         """
 
 rule variant_annot:
     input:
-        "analysis/08_merge_and_filter/all.merged.filt.vcf.gz"
+        "analysis/08_merge_and_filter/all.merged.filt.PASS.vcf.gz"
     output:
-        html="analysis/09_variant_annot/all.merged.filt.snpeff.html",
-        vcf="analysis/09_variant_annot/all.merged.filt.snpeff.vcf.gz",
-        tbi="analysis/09_variant_annot/all.merged.filt.snpeff.vcf.gz.tbi",
-        html_canon="analysis/09_variant_annot/all.merged.filt.snpeff_canonical.html",
-        vcf_canon="analysis/09_variant_annot/all.merged.filt.snpeff_canonical.vcf.gz",
-        tbi_canon="analysis/09_variant_annot/all.merged.filt.snpeff_canonical.vcf.gz.tbi",
+        html="analysis/09a_variant_annot/all.merged.filt.PASS.snpeff.html",
+        vcf="analysis/09a_variant_annot/all.merged.filt.PASS.snpeff.vcf.gz",
+        tbi="analysis/09a_variant_annot/all.merged.filt.PASS.snpeff.vcf.gz.tbi",
+        html_canon="analysis/09a_variant_annot/all.merged.filt.PASS.snpeff_canonical.html",
+        vcf_canon="analysis/09a_variant_annot/all.merged.filt.PASS.snpeff_canonical.vcf.gz",
+        tbi_canon="analysis/09a_variant_annot/all.merged.filt.PASS.snpeff_canonical.vcf.gz.tbi",
     log:
-        out="logs/09_variant_annot/out.o",
-        err="logs/09_variant_annot/out.e"
+        out="logs/09a_variant_annot/out.o",
+        err="logs/09a_variant_annot/out.e"
     benchmark:
-        "benchmarks/09_variant_annot/benchmark.txt"
+        "benchmarks/09a_variant_annot/benchmark.txt"
     params:
         db_id=config["ref"]["snpeff_db_id"],
     envmodules:
@@ -689,27 +701,25 @@ rule variant_annot:
         mem_gb = 80
     shell:
         """
-        zcat {input} 2>>{log.err} | \
         java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $SNPEFF/snpEff.jar eff \
         -v \
         -canon \
         -onlyProtein \
         -stats {output.html_canon} \
         {params.db_id} \
-        - \
+        {input} \
         2>>{log.err} | \
         bgzip > {output.vcf_canon}
 
         tabix {output.vcf_canon} 2>>{log.err} 1>>{log.out}
 
 
-        zcat {input} 2>>{log.err} | \
         java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $SNPEFF/snpEff.jar eff \
         -v \
         -onlyProtein \
         -stats {output.html} \
         {params.db_id} \
-        - \
+        {input} \
         2>>{log.err} | \
         bgzip > {output.vcf}
 
@@ -719,11 +729,11 @@ rule variant_annot:
 
 rule snprelate:
     input:
-        "analysis/08_merge_and_filter/all.merged.filt.vcf.gz"
+        "analysis/08_merge_and_filter/all.merged.filt.PASS.vcf.gz"
     output:
-        "analysis/10_snp_pca_and_dendro/report.html"
+        "analysis/09b_snp_pca_and_dendro/report.html"
     params:
-        gds="analysis/10_snp_pca_and_dendro/all.gds"
+        gds="analysis/09b_snp_pca_and_dendro/all.gds"
     conda:
         "envs/R.yaml"
     #envmodules:
