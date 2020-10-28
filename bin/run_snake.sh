@@ -14,7 +14,7 @@ cd ${PBS_O_WORKDIR}
 module load bbc/snakemake/snakemake-5.20.1
 
 # specify which conda installation to use
-conda_setup='/secondary/projects/bbc/tools/miniconda3/etc/profile.d/conda.sh'
+conda_setup='/primary/vari/software/BBC/miniconda_bare/etc/profile.d/conda.sh'
 
 # this make 'conda' callable and allows conda environments to be created.
 source $conda_setup
@@ -31,6 +31,7 @@ snakemake --dag | dot -Tpng > logs/runs/workflow_${TIME}.png
 
 
 snakemake \
+-p \
 --use-envmodules \
 --use-conda \
 --jobs 100 \
