@@ -32,4 +32,4 @@ fdr.filter: 0.05
 
 # Boolean for whether to call variants. Requires 'variant_calling_units.tsv'
 # snpRelate html report only generated if conda is callable. Otherwise, the snpRelate rule is not run.
-call_variants: true
+call_variants: false
