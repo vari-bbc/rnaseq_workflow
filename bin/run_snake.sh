@@ -11,7 +11,7 @@ cd ${PBS_O_WORKDIR}
 # snakemake should now automatically call Singularity 3.4.0-1
 #PATH=/usr/local/bin/:$PATH
 
-module load bbc/snakemake/snakemake-5.20.1
+module load bbc/snakemake/snakemake-5.28.0
 
 # specify which conda installation to use
 conda_setup='/primary/vari/software/BBC/miniconda_bare/etc/profile.d/conda.sh'
