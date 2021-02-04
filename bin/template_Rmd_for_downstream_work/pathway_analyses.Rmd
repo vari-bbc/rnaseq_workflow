@@ -154,7 +154,7 @@ stopifnot(all(correct_ranking))
 
 ```{r get_genesets_and_run_gsea}
 # ning wants Pathways: H: hallmark gene sets, C5 GO: gene ontology gene sets, C3 TFT transcription factor targets, C2 CP canonical pathways.
-# H, C5 GO:BP GO:CC GO:MF 	C3 	TFT C2 CP
+# H, C5 GO:BP GO:CC GO:MF   C3  TFT C2 CP
 genesets_of_interest <- list(H=c("H",NA),
                              C2_CP=c("C2","CP"),
                              C3_TFT_GTRD=c("C3","TFT:GTRD"),
@@ -214,8 +214,7 @@ invisible(lapply(names(gsea_res), function(geneset){
 
 # Get leading edge genes
 
-```{r leading, fig.height=15, fig.width=6}
-
+```{r leading, fig.height=20, fig.width=7}
 
 # cpms is an expression matrix with an 'entrez' column
 # gsea_res is a nested list. First level is geneset collection (e.g. "H","C2") and second level are specific contrasts that GSEA was run for.
@@ -245,17 +244,20 @@ plot_leading_edge_heatmap <- function(cpms, gsea_res, geneset_collection, genese
       leading_genes_mat <- t(scale(t(leading_genes_mat), scale=FALSE))
     }
     
-    Heatmap(leading_genes_mat, name=scale, column_title = paste0(contrast, " -- ", geneset_id))
+    Heatmap(leading_genes_mat, name=scale, column_title = paste0(geneset_collection,"\n",contrast, " -- ", geneset_id))
   })
 }
 
 
-plot_leading_edge_heatmap(cpms=cpms, gsea_res=gsea_res, geneset_collection="H", geneset_id="HALLMARK_ADIPOGENESIS")
+#plot_leading_edge_heatmap(cpms=cpms, gsea_res=gsea_res, geneset_collection="H", geneset_id="HALLMARK_ADIPOGENESIS")
 
-
-invisible(lapply(as.data.frame(gsea_res$H$`GenotypeAKO-GenotypeWT`$entrez)$ID[1:3], function(geneset_id){
-  plot_leading_edge_heatmap(cpms=cpms, gsea_res=gsea_res, geneset_collection="H", geneset_id=geneset_id)
-}))
+# heatmaps for top 3 geensets of each geneset collection
+lapply(names(gsea_res), function(geneseq_collec){
+  top_geneset_ids <- head(as.data.frame(gsea_res[[geneseq_collec]]$`GenotypeAKO-GenotypeWT`$entrez)$ID, 3) # using head instead of indexing accounts for cases where there are less than 'n' significant genesets
+  lapply(top_geneset_ids, function(geneset_id){
+    plot_leading_edge_heatmap(cpms=cpms, gsea_res=gsea_res, geneset_collection=geneseq_collec, geneset_id=geneset_id)
+  })
+})
 ```
 
 
@@ -273,3 +275,4 @@ end_ptm
 end_ptm - start_ptm
 
 ```
+
