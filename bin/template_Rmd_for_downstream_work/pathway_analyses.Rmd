@@ -1,0 +1,275 @@
+---
+title: "Pathways"
+author: "BBC"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  html_document:
+    code_folding: hide
+    self_contained: yes
+    toc: true
+    toc_depth: 5
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+    number_sections: true
+---
+
+```{r starttime}
+# save start time for script
+start_ptm <- proc.time()
+start_ptm
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=TRUE, dev=c('png','pdf'), fig.width=8, fig.height=8)
+
+```
+
+# Make output directory
+
+```{r makeoutdir}
+outdir <- "pathway_analyses_out_files"
+dir.create(outdir)
+```
+
+# Load packages
+
+```{r loadlibs, echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE}
+
+orgdb <- "org.Mm.eg.db"
+library(orgdb, character.only=TRUE) # load the org.db for your organism
+library(AnnotationDbi)
+library(ggplot2)
+library(dplyr)
+library(edgeR)
+library(tibble)
+library(kableExtra)
+library(readr)
+library(stringr)
+library(cowplot)
+library(patchwork)
+library(clusterProfiler)
+library(enrichplot)
+library(msigdbr)
+library(ComplexHeatmap)
+```
+
+# Read in DE results
+
+```{r read_DE}
+# set organism for loking up gene sets
+msigdb_organism <- "Mus musculus"
+
+# set seed for gsea
+gsea_seed <- 12345
+
+de_objs <- readRDS("../de_analysis_out_files/edgeR.rds")
+de_res <- lapply(de_objs$res, as.data.frame)
+sapply(de_res, nrow)
+
+cpms <- readRDS("../de_analysis_out_files/norm_counts.rds")
+```
+
+
+```{r define_func}
+
+# Remove genes with 0 logFC and PValue = 1, calculate ranking metric then sort Entrez genes in descending order
+# Adapts code from
+# https://github.com/YuLab-SMU/DOSE/wiki/how-to-prepare-your-own-geneList.
+prep_clusterprofiler_genelist <- function(dge_table, rank_by="signed-log10pval"){
+  
+  # filter away genes with exactly 0 logFC and PValue = 1.
+  filt_dge_table <- dge_table[dge_table$logFC != 0 &
+                                dge_table$PValue != 1, ]
+  
+  # calculate rank_metric
+  if(identical(rank_by, "signed-log10pval")){
+    filt_dge_table$rank_metric <-
+      sign(filt_dge_table$logFC) * -log10(filt_dge_table$PValue)
+  } else{
+    stop("Specify valid ranking metric.")
+  }
+  
+  ## feature 1: numeric vector
+  geneList <- filt_dge_table$rank_metric
+  ## feature 2: named vector
+  names(geneList) <- as.character(filt_dge_table$entrez)
+  ## feature 3: decreasing order
+  geneList <- sort(geneList, decreasing = TRUE)
+
+  return(geneList)
+}
+
+
+# Get the genesets and format for clusterprofiler (dataframe with col1 = geneset name, col2 = entrez gene)
+# organisms is 'Homo sapiens' or 'Mus musculus'
+# if no msigdb subcat, then specify NA
+get_geneset <- function(gene_set, msigdb_subcat=NA, organism){
+  if (gene_set %in% c("H", "C1", "C2", "C3", "C4", "C5", "C6", "C7")){
+    #browser()
+    msigdbr_args <- list(species = organism, category = gene_set, subcat=msigdb_subcat)
+    msigdbr_args <-  msigdbr_args[!sapply(msigdbr_args, is.na)] # remove 'subcat' param if it is NA
+    
+    msigdbr_gene_set <- do.call(msigdbr::msigdbr, msigdbr_args)
+    
+    # convert to clusterprofiler friendly format
+    geneset_out <- msigdbr_gene_set[, c("gs_name", "entrez_gene")] %>%
+      as.data.frame(stringsAsFactors = FALSE)
+    
+  } else{
+    stop("Invalid value for gene_set parameter.")
+  }
+  
+  geneset_out
+}
+
+```
+
+# Get ranked genes
+
+```{r calc_ranks}
+genes_and_score <- lapply(de_res, prep_clusterprofiler_genelist)
+sapply(genes_and_score, length)
+
+# remove genes with no Entrez ID (isNA) 
+genes_and_score <- lapply(genes_and_score, function(x) x[!is.na(names(x))])
+sapply(genes_and_score, length)
+
+# remove genes with duplicated Entrez ID
+genes_and_score <- lapply(genes_and_score, function(x) {
+  ids <- names(x)
+  duplicated_ids <- unique(ids[duplicated(ids)])
+  x[!ids %in% duplicated_ids]
+})
+sapply(genes_and_score, length)
+
+# Confirm genes are ordered in decreasing order
+correct_ranking <- sapply(genes_and_score, function(x) {
+  all(order(x, decreasing = TRUE) == 1:length(x))
+})
+stopifnot(all(correct_ranking))
+```
+
+# Get genesets and run GSEA
+
+```{r get_genesets_and_run_gsea}
+# ning wants Pathways: H: hallmark gene sets, C5 GO: gene ontology gene sets, C3 TFT transcription factor targets, C2 CP canonical pathways.
+# H, C5 GO:BP GO:CC GO:MF 	C3 	TFT C2 CP
+genesets_of_interest <- list(H=c("H",NA),
+                             C2_CP=c("C2","CP"),
+                             C3_TFT_GTRD=c("C3","TFT:GTRD"),
+                             C3_TFT_GTRD=c("C3","TFT:TFT_Legacy"),
+                             C5_BP=c("C5","GO:BP"),
+                             C5_CC=c("C5","GO:CC"),
+                             C5_MF=c("C5","GO:MF")
+)
+
+genesets <- lapply(genesets_of_interest, function(x) get_geneset(gene_set=x[1], 
+                                                                 msigdb_subcat=x[2], 
+                                                                 organism=msigdb_organism))
+
+gsea_res <- lapply(genesets, function(geneset){
+  
+  lapply(genes_and_score, function(y){
+    set.seed(gsea_seed) # make reproducible
+    
+    # gene_list is named vector where names are the Entrez IDs and values are the ranking metric
+    gsea_res <- clusterProfiler::GSEA(geneList = y,
+                                      TERM2GENE = geneset, 
+                                      eps = 0.0 # need to set this or Pvalues will not reach below 1e-10
+                                      )
+    
+    gsea_res_syms <- DOSE::setReadable(gsea_res,
+                                       OrgDb = eval(as.symbol(orgdb)),
+                                       keyType = "ENTREZID")
+    list(entrez=gsea_res, symbols=gsea_res_syms)
+    
+  })
+})
+
+# output to file
+invisible(lapply(names(gsea_res), function(geneset){
+  lapply(names(gsea_res[[geneset]]), function(contrast){
+    gseaResult <- gsea_res[[geneset]][[contrast]]$symbols
+    write_tsv(as_tibble(gseaResult), paste0(outdir, "/", contrast, "_", geneset, ".tsv")) 
+  })
+}))
+```
+
+# Summary Plots
+
+```{r plots, fig.width=8, fig.height=5}
+invisible(lapply(names(gsea_res), function(geneset){
+  lapply(names(gsea_res[[geneset]]), function(contrast){
+    gseaResult <- gsea_res[[geneset]][[contrast]]$symbols
+    if(nrow(gseaResult) > 0){
+      dotplot(gseaResult) + ggtitle(paste0(contrast," -- ",geneset)) + 
+        scale_y_discrete(label=function(x) str_trunc(x, 40))
+    } else{
+      "No significant results" 
+    }
+  })
+}))
+```
+
+# Get leading edge genes
+
+```{r leading, fig.height=15, fig.width=6}
+
+
+# cpms is an expression matrix with an 'entrez' column
+# gsea_res is a nested list. First level is geneset collection (e.g. "H","C2") and second level are specific contrasts that GSEA was run for.
+# genset_collection is a character indicating the geneset collection
+# geneset_id is a character indicating the specific geneset within the collection
+plot_leading_edge_heatmap <- function(cpms, gsea_res, geneset_collection, geneset_id, scale="Z-score"){
+  gsea_res <- gsea_res[[geneset_collection]] # get the results for requested collection
+  
+  lapply(rlang::set_names(names(gsea_res), names(gsea_res)), function(contrast){
+    gsea_entrez_df <- as.data.frame(gsea_res[[contrast]]$entrez)
+    
+    geneset_row <- gsea_entrez_df[match(geneset_id, gsea_entrez_df$ID), ]
+    
+    leading_genes_entrez <- unlist(str_split(geneset_row$core_enrichment, "/"))
+    
+    leading_genes_cpms <- cpms[match(leading_genes_entrez, cpms$entrez), ] %>% 
+      dplyr::select(-ensembl_id, -Symbol,-entrez) %>% 
+      remove_rownames() %>%
+      column_to_rownames("Uniq_syms")
+    
+    leading_genes_mat <- as.matrix(leading_genes_cpms)
+    
+    if (scale=="Z-score"){
+      leading_genes_mat <- t(scale(t(leading_genes_mat)))
+    }
+    if (scale=="mean-center"){
+      leading_genes_mat <- t(scale(t(leading_genes_mat), scale=FALSE))
+    }
+    
+    Heatmap(leading_genes_mat, name=scale, column_title = paste0(contrast, " -- ", geneset_id))
+  })
+}
+
+
+plot_leading_edge_heatmap(cpms=cpms, gsea_res=gsea_res, geneset_collection="H", geneset_id="HALLMARK_ADIPOGENESIS")
+
+
+invisible(lapply(as.data.frame(gsea_res$H$`GenotypeAKO-GenotypeWT`$entrez)$ID[1:3], function(geneset_id){
+  plot_leading_edge_heatmap(cpms=cpms, gsea_res=gsea_res, geneset_collection="H", geneset_id=geneset_id)
+}))
+```
+
+
+# Session Info
+```{r session_info, echo = TRUE, eval=TRUE}
+sessionInfo()
+```
+
+# Time
+
+```{r endtime}
+# output time taken to run script
+end_ptm <- proc.time()
+end_ptm
+end_ptm - start_ptm
+
+```
