@@ -1,6 +1,6 @@
 ---
 title: "DE_analysis"
-author: "BBC"
+author: "Kin Lau"
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output:
   html_document:
@@ -213,7 +213,22 @@ lapply(res, function(contrast) {
 analysis_name <- "edgeR"
 
 invisible(
-  lapply(names(res), function(contrast) readr::write_tsv(as.data.frame(res[[contrast]]), paste0(outdir,"/", analysis_name, "_", contrast, ".tsv")))
+  lapply(names(res), function(contrast) {
+    # convert ensembl id from rownames to a new column
+    res_tbl <- as_tibble(as.data.frame(res[[contrast]]), rownames = "ensembl_id")
+    
+    # output just the results
+    readr::write_tsv(res_tbl, paste0(outdir,"/", analysis_name, "_", contrast, ".tsv"))
+    
+    # DE results with normalized counts
+    norm_counts_df2 <- norm_counts_df %>% dplyr::select(-entrez, -Symbol, -Uniq_syms) # de_results already has these columns
+    readr::write_tsv(res_tbl %>% left_join(., norm_counts_df2, by="ensembl_id"), paste0(outdir,"/", analysis_name, "_", contrast, "_w_norm_cts.tsv"))
+
+    # DE results with raw counts counts
+    raw_counts_df2 <- raw_counts_df %>% dplyr::select(-entrez, -Symbol, -Uniq_syms) # de_results already has these columns
+    readr::write_tsv(res_tbl %>% left_join(., raw_counts_df2, by="ensembl_id"), paste0(outdir,"/", analysis_name, "_", contrast, "_w_raw_cts.tsv"))
+
+  })
 )
 
 # output edgeR objects

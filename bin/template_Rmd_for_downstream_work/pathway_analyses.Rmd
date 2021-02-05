@@ -1,6 +1,6 @@
 ---
 title: "Pathways"
-author: "BBC"
+author: "Kin Lau"
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output:
   html_document:
@@ -68,6 +68,7 @@ de_res <- lapply(de_objs$res, as.data.frame)
 sapply(de_res, nrow)
 
 cpms <- readRDS("../de_analysis_out_files/norm_counts.rds")
+
 ```
 
 
@@ -154,7 +155,7 @@ stopifnot(all(correct_ranking))
 
 ```{r get_genesets_and_run_gsea}
 # ning wants Pathways: H: hallmark gene sets, C5 GO: gene ontology gene sets, C3 TFT transcription factor targets, C2 CP canonical pathways.
-# H, C5 GO:BP GO:CC GO:MF   C3  TFT C2 CP
+# H, C5 GO:BP GO:CC GO:MF 	C3 	TFT C2 CP
 genesets_of_interest <- list(H=c("H",NA),
                              C2_CP=c("C2","CP"),
                              C3_TFT_GTRD=c("C3","TFT:GTRD"),
@@ -198,23 +199,23 @@ invisible(lapply(names(gsea_res), function(geneset){
 
 # Summary Plots
 
-```{r plots, fig.width=8, fig.height=5}
-invisible(lapply(names(gsea_res), function(geneset){
+```{r plots, fig.width=10, fig.height=5}
+lapply(names(gsea_res), function(geneset){
   lapply(names(gsea_res[[geneset]]), function(contrast){
     gseaResult <- gsea_res[[geneset]][[contrast]]$symbols
     if(nrow(gseaResult) > 0){
-      dotplot(gseaResult) + ggtitle(paste0(contrast," -- ",geneset)) + 
-        scale_y_discrete(label=function(x) str_trunc(x, 40))
+      dotplot(gseaResult, split=".sign") + ggtitle(paste0(contrast," -- ",geneset)) + 
+        scale_y_discrete(label=function(x) str_trunc(x, 40)) + facet_grid(.~.sign)
     } else{
       "No significant results" 
     }
   })
-}))
+})
 ```
 
 # Get leading edge genes
 
-```{r leading, fig.height=20, fig.width=7}
+```{r leading, fig.height=28, fig.width=7}
 
 # cpms is an expression matrix with an 'entrez' column
 # gsea_res is a nested list. First level is geneset collection (e.g. "H","C2") and second level are specific contrasts that GSEA was run for.
@@ -252,11 +253,39 @@ plot_leading_edge_heatmap <- function(cpms, gsea_res, geneset_collection, genese
 #plot_leading_edge_heatmap(cpms=cpms, gsea_res=gsea_res, geneset_collection="H", geneset_id="HALLMARK_ADIPOGENESIS")
 
 # heatmaps for top 3 geensets of each geneset collection
-lapply(names(gsea_res), function(geneseq_collec){
-  top_geneset_ids <- head(as.data.frame(gsea_res[[geneseq_collec]]$`GenotypeAKO-GenotypeWT`$entrez)$ID, 3) # using head instead of indexing accounts for cases where there are less than 'n' significant genesets
+lapply(names(gsea_res), function(geneset_collec){
+  top_geneset_ids <- head(as.data.frame(gsea_res[[geneset_collec]]$`GenotypeAKO-GenotypeWT`$entrez)$ID, 3) # using head instead of indexing accounts for cases where there are less than 'n' significant genesets
   lapply(top_geneset_ids, function(geneset_id){
-    plot_leading_edge_heatmap(cpms=cpms, gsea_res=gsea_res, geneset_collection=geneseq_collec, geneset_id=geneset_id)
+    plot_leading_edge_heatmap(cpms=cpms, gsea_res=gsea_res, geneset_collection=geneset_collec, geneset_id=geneset_id)
   })
+})
+```
+
+# Plot leading edge genes in specific genesets
+
+```{r specific_genesets, fig.height=28, fig.width=7}
+specific_genesets <- 
+tribble(~collection, ~ID,
+        "H","HALLMARK_WNT_BETA_CATENIN_SIGNALING",
+        "H","HALLMARK_PROTEIN_SECRETION",
+        "C3_TFT_GTRD","TAZ_TARGET_GENES",
+        "C5_BP","GO_MITOCHONDRIAL_TRANSLATIONAL_TERMINATION",
+        "C5_BP","GO_TRANSLATIONAL_ELONGATION",
+        "C5_CC","GO_MITOCHONDRIAL_LARGE_RIBOSOMAL_SUBUNIT",
+        "C5_CC","GO_ORGANELLAR_RIBOSOME",
+        "C5_CC","GO_INNER_MITOCHONDRIAL_MEMBRANE_PROTEIN_COMPLEX",
+        "C5_BP","GO_MITOCHONDRIAL_RESPIRATORY_CHAIN_COMPLEX_ASSEMBLY",
+        "C5_CC","GO_RESPIRATORY_CHAIN_COMPLEX",
+        "C5_CC","GO_RESPIRATORY_CHAIN_COMPLEX_III",
+        "C5_MF","GO_EXTRACELLULAR_MATRIX_STRUCTURAL_CONSTITUENT_CONFERRING_TENSILE_STRENGTH",
+        "C5_MF","GO_STRUCTURAL_CONSTITUENT_OF_RIBOSOME"
+)
+
+
+lapply(1:nrow(specific_genesets), function(x){
+  geneset_collec <- specific_genesets[[x, "collection"]]
+  geneset_id <- specific_genesets[[x, "ID"]]
+  plot_leading_edge_heatmap(cpms=cpms, gsea_res=gsea_res, geneset_collection=geneset_collec, geneset_id=geneset_id)
 })
 ```
 
@@ -275,4 +304,3 @@ end_ptm
 end_ptm - start_ptm
 
 ```
-
