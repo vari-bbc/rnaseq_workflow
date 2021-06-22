@@ -5,16 +5,16 @@ contrasts: bin/contrasts.tsv
 
 ref:
   # path/to/reference/gDNA.fasta
-  sequence:       /secondary/projects/bbc/research/prep_bbc_shared/data/hg38_gencode/sequence/hg38_gencode.fa
-  fai:            /secondary/projects/bbc/research/prep_bbc_shared/data/hg38_gencode/sequence/hg38_gencode.fa.fai
+  sequence:       /varidata/research/projects/bbc/versioned_references/2021-05-10_16.02.19_v2/data/mm10_gencode/sequence/mm10_gencode.fa
+  fai:            /varidata/research/projects/bbc/versioned_references/2021-05-10_16.02.19_v2/data/mm10_gencode/sequence/mm10_gencode.fa.fai
   # path/to/STAR/index/directory
-  index:          /secondary/projects/bbc/research/prep_bbc_shared/data/hg38_gencode/indexes/star
+  index:          /varidata/research/projects/bbc/versioned_references/2021-05-10_16.02.19_v2/data/mm10_gencode/indexes/star
   # path/to/gtf/file/with/transcripts.gtf
-  annotation:     /secondary/projects/bbc/research/prep_bbc_shared/data/hg38_gencode/annotation/hg38_gencode.gtf
-  # known variants (Broad resource downloaded here: https://console.cloud.google.com/storage/browser/genomics-public-data/resources/broad/hg38/v0/)
-  known_snps: /secondary/projects/bbc/research/broad_resource_bundle_hg38/Homo_sapiens_assembly38.dbsnp138.vcf
-  known_indels: /secondary/projects/bbc/research/broad_resource_bundle_hg38/Homo_sapiens_assembly38.known_indels.vcf.gz
-  snpeff_db_id: "GRCh38.86"
+  annotation:     /varidata/research/projects/bbc/versioned_references/2021-05-10_16.02.19_v2/data/mm10_gencode/annotation/mm10_gencode.gtf
+  # known variants (Broad resource downloaded here: https://console.cloud.google.com/storage/browser/genomics-public-data/resources/broad/mm10/v0/)
+  known_snps:
+  known_indels:
+  snpeff_db_id:
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
 
@@ -25,7 +25,7 @@ strandedness: reverse
 ### EdgeR Variables ###
 
 # used for annotation. see src/annotation.tsv for common_name options. e.g.:  "mouse", "human", "fly"
-common_name: human
+common_name: mouse
 # differential expression cutoff values
 logfc.filter: 1
 fdr.filter: 0.05
