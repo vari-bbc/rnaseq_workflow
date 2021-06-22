@@ -44,6 +44,9 @@ if config["call_variants"]:
 
 ##### target rules #####
 
+# Need this directive because both PE and SE versions of these rules produce the trimmed R1 output files.
+ruleorder: trim_galore_PE > trim_galore_SE
+
 rule all:
     input:
         #lambda wildcards: expand("analysis/05_haplotypecaller/{units.sample}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.baserecal.vcf.gz", units=var_calling_units.itertuples()) if config["call_variants"] else [],
@@ -86,74 +89,52 @@ rule all:
         # edgeR
         #"bin/diffExp.html",
 
-rule mergeLanesAndRename_SE:
-    input:
-    output:      "raw_data/{sample}-SE.fastq.gz"
-    log:         "logs/mergeLanesAndRename/mergeLanesAndRename_SE-{sample}.log"
-                 "logs/mergeLanesAndRename/mergeLanesAndRename_PE-{sample}.log"
-    threads: 1
-    resources:
-        nodes =   1,
-        mem_gb =  16,
-    envmodules:  "bbc/R/R-3.6.0"
-    script:      "bin/mergeLanesAndRename.R"
 
-rule mergeLanesAndRename_PE:
-    input:
-    output:      "raw_data/{sample}-R1.fastq.gz",
-                 "raw_data/{sample}-R2.fastq.gz"
-    log:
-                 "logs/mergeLanesAndRename/mergeLanesAndRename_PE-{sample}.log"
-    threads: 1
-    resources:
-        nodes =   1,
-        mem_gb =  16,
-    envmodules:  "bbc/R/R-3.6.0"
-    script:      "bin/mergeLanesAndRename.R"
+def get_orig_fastq(wildcards):
+    if wildcards.read == "R1":
+            fastq = expand("raw_data/{fq}", fq = units[units["sample"] == wildcards.sample]["fq1"].values)
+    elif wildcards.read == "R2":
+            fastq = expand("raw_data/{fq}", fq = units[units["sample"] == wildcards.sample]["fq2"].values)
+    return fastq
 
-def fastq_screen_input(wildcards):
-    if config["PE_or_SE"] == "SE":
-        reads = "raw_data/{sample}-SE.fastq.gz".format(**wildcards)
-        return reads
-    elif config["PE_or_SE"] == "PE":
-        R1 =    "raw_data/{sample}-R1.fastq.gz".format(**wildcards)
-        R2 =    "raw_data/{sample}-R2.fastq.gz".format(**wildcards)
-        return [R1,R2]
-
-rule fastq_screen_PE:
+rule rename_fastqs:
+    """
+    Rename fastqs by biologically meaningful name. Concatenate different runs of same library.
+    """
     input:
-        R1 =      "raw_data/{sample}-R1.fastq.gz",
-        R2 =      "raw_data/{sample}-R2.fastq.gz",
+        get_orig_fastq
     output:
-        R1_html = "analysis/fastq_screen/{sample}-R1_screen.html",
-        R1_txt =  "analysis/fastq_screen/{sample}-R1_screen.txt",
-        R2_html = "analysis/fastq_screen/{sample}-R2_screen.html",
-        R2_txt =  "analysis/fastq_screen/{sample}-R2_screen.txt",
+        "analysis/rename_fastqs/{sample}_{read}.fastq.gz"
     log:
-        R1 =      "logs/fastq_screen/fastq_screen.{sample}-R1.log",
-        R2 =      "logs/fastq_screen/fastq_screen.{sample}-R2.log",
-    benchmark:    "benchmarks/fastq_screen/{sample}.bmk"
-    threads: 8
+        stdout="logs/rename_fastqs/{sample}_{read}.o",
+        stderr="logs/rename_fastqs/{sample}_{read}.e",
+    benchmark:
+        "benchmarks/rename_fastqs/{sample}_{read}.txt"
+    params:
+    threads: 1
     resources:
-        nodes =   1,
-        mem_gb =  64,
-    envmodules:   "bbc/fastq_screen/fastq_screen-0.14.0"
+        mem_gb=8
+    envmodules:
     shell:
         """
-        fastq_screen --outdir analysis/fastq_screen/ {input.R1} 2> {log.R1}
-        fastq_screen --outdir analysis/fastq_screen/ {input.R2} 2> {log.R2}
+        if [ `printf '{input}' | wc -w` -gt 1 ]
+        then
+            cat {input} > {output}
+        else
+            ln -sr {input} {output}
+        fi
         """
 
-rule fastq_screen_SE:
+rule fastq_screen:
     input:
-                    "raw_data/{sample}-SE.fastq.gz",
+                    "analysis/rename_fastqs/{fq_pref}.fastq.gz",
     output:
-        html =      "analysis/fastq_screen/{sample}-SE_screen.html",
-        txt =       "analysis/fastq_screen/{sample}-SE_screen.txt",
+        html =      "analysis/fastq_screen/{fq_pref}_screen.html",
+        txt =       "analysis/fastq_screen/{fq_pref}_screen.txt",
     log:
-                    "logs/fastq_screen/fastq_screen.{sample}-SE.log",
+                    "logs/fastq_screen/{fq_pref}.log",
     benchmark:
-                    "benchmarks/fastq_screen/fastq_screen.{sample}.bmk"
+                    "benchmarks/fastq_screen/{fq_pref}.bmk"
     threads: 8
     resources:
         nodes =     1,
@@ -161,30 +142,30 @@ rule fastq_screen_SE:
     envmodules:     "bbc/fastq_screen/fastq_screen-0.14.0"
     shell:
         """
-        fastq_screen --outdir analysis/fastq_screen/ {input} 2> {log.R1}
+        fastq_screen --outdir analysis/fastq_screen/ {input} 2> {log}
         """
 
 def trim_galore_input(wildcards):
     if config["PE_or_SE"] == "SE":
-        reads = "raw_data/{sample}-SE.fastq.gz".format(**wildcards)
+        reads = "analysis/rename_fastqs/{sample}_R1.fastq.gz".format(**wildcards)
         return reads
     elif config["PE_or_SE"] == "PE":
-        R1 = "raw_data/{sample}-R1.fastq.gz".format(**wildcards)
-        R2 = "raw_data/{sample}-R2.fastq.gz".format(**wildcards)
+        R1 = "analysis/rename_fastqs/{sample}_R1.fastq.gz".format(**wildcards)
+        R2 = "analysis/rename_fastqs/{sample}_R2.fastq.gz".format(**wildcards)
         return [R1,R2]
 
 rule trim_galore_PE:
     input:
         trim_galore_input
     output:
-        "analysis/trimmed_data/{sample}-R1_val_1.fq.gz",
-        "analysis/trimmed_data/{sample}-R1_val_1_fastqc.html",
-        "analysis/trimmed_data/{sample}-R1_val_1_fastqc.zip",
-        "analysis/trimmed_data/{sample}-R1.fastq.gz_trimming_report.txt",
-        "analysis/trimmed_data/{sample}-R2_val_2.fq.gz",
-        "analysis/trimmed_data/{sample}-R2_val_2_fastqc.html",
-        "analysis/trimmed_data/{sample}-R2_val_2_fastqc.zip",
-        "analysis/trimmed_data/{sample}-R2.fastq.gz_trimming_report.txt"
+        "analysis/trimmed_data/{sample}_R1_val_1.fq.gz",
+        "analysis/trimmed_data/{sample}_R1_val_1_fastqc.html",
+        "analysis/trimmed_data/{sample}_R1_val_1_fastqc.zip",
+        "analysis/trimmed_data/{sample}_R1.fastq.gz_trimming_report.txt",
+        "analysis/trimmed_data/{sample}_R2_val_2.fq.gz",
+        "analysis/trimmed_data/{sample}_R2_val_2_fastqc.html",
+        "analysis/trimmed_data/{sample}_R2_val_2_fastqc.zip",
+        "analysis/trimmed_data/{sample}_R2.fastq.gz_trimming_report.txt"
     params:
         outdir="analysis/trimmed_data/"
     log:
@@ -214,10 +195,10 @@ rule trim_galore_SE:
     input:
         trim_galore_input
     output:
-        "analysis/trimmed_data/{sample}-SE_trimmed.fq.gz",
-        "analysis/trimmed_data/{sample}-SE_trimmed_fastqc.zip",
-        "analysis/trimmed_data/{sample}-SE_trimmed_fastqc.html",
-        "analysis/trimmed_data/{sample}-SE.fastq.gz_trimming_report.txt",
+        "analysis/trimmed_data/{sample}_R1_trimmed.fq.gz",
+        "analysis/trimmed_data/{sample}_R1_trimmed_fastqc.zip",
+        "analysis/trimmed_data/{sample}_R1_trimmed_fastqc.html",
+        "analysis/trimmed_data/{sample}_R1.fastq.gz_trimming_report.txt",
     params:
         outdir="analysis/trimmed_data/"
     log:
@@ -244,11 +225,11 @@ rule trim_galore_SE:
 
 def STAR_input(wildcards):
     if config["PE_or_SE"] == "SE":
-        fq1="analysis/trimmed_data/{sample}-SE_trimmed.fq.gz".format(**wildcards)
+        fq1="analysis/trimmed_data/{sample}_R1_trimmed.fq.gz".format(**wildcards)
         return fq1
     elif config["PE_or_SE"] == "PE":
-        fq1 = "analysis/trimmed_data/{sample}-R1_val_1.fq.gz".format(**wildcards)
-        fq2 = "analysis/trimmed_data/{sample}-R2_val_2.fq.gz".format(**wildcards)
+        fq1 = "analysis/trimmed_data/{sample}_R1_val_1.fq.gz".format(**wildcards)
+        fq2 = "analysis/trimmed_data/{sample}_R2_val_2.fq.gz".format(**wildcards)
         return [fq1,fq2]
 
 rule STAR:
@@ -297,17 +278,17 @@ rule STAR:
 
 multiqc_input = []
 if config["PE_or_SE"] =="SE":
-    multiqc_input.append(expand("analysis/fastq_screen/{units.sample}-SE_screen.txt", units=units.itertuples()))
-    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-SE_trimmed.fq.gz", units=units.itertuples()))
-    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-SE_trimmed_fastqc.zip", units=units.itertuples()))
-    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-SE_trimmed_fastqc.html", units=units.itertuples()))
+    multiqc_input.append(expand("analysis/fastq_screen/{units.sample}_R1_screen.txt", units=units.itertuples()))
+    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R1_trimmed.fq.gz", units=units.itertuples()))
+    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R1_trimmed_fastqc.zip", units=units.itertuples()))
+    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R1_trimmed_fastqc.html", units=units.itertuples()))
     multiqc_input.append(expand("analysis/star/{units.sample}.Log.final.out", units=units.itertuples()))
 elif config["PE_or_SE"] =="PE":
-    multiqc_input.append(expand("analysis/fastq_screen/{units.sample}-R{read}_screen.txt", units=units.itertuples(), read=["1","2"]))
-    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-R{read}_val_{read}.fq.gz", units=units.itertuples(), read=["1","2"]))
-    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.html", units=units.itertuples(), read=["1","2"]))
-    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.zip", units=units.itertuples(), read=["1","2"]))
-    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}-R{read}.fastq.gz_trimming_report.txt", units=units.itertuples(), read=["1","2"]))
+    multiqc_input.append(expand("analysis/fastq_screen/{units.sample}_R{read}_screen.txt", units=units.itertuples(), read=["1","2"]))
+    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R{read}_val_{read}.fq.gz", units=units.itertuples(), read=["1","2"]))
+    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R{read}_val_{read}_fastqc.html", units=units.itertuples(), read=["1","2"]))
+    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R{read}_val_{read}_fastqc.zip", units=units.itertuples(), read=["1","2"]))
+    multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R{read}.fastq.gz_trimming_report.txt", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("analysis/star/{units.sample}.Log.final.out", units=units.itertuples()))
 
 rule multiqc:
