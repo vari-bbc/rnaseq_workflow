@@ -111,18 +111,14 @@ rule rename_fastqs:
     benchmark:
         "benchmarks/rename_fastqs/{sample}_{read}.txt"
     params:
+        cat_or_symlink=lambda wildcards, input: "cat " + " ".join(input) + " > " if len(input) > 1 else "ln -sr " + input[0]
     threads: 1
     resources:
         mem_gb=8
     envmodules:
     shell:
         """
-        if [ `printf '{input}' | wc -w` -gt 1 ]
-        then
-            cat {input} > {output}
-        else
-            ln -sr {input} {output}
-        fi
+        {params.cat_or_symlink} {output}
         """
 
 rule fastq_screen:
