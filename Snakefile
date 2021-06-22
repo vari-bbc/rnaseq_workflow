@@ -273,7 +273,7 @@ rule STAR:
     benchmark:
         "benchmarks/star/{sample}.txt"
     envmodules:
-        "bbc/STAR/STAR-2.7.3a",
+        "bbc/STAR/STAR-2.7.8a",
         "bbc/samtools/samtools-1.9"
     threads: 8
     resources:
