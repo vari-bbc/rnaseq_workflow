@@ -43,3 +43,4 @@ rules/diffExp.html
 rules/._*
 
 *test*
+.idea

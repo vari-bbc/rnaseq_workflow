@@ -18,6 +18,9 @@ ref:
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
 
+kallisto_idx: /secondary/projects/bbc/research/prep_bbc_shared_current/data/mm10_gencode/indexes/kallisto/mm10_gencode
+salmon_idx: /secondary/projects/bbc/research/prep_bbc_shared_current/data/mm10_gencode/indexes/salmon/mm10_gencode
+
 # what is the strandedness of the kit used for library prep?
 # options: "forward", "reverse", "unstranded" (usually reverse)
 strandedness: reverse
