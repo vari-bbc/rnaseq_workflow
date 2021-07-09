@@ -88,6 +88,7 @@ rule all:
         #expand("analysis/02_splitncigar/{units.sample}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.bam", units=var_calling_units.itertuples())
         # edgeR
         #"bin/diffExp.html",
+        directory(expand("analysis/kallisto/{samples}", samples=list(units.index))),
 
 
 def get_orig_fastq(wildcards):
@@ -271,6 +272,50 @@ rule STAR:
 
         samtools index {output.bam}
         """
+
+def kallisto_salmon_input(wildcards):
+    if config["PE_or_SE"] == "SE":
+        fq1="analysis/trimmed_data/{sample}_R1_trimmed.fq.gz".format(**wildcards)
+        return fq1
+    if config["PE_or_SE"] == "PE":
+        fq1 = "analysis/trimmed_data/{sample}_R1_val_1.fq.gz".format(**wildcards)
+        fq2 = "analysis/trimmed_data/{sample}_R2_val_2.fq.gz".format(**wildcards)
+        return [fq1,fq2]
+
+rule kallisto:
+    input:
+        kallisto_salmon_input,
+    output:
+        "analysis/kallisto/{sample}/abundance.h5",
+        "analysis/kallisto/{sample}/abundance.tsv",
+        "analysis/kallisto/{sample}/run_info.json",
+    params:
+        index = config['kallisto_idx'],
+        outputprefix = "analysis/kallisto/{sample}"
+    log:
+        "logs/kallisto/{sample}.log",
+    benchmark:
+        "benchmarks/kallisto/{sample}.txt"
+    threads: 8
+    resources:
+        nodes =   1,
+        mem_gb =  30,
+#    envmodules:
+#        "bbc/kallisto/kallisto-0.46.1",
+    run:
+        ## single end
+        if len(input.__str__().split()) == 1:
+            shell("""module load bbc/kallisto/kallisto-0.46.1; \
+            kallisto quant --bias -b 100 -t {threads} --single -l 200 -s 20 -i {params.index} \
+            -o {params.outputprefix} {input}
+             """)
+        else: ## paired-end
+            shell("""module load bbc/kallisto/kallisto-0.46.1; \
+                        kallisto quant --bias -b 100 -t {threads} -i {params.index} \
+                        -o {params.outputprefix} {input}
+                """)
+
+
 
 multiqc_input = []
 if config["PE_or_SE"] =="SE":
