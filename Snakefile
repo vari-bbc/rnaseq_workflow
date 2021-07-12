@@ -88,7 +88,8 @@ rule all:
         #expand("analysis/02_splitncigar/{units.sample}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.bam", units=var_calling_units.itertuples())
         # edgeR
         #"bin/diffExp.html",
-        directory(expand("analysis/kallisto/{samples}", samples=list(units.index))),
+        expand("analysis/kallisto/{samples}/abundance.tsv", samples=list(units.index)),
+        expand("analysis/salmon/{samples}/quant.sf", samples=list(units.index)),
 
 
 def get_orig_fastq(wildcards):
@@ -291,7 +292,7 @@ rule kallisto:
         "analysis/kallisto/{sample}/run_info.json",
     params:
         index = config['kallisto_idx'],
-        outputprefix = "analysis/kallisto/{sample}"
+        outputprefix = "analysis/kallisto/{sample}",
     log:
         "logs/kallisto/{sample}.log",
     benchmark:
@@ -315,7 +316,40 @@ rule kallisto:
                         -o {params.outputprefix} {input}
                 """)
 
-
+rule salmon:
+    input:
+        kallisto_salmon_input,
+    output:
+        "analysis/salmon/{sample}/quant.sf",
+    params:
+        index = config['salmon_idx'],
+        outputprefix = "analysis/salmon/{sample}",
+    log:
+        "logs/salmon/{sample}.log",
+    benchmark:
+        "benchmarks/salmon/{sample}.txt",
+    threads: 8
+    resources:
+        node   = 1,
+        mem_gb = 30,
+    # envmodules:
+    #     "bbc/salmon/salmon-1.4.0",
+    run:
+        ## single-end
+        if len(input.__str__().split()) == 1:
+            fq=input.__str__().split()[0]
+            shell("""module load bbc/salmon/salmon-1.4.0; \
+            salmon quant --seqBias --posBias --numGibbsSamples 20 -p {threads} -i {params.index} \
+            -l A -o {params.outputprefix} -1 {fq}
+            """)
+        else:
+            fq_1 = input.__str__().split()[0]
+            fq_2 = input.__str__().split()[1]
+        ## PE
+            shell("""module load bbc/salmon/salmon-1.4.0; \
+            salmon quant --seqBias --posBias --numGibbsSamples 20 -p {threads} -i {params.index} \
+            -l A -o {params.outputprefix} -1 {fq_1} -2 {fq_2}
+            """)
 
 multiqc_input = []
 if config["PE_or_SE"] =="SE":
@@ -405,7 +439,7 @@ rule addRG:
         sample=lambda wildcards: var_calling_units[var_calling_units["unit"]==wildcards.sample]['sample'].values[0],
         platform_unit=lambda wildcards: var_calling_units[var_calling_units["unit"]==wildcards.sample]['platform_unit'].values[0]
     threads: 4
-    resources: 
+    resources:
         mem_gb = 64
     shell:
         """
@@ -428,7 +462,7 @@ rule markdups:
     output:
         bam="analysis/01_markdup/{sample}.Aligned.sortedByCoord.out.addRG.mrkdup.bam",
         metrics="analysis/01_markdup/{sample}.Aligned.sortedByCoord.out.addRG.mrkdup.metrics"
-    params: 
+    params:
         input_params=lambda wildcards: expand("--INPUT analysis/00_addRG/{sample}.Aligned.sortedByCoord.out.addRG.bam", sample=var_calling_units[var_calling_units["sample"]==wildcards.sample].index.values)
     log:
         out="logs/01_markdup/{sample}.o",
@@ -438,7 +472,7 @@ rule markdups:
     envmodules:
         "bbc/picard/picard-2.23.3"
     threads: 4
-    resources: 
+    resources:
         mem_gb = 64
     shell:
         """
@@ -465,7 +499,7 @@ rule splitncigar:
     envmodules:
         "bbc/gatk/gatk-4.1.8.1"
     threads: 4
-    resources: 
+    resources:
         mem_gb = 64
     shell:
         """
@@ -494,7 +528,7 @@ rule base_recalibrate:
     envmodules:
         "bbc/gatk/gatk-4.1.8.1"
     threads: 4
-    resources: 
+    resources:
         mem_gb = 64
     shell:
         """
@@ -524,7 +558,7 @@ rule applyBQSR:
     envmodules:
         "bbc/gatk/gatk-4.1.8.1"
     threads: 4
-    resources: 
+    resources:
         mem_gb = 64
     shell:
         """
@@ -552,11 +586,11 @@ rule haplotypecaller:
         dbsnp=config["ref"]["known_snps"],
         ref_fasta=config["ref"]["sequence"],
         contigs = lambda wildcards: "-L " + contig_groups[contig_groups.name == wildcards.contig_group]['contigs'].values[0].replace(",", " -L "),
-        
+
     envmodules:
         "bbc/gatk/gatk-4.1.8.1"
     threads: 4
-    resources: 
+    resources:
         mem_gb = 80
     shell:
         """
@@ -592,7 +626,7 @@ rule combinevar:
     envmodules:
         "bbc/gatk/gatk-4.1.8.1"
     threads: 4
-    resources: 
+    resources:
         mem_gb = 80
     shell:
         """
@@ -621,7 +655,7 @@ rule jointgeno:
     envmodules:
         "bbc/gatk/gatk-4.1.8.1"
     threads: 4
-    resources: 
+    resources:
         mem_gb = 80
     shell:
         """
@@ -653,7 +687,7 @@ rule merge_and_filter_vcf:
         "bbc/gatk/gatk-4.1.8.1",
         "bbc/vt/vt-0.1.16"
     threads: 4
-    resources: 
+    resources:
         mem_gb = 80
     shell:
         """
@@ -719,7 +753,7 @@ rule variant_annot:
         "bbc/SnpEff/SnpEff-4.3t",
         "bbc/htslib/htslib-1.10.2"
     threads: 4
-    resources: 
+    resources:
         mem_gb = 80
     shell:
         """
