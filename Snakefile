@@ -88,8 +88,15 @@ rule all:
         #expand("analysis/02_splitncigar/{units.sample}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.bam", units=var_calling_units.itertuples())
         # edgeR
         #"bin/diffExp.html",
+        # kallisto
         expand("analysis/kallisto/{samples}/abundance.tsv", samples=list(units.index)),
+        expand("analysis/kallisto/{samples}/abundance.h5", samples=list(units.index)),
+        expand("analysis/kallisto/{samples}/run_info.json", samples=list(units.index)),
+        # salmon
         expand("analysis/salmon/{samples}/quant.sf", samples=list(units.index)),
+        expand("analysis/salmon/{samples}/cmd_info.json", samples=list(units.index)),
+        expand("analysis/salmon/{samples}/lib_format_counts.json", samples=list(units.index)),
+        expand("analysis/salmon/{samples}/logs/salmon_quant.log", samples=list(units.index)),
 
 
 def get_orig_fastq(wildcards):
@@ -307,13 +314,13 @@ rule kallisto:
         ## single end
         if len(input.__str__().split()) == 1:
             shell("""module load bbc/kallisto/kallisto-0.46.1; \
-            kallisto quant --bias -b 100 -t {threads} --single -l 200 -s 20 -i {params.index} \
-            -o {params.outputprefix} {input}
-             """)
+                kallisto quant --bias -b 100 -t {threads} --single -l 200 -s 20 -i {params.index} \
+                -o {params.outputprefix} {input}
+                """)
         else: ## paired-end
             shell("""module load bbc/kallisto/kallisto-0.46.1; \
-                        kallisto quant --bias -b 100 -t {threads} -i {params.index} \
-                        -o {params.outputprefix} {input}
+                kallisto quant --bias -b 100 -t {threads} -i {params.index} \
+                -o {params.outputprefix} {input}
                 """)
 
 rule salmon:
@@ -335,21 +342,26 @@ rule salmon:
     # envmodules:
     #     "bbc/salmon/salmon-1.4.0",
     run:
+    ## reference https://bit.ly/3wuBDxP
         ## single-end
         if len(input.__str__().split()) == 1:
-            fq=input.__str__().split()[0]
+            # print(input)
+            # print(input.__str__().split())
+            #fq=input.__str__().split()[0]
             shell("""module load bbc/salmon/salmon-1.4.0; \
-            salmon quant --seqBias --posBias --numGibbsSamples 20 -p {threads} -i {params.index} \
-            -l A -o {params.outputprefix} -1 {fq}
-            """)
+                salmon quant --seqBias --posBias --numGibbsSamples 20 -p {threads} -i {params.index} \
+                -l A -o {params.outputprefix} -r {input}
+               """)
         else:
             fq_1 = input.__str__().split()[0]
             fq_2 = input.__str__().split()[1]
+            # print(input)
+            # print(fq_1, fq_2)
         ## PE
             shell("""module load bbc/salmon/salmon-1.4.0; \
-            salmon quant --seqBias --posBias --numGibbsSamples 20 -p {threads} -i {params.index} \
-            -l A -o {params.outputprefix} -1 {fq_1} -2 {fq_2}
-            """)
+                  salmon quant --seqBias --posBias --numGibbsSamples 20 -p {threads} -i {params.index} \
+               -l A -o {params.outputprefix} -1 {fq_1} -2 {fq_2}
+                   """)
 
 multiqc_input = []
 if config["PE_or_SE"] =="SE":
