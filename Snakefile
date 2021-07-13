@@ -328,6 +328,9 @@ rule salmon:
         kallisto_salmon_input,
     output:
         "analysis/salmon/{sample}/quant.sf",
+        "analysis/salmon/{sample}/lib_format_counts.json",
+        "analysis/salmon/{sample}/cmd_info.json",
+        "analysis/salmon/{sample}/logs/salmon_quant.log",
     params:
         index = config['salmon_idx'],
         outputprefix = "analysis/salmon/{sample}",
