@@ -89,14 +89,14 @@ rule all:
         # edgeR
         #"bin/diffExp.html",
         # kallisto
-        expand("analysis/kallisto/{samples}/abundance.tsv", samples=list(units.index)),
-        expand("analysis/kallisto/{samples}/abundance.h5", samples=list(units.index)),
-        expand("analysis/kallisto/{samples}/run_info.json", samples=list(units.index)),
+        expand("analysis/kallisto/{sample}/abundance.tsv", sample=list(units.index)),
+        expand("analysis/kallisto/{sample}/abundance.h5", sample=list(units.index)),
+        expand("analysis/kallisto/{sample}/run_info.json", sample=list(units.index)),
         # salmon
-        expand("analysis/salmon/{samples}/quant.sf", samples=list(units.index)),
-        expand("analysis/salmon/{samples}/cmd_info.json", samples=list(units.index)),
-        expand("analysis/salmon/{samples}/lib_format_counts.json", samples=list(units.index)),
-        expand("analysis/salmon/{samples}/logs/salmon_quant.log", samples=list(units.index)),
+        expand("analysis/salmon/{sample}/quant.sf", sample=list(units.index)),
+        expand("analysis/salmon/{sample}/cmd_info.json", sample=list(units.index)),
+        expand("analysis/salmon/{sample}/lib_format_counts.json", sample=list(units.index)),
+        expand("analysis/salmon/{sample}/logs/salmon_quant.log", sample=list(units.index)),
 
 
 def get_orig_fastq(wildcards):
