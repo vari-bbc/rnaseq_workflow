@@ -5,12 +5,12 @@ contrasts: bin/contrasts.tsv
 
 ref:
   # path/to/reference/gDNA.fasta
-  sequence:       /varidata/research/projects/bbc/versioned_references/2021-05-10_16.02.19_v2/data/mm10_gencode/sequence/mm10_gencode.fa
-  fai:            /varidata/research/projects/bbc/versioned_references/2021-05-10_16.02.19_v2/data/mm10_gencode/sequence/mm10_gencode.fa.fai
+  sequence:       /varidata/research/projects/bbc/versioned_references/2021-08-10_11.12.27_v6/data/mm10_gencode/sequence/mm10_gencode.fa
+  fai:            /varidata/research/projects/bbc/versioned_references/2021-08-10_11.12.27_v6/data/mm10_gencode/sequence/mm10_gencode.fa.fai
   # path/to/STAR/index/directory
-  index:          /varidata/research/projects/bbc/versioned_references/2021-05-10_16.02.19_v2/data/mm10_gencode/indexes/star
+  index:          /varidata/research/projects/bbc/versioned_references/2021-08-10_11.12.27_v6/data/mm10_gencode/indexes/star
   # path/to/gtf/file/with/transcripts.gtf
-  annotation:     /varidata/research/projects/bbc/versioned_references/2021-05-10_16.02.19_v2/data/mm10_gencode/annotation/mm10_gencode.gtf
+  annotation:     /varidata/research/projects/bbc/versioned_references/2021-08-10_11.12.27_v6/data/mm10_gencode/annotation/mm10_gencode.gtf
   # known variants (Broad resource downloaded here: https://console.cloud.google.com/storage/browser/genomics-public-data/resources/broad/mm10/v0/)
   known_snps:
   known_indels:
