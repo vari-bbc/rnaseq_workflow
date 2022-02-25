@@ -42,10 +42,14 @@ if config["call_variants"]:
 
     assert contig_groups_flattened == fai_pd.iloc[:,0].values.tolist(), "Chromosomes in .fai do not match those in 'grouped_contigs.tsv'."
 
+avail_read = ["1", "2"] if config["PE_or_SE"] == "PE" else ["1"]
+
 ##### target rules #####
 
 # Need this directive because both PE and SE versions of these rules produce the trimmed R1 output files.
 ruleorder: trim_galore_PE > trim_galore_SE
+ruleorder: seqtk_PE > seqtk_SE
+ruleorder: sortmerna_PE > sortmerna_SE
 
 rule all:
     input:
@@ -88,6 +92,8 @@ rule all:
         #expand("analysis/02_splitncigar/{units.sample}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.bam", units=var_calling_units.itertuples())
         # edgeR
         #"bin/diffExp.html",
+        #seqtk
+        #expand("analysis/subsample/{units.sample}_R{read}.fq.gz", read=avail_read, units=units.itertuples())
 
 
 def get_orig_fastq(wildcards):
@@ -279,6 +285,7 @@ if config["PE_or_SE"] =="SE":
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R1_trimmed_fastqc.zip", units=units.itertuples()))
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R1_trimmed_fastqc.html", units=units.itertuples()))
     multiqc_input.append(expand("analysis/star/{units.sample}.Log.final.out", units=units.itertuples()))
+    multiqc_input.append(expand("analysis/sortmerna/{units.sample}",units=units.itertuples()))
 elif config["PE_or_SE"] =="PE":
     multiqc_input.append(expand("analysis/fastq_screen/{units.sample}_R{read}_screen.txt", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R{read}_val_{read}.fq.gz", units=units.itertuples(), read=["1","2"]))
@@ -286,6 +293,7 @@ elif config["PE_or_SE"] =="PE":
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R{read}_val_{read}_fastqc.zip", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R{read}.fastq.gz_trimming_report.txt", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("analysis/star/{units.sample}.Log.final.out", units=units.itertuples()))
+    multiqc_input.append(expand("analysis/sortmerna/{units.sample}",units=units.itertuples()))
 
 rule multiqc:
     input:
@@ -294,6 +302,7 @@ rule multiqc:
         "analysis/star/",
         "analysis/trimmed_data/",
         "analysis/fastq_screen/",
+        "analysis/sortmerna/",
     output:
         "analysis/multiqc/multiqc_report.html",
         "analysis/multiqc/multiqc_report_data/multiqc.log",
@@ -311,7 +320,7 @@ rule multiqc:
         nodes = 1,
         mem_gb = 32,
     envmodules:
-        "bbc/multiqc/multiqc-1.8"
+        "bbc/multiqc/multiqc-1.11"
     shell:
         """
         multiqc -f {params} \
@@ -320,6 +329,137 @@ rule multiqc:
         -n multiqc_report.html \
         --cl-config 'max_table_rows: 999999' \
         2> {log}
+        """
+
+rule seqtk_SE:
+    input:
+        fq1 = STAR_input,
+    output:
+        fq1 = "analysis/subsample/{sample}_R1_trimmed.fq.gz",
+    log:
+        stderr = "logs/seqtk/{sample}.e",
+        stdout = "logs/seqtk/{sample}.o",
+    envmodules:
+        "bbc/seqtk/seqtk-1.3-r115-dirty",
+    params:
+        num_subsamp = 50000,
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_gb = 16,
+    shell:
+        """
+        seqtk sample -s 100 {input.fq1} {params.num_subsamp} | gzip -c > {output.fq1}
+        """
+
+rule seqtk_PE:
+    input:
+        fq1 = lambda wildcards:  STAR_input(wildcards)[0],
+        fq2 = lambda wildcards:  STAR_input(wildcards)[1],
+    output:
+        fq1 = "analysis/subsample/{sample}_R1_val_1.fq.gz",
+        fq2 = "analysis/subsample/{sample}_R2_val_2.fq.gz",
+    log:
+        stderr = "logs/seqtk/{sample}.e",
+        stdout = "logs/seqtk/{sample}.o",
+    envmodules:
+        "bbc/seqtk/seqtk-1.3-r115-dirty",
+    params:
+        num_subsamp = 50000,
+    threads: 1
+    resources:
+        nodes = 1,
+        mem_gb = 16,
+    shell:
+        """
+        seqtk sample -s 100 {input.fq1} {params.num_subsamp} | gzip -c > {output.fq1}
+        seqtk sample -s 100 {input.fq2} {params.num_subsamp} | gzip -c > {output.fq2}
+        """
+
+def sortmerna_input(wildcards):
+    if config["PE_or_SE"] == "SE":
+        fq1="analysis/subsample/{sample}_R1_trimmed.fq.gz".format(**wildcards)
+        return fq1
+    if config["PE_or_SE"] == "PE":
+        fq1 = "analysis/subsample/{sample}_R1_val_1.fq.gz".format(**wildcards)
+        fq2 = "analysis/subsample/{sample}_R2_val_2.fq.gz".format(**wildcards)
+        return [fq1,fq2]
+
+rule sortmerna_SE:
+    input:
+        fq1 = sortmerna_input,
+    output:
+        directory("analysis/sortmerna/{sample}")
+    log:
+        stderr = "logs/sortmerna/{sample}.e",
+        stdout = "logs/sortmerna/{sample}.o",
+    envmodules:
+        "bbc/sortmerna/sortmerna-4.3.4",
+    params:
+        rfam5_8s = config["sortmerna"]["rfam5_8s"],
+        rfam5s = config['sortmerna']['rfam5s'],
+        silva_arc_16s = config['sortmerna']['silva_arc_16s'],
+        silva_arc_23s = config['sortmerna']['silva_arc_23s'],
+        silva_bac_16s = config['sortmerna']['silva_bac_16s'],
+        silva_bac_23s = config['sortmerna']['silva_bac_23s'],
+        silva_euk_18s = config['sortmerna']['silva_euk_18s'],
+        silva_euk_28s = config['sortmerna']['silva_euk_28s'],
+        idx_dir = config['sortmerna']['idx_dir'],
+    threads: 8
+    resources:
+        nodes = 1,
+        mem_gb = 16,
+    shell:
+        """
+        sortmerna --threads {threads} -reads {input.fq1} --workdir {output}  \
+        --idx-dir {params.idx_dir}  \
+        --ref {params.rfam5s}  \
+        --ref {params.rfam5_8s}  \
+        --ref {params.silva_arc_16s}  \
+        --ref {params.silva_arc_23s}  \
+        --ref {params.silva_bac_16s}  \
+        --ref {params.silva_bac_23s}  \
+        --ref {params.silva_euk_18s}  \
+        --ref {params.silva_euk_28s}
+        """
+
+rule sortmerna_PE:
+    input:
+        fq1 = lambda wildcards: sortmerna_input(wildcards)[0],
+        fq2 = lambda wildcards: sortmerna_input(wildcards)[1],
+    output:
+        directory("analysis/sortmerna/{sample}")
+    log:
+        stderr = "logs/sortmerna/{sample}.e",
+        stdout = "logs/sortmerna/{sample}.o",
+    envmodules:
+        "bbc/sortmerna/sortmerna-4.3.4",
+    params:
+        rfam5_8s = config["sortmerna"]["rfam5_8s"],
+        rfam5s = config['sortmerna']['rfam5s'],
+        silva_arc_16s = config['sortmerna']['silva_arc_16s'],
+        silva_arc_23s = config['sortmerna']['silva_arc_23s'],
+        silva_bac_16s = config['sortmerna']['silva_bac_16s'],
+        silva_bac_23s = config['sortmerna']['silva_bac_23s'],
+        silva_euk_18s = config['sortmerna']['silva_euk_18s'],
+        silva_euk_28s = config['sortmerna']['silva_euk_28s'],
+        idx_dir = config['sortmerna']['idx_dir'],
+    threads: 8
+    resources:
+        nodes = 1,
+        mem_gb = 16,
+    shell:
+        """
+        sortmerna --threads {threads} -reads {input.fq1} -reads {input.fq2} --workdir {output}  \
+        --idx-dir {params.idx_dir}  \
+        --ref {params.rfam5s}  \
+        --ref {params.rfam5_8s}  \
+        --ref {params.silva_arc_16s}  \
+        --ref {params.silva_arc_23s}  \
+        --ref {params.silva_bac_16s}  \
+        --ref {params.silva_bac_23s}  \
+        --ref {params.silva_euk_18s}  \
+        --ref {params.silva_euk_28s}
         """
 
 rule edgeR:

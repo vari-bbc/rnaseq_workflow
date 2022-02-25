@@ -43,3 +43,6 @@ rules/diffExp.html
 rules/._*
 
 *test*
+
+#pycharm
+.idea
