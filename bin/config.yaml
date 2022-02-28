@@ -33,3 +33,15 @@ fdr.filter: 0.05
 # Boolean for whether to call variants. Requires 'variant_calling_units.tsv'
 # snpRelate html report only generated if conda is callable. Otherwise, the snpRelate rule is not run.
 call_variants: false
+
+
+sortmerna:
+    rfam5_8s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.4-Linux/rRNA_databases/rfam-5.8s-database-id98.fasta
+    rfam5s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.4-Linux/rRNA_databases/rfam-5s-database-id98.fasta
+    silva_arc_16s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.4-Linux/rRNA_databases/silva-arc-16s-id95.fasta
+    silva_arc_23s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.4-Linux/rRNA_databases/silva-arc-23s-id98.fasta
+    silva_bac_16s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.4-Linux/rRNA_databases/silva-bac-16s-id90.fasta
+    silva_bac_23s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.4-Linux/rRNA_databases/silva-bac-23s-id98.fasta
+    silva_euk_18s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.4-Linux/rRNA_databases/silva-euk-18s-id95.fasta
+    silva_euk_28s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.4-Linux/rRNA_databases/silva-euk-28s-id98.fasta
+    idx_dir: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.4-Linux/indexes/idx/
