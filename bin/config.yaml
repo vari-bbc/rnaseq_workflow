@@ -9,6 +9,7 @@ ref:
   fai:            /varidata/research/projects/bbc/versioned_references/2021-08-10_11.12.27_v6/data/mm10_gencode/sequence/mm10_gencode.fa.fai
   # path/to/STAR/index/directory
   index:          /varidata/research/projects/bbc/versioned_references/2021-08-10_11.12.27_v6/data/mm10_gencode/indexes/star
+  salmon_index:   /varidata/research/projects/bbc/versioned_references/2021-08-10_11.12.27_v6/data/mm10_gencode/indexes/salmon/mm10_gencode
   # path/to/gtf/file/with/transcripts.gtf
   annotation:     /varidata/research/projects/bbc/versioned_references/2021-08-10_11.12.27_v6/data/mm10_gencode/annotation/mm10_gencode.gtf
   # known variants (Broad resource downloaded here: https://console.cloud.google.com/storage/browser/genomics-public-data/resources/broad/mm10/v0/)
