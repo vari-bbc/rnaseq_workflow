@@ -272,6 +272,37 @@ rule STAR:
         samtools index {output.bam}
         """
 
+rule salmon:
+    input:
+        STAR_input,
+        index=config["ref"]["salmon_index"]
+    output:
+        expand("analysis/salmon/{{sample}}/{file}", file=["libParams/flenDist.txt","aux_info/meta_info.json","quant.sf","lib_format_counts.json","cmd_info.json","logs/salmon_quant.log"])
+    params:
+        outdir=directory("analysis/salmon/{sample}"),
+        reads=lambda wildcards, input: "-1 {fq1} -2 {fq2}".format(fq1=input[0], fq2=input[1]) if config["PE_or_SE"] == "PE" else "-r {fq1}".format(fq1=input[0])
+    log:
+        "logs/salmon/{sample}.log"
+    benchmark:
+        "benchmarks/salmon/{sample}.txt"
+    envmodules:
+        "bbc/salmon/salmon-1.5.2"
+    threads: 8
+    resources:
+        nodes =   1,
+        mem_gb =  120,
+    shell:
+        """
+        salmon quant \
+                -p {threads} \
+                -l A \
+                -i {input.index} \
+                {params.reads} \
+                --validateMappings \
+                -o {params.outdir} 2>&1 {log}
+        """
+
+
 multiqc_input = []
 if config["PE_or_SE"] =="SE":
     multiqc_input.append(expand("analysis/fastq_screen/{units.sample}_R1_screen.txt", units=units.itertuples()))
@@ -286,6 +317,7 @@ elif config["PE_or_SE"] =="PE":
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R{read}_val_{read}_fastqc.zip", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R{read}.fastq.gz_trimming_report.txt", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("analysis/star/{units.sample}.Log.final.out", units=units.itertuples()))
+    multiqc_input.append(expand("analysis/salmon/{units.sample}/{file}", units=units.itertuples(), file=["libParams/flenDist.txt","aux_info/meta_info.json"]))
 
 rule multiqc:
     input:
@@ -294,6 +326,7 @@ rule multiqc:
         "analysis/star/",
         "analysis/trimmed_data/",
         "analysis/fastq_screen/",
+        "analysis/salmon/"
     output:
         "analysis/multiqc/multiqc_report.html",
         "analysis/multiqc/multiqc_report_data/multiqc.log",
