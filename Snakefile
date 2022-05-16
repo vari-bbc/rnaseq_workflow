@@ -286,6 +286,7 @@ if config["PE_or_SE"] =="SE":
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R1_trimmed_fastqc.html", units=units.itertuples()))
     multiqc_input.append(expand("analysis/star/{units.sample}.Log.final.out", units=units.itertuples()))
     multiqc_input.append(expand("analysis/sortmerna/{units.sample}",units=units.itertuples()))
+    multiqc_input.append(expand("analysis/qualimap/{units.sample}/done",units=units.itertuples()))
 elif config["PE_or_SE"] =="PE":
     multiqc_input.append(expand("analysis/fastq_screen/{units.sample}_R{read}_screen.txt", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R{read}_val_{read}.fq.gz", units=units.itertuples(), read=["1","2"]))
@@ -294,6 +295,7 @@ elif config["PE_or_SE"] =="PE":
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R{read}.fastq.gz_trimming_report.txt", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("analysis/star/{units.sample}.Log.final.out", units=units.itertuples()))
     multiqc_input.append(expand("analysis/sortmerna/{units.sample}",units=units.itertuples()))
+    multiqc_input.append(expand("analysis/qualimap/{units.sample}/done",units=units.itertuples()))
 
 rule multiqc:
     input:
@@ -303,6 +305,7 @@ rule multiqc:
         "analysis/trimmed_data/",
         "analysis/fastq_screen/",
         "analysis/sortmerna/",
+        "analysis/qualimap/",
     output:
         "analysis/multiqc/multiqc_report.html",
         "analysis/multiqc/multiqc_report_data/multiqc.log",
@@ -460,6 +463,29 @@ rule sortmerna_PE:
         --ref {params.silva_bac_23s}  \
         --ref {params.silva_euk_18s}  \
         --ref {params.silva_euk_28s}
+        """
+
+rule qualimap:
+    """
+    Run qualimap on bam files.
+    """
+    input:
+        bam = "analysis/star/{sample}.Aligned.sortedByCoord.out.bam",
+    output:
+        touch("analysis/qualimap/{sample}/done")
+    log:
+        stdout="logs/qualimap/{sample}.o",
+        stderr="logs/qualimap/{sample}.e"
+    benchmark:
+        "benchmarks/qualimap/{sample}.txt"
+    envmodules:
+        "bbc/qualimap/qualimap_v.2.2.2"
+    resources:
+        mem_gb=100,
+    threads: 8,
+    shell:
+        """
+        qualimap bamqc -bam {input} --java-mem-size={resources.mem_gb}G --paint-chromosome-limits -outdir analysis/qualimap/{wildcards.sample} -nt {threads}
         """
 
 rule edgeR:
