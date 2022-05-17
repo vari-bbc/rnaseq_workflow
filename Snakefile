@@ -480,12 +480,17 @@ rule qualimap:
         "benchmarks/qualimap/{sample}.txt"
     envmodules:
         "bbc/qualimap/qualimap_v.2.2.2"
+    params:
+        gtf = config["ref"]["annotation"],
     resources:
         mem_gb=100,
     threads: 8,
     shell:
         """
-        qualimap bamqc -bam {input} --java-mem-size={resources.mem_gb}G --paint-chromosome-limits -outdir analysis/qualimap/{wildcards.sample} -nt {threads}
+        qualimap rnaseq -bam {input} \
+        -gtf {params.gtf} --paired \
+        --sequencing-protocol strand-specific-reverse \
+        -outdir analysis/qualimap/{wildcards.sample}
         """
 
 rule edgeR:
