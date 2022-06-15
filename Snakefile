@@ -487,10 +487,11 @@ rule qualimap:
     threads: 8,
     shell:
         """
-        qualimap rnaseq -bam {input} \
-        -gtf {params.gtf} --paired \
-        --sequencing-protocol strand-specific-reverse \
-        -outdir analysis/qualimap/{wildcards.sample}
+        qualimap rnaseq -bam {input}  \
+        -gtf {params.gtf} --paired  \
+        --sequencing-protocol strand-specific-reverse  \
+        -outdir analysis/qualimap/{wildcards.sample}  \
+        --java-mem-size={resources.mem_gb}G 
         """
 
 rule edgeR:
