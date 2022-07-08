@@ -5,15 +5,15 @@ library(readr)
 library(stringr)
  
 option_list <- list(
-  make_option(c("-s", "--sample_rgx"), type="character", default="^(\\S+)(?=_L000)", 
+  make_option(c("-s", "--sample_rgx"), type="character", default="^([^_]+)", 
               help="regex for sample [default= %default]", metavar="character"),
-  make_option(c("-r", "--group_rgx"), type="character", default="^(\\S+)(?=_L000)", 
+  make_option(c("-r", "--group_rgx"), type="character", default="^([^_]+)", 
               help="regex for group [default= %default]", metavar="character"),
-  make_option(c("-g", "--geno_rgx"), type="character", default="^(\\S+)(?=_L000)", 
+  make_option(c("-g", "--geno_rgx"), type="character", default="^([^_]+)", 
               help="regex for genotype [default= %default]", metavar="character"),
-  make_option(c("-c", "--cond_rgx"), type="character", default="^(\\S+)(?=_L000)", 
+  make_option(c("-c", "--cond_rgx"), type="character", default="^([^_]+)", 
               help="regex for condition [default= %default]", metavar="character"),
-  make_option(c("-u", "--unit_rgx"), type="character", default="^(\\S+)(?=_L000)", 
+  make_option(c("-u", "--unit_rgx"), type="character", default="^([^_]+)", 
               help="regex for unit [default= %default]", metavar="character")
 ); 
  
@@ -22,7 +22,7 @@ opt <- parse_args(opt_parser);
 
 
 fq_files <- list.files("../raw_data/", pattern = "*fastq.gz", recursive=TRUE)
-R1_files <- grep("_R1_", fq_files, value = TRUE)
+R1_files <- grep("_R1[_\\.]", fq_files, value = TRUE)
 
 # sample    group    genotype    condition    unit    fq1    fq2    strandedness
 df <- data.frame(fq1 = R1_files) %>%
@@ -31,12 +31,21 @@ mutate(sample = str_extract(basename(fq1), opt$sample_rgx),
        genotype = str_extract(basename(fq1), opt$geno_rgx),
        condition = str_extract(basename(fq1), opt$cond_rgx),
        unit = str_extract(basename(fq1), opt$unit_rgx),
-       fq2 = str_replace(fq1, "_R1_", "_R2_"),
+       fq2 = str_replace(fq1, "_R1([_\\.])", "_R2\\1"),
        strandedness = "reverse") %>%
+arrange(sample) %>%
 select(sample,group,genotype,condition,unit,fq1,fq2,strandedness)
 
 # make sure no fq file listed more than once.
 stopifnot(length(df$fq1) == length(unique(df$fq1)))
 stopifnot(length(df$fq2) == length(unique(df$fq2)))
+stopifnot(length(c(df$fq1, df$fq2)) == length(unique(c(df$fq1, df$fq2))))
+
+# make sure all R2 files have 'R2' in the name
+stopifnot(sum(str_detect(df$fq2, "_R2[_\\.]")) == length(df$fq2))
+stopifnot(sum(str_detect(df$fq1, "_R1[_\\.]")) == length(df$fq1))
+
+# make all found fastq files listed
+stopifnot(all(sort(c(df$fq1, df$fq2)) == sort(fq_files)))
 
 write_tsv(df, "units_template.tsv")
