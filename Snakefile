@@ -317,6 +317,7 @@ if config["PE_or_SE"] =="SE":
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R1_trimmed_fastqc.html", units=units.itertuples()))
     multiqc_input.append(expand("analysis/star/{units.sample}.Log.final.out", units=units.itertuples()))
     multiqc_input.append(expand("analysis/sortmerna/{units.sample}",units=units.itertuples()))
+    multiqc_input.append(expand("analysis/salmon/{units.sample}/{file}", units=units.itertuples(), file=["aux_info/meta_info.json"]))
 elif config["PE_or_SE"] =="PE":
     multiqc_input.append(expand("analysis/fastq_screen/{units.sample}_R{read}_screen.txt", units=units.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("analysis/trimmed_data/{units.sample}_R{read}_val_{read}.fq.gz", units=units.itertuples(), read=["1","2"]))
