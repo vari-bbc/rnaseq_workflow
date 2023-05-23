@@ -3,7 +3,7 @@ import os
 from shutil import which
 from snakemake.utils import validate, min_version
 ##### set minimum snakemake version #####
-min_version("5.14.0")
+min_version("7.25.0")
 
 ##### check if conda is available. If not, we don't run rules requiring conda envs. Applies to dryruns and actual runs.
 conda_avail = (which('conda') is not None)
@@ -17,8 +17,6 @@ configfile: "bin/config.yaml"
 units = pd.read_table(config["units"]).set_index("sample", drop=False)
 var_calling_units = pd.read_table("bin/variant_calling_units.tsv").set_index("unit", drop=False)
 
-contrasts = pd.read_table(config["contrasts"]).set_index("name", drop=False)
-#validate(contrasts, schema="schemas/contrasts.schema.yaml")
 
 if not os.path.exists('tmp'):
     os.mkdir('tmp')
@@ -53,47 +51,9 @@ ruleorder: sortmerna_PE > sortmerna_SE
 
 rule all:
     input:
-        #lambda wildcards: expand("analysis/05_haplotypecaller/{units.sample}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.baserecal.vcf.gz", units=var_calling_units.itertuples()) if config["call_variants"] else [],
-        #lambda wildcards: expand("analysis/07_jointgeno/all.{contig_group}.vcf.gz", contig_group=contig_groups.name) if config["call_variants"] else [],
-        #lambda wildcards: "analysis/08_merge_and_filter/all.merged.filt.vcf.gz" if config["call_variants"] else [],
         lambda wildcards: "analysis/09a_variant_annot/all.merged.filt.PASS.snpeff.vcf.gz.tbi" if config["call_variants"] else [],
         "analysis/09b_snp_pca_and_dendro/report.html" if (config["call_variants"] and conda_avail) else [],
-        # mergeLanesAndRename
-            # SE
-        # expand("raw_data/{units.sample}-SE.fastq.gz", units=units.itertuples()),
-            # PE
-        # expand("raw_data/{units.sample}-R1.fastq.gz", units=units.itertuples()),
-        # expand("raw_data/{units.sample}-R2.fastq.gz", units=units.itertuples()),
-        # fastq_screen
-            # PE
-        # expand("analysis/fastq_screen/{units.sample}-R1_screen.html", units=units.itertuples()),
-        # expand("analysis/fastq_screen/{units.sample}-R1_screen.txt", units=units.itertuples()),
-        # expand("analysis/fastq_screen/{units.sample}-R2_screen.html", units=units.itertuples()),
-        # expand("analysis/fastq_screen/{units.sample}-R2_screen.txt", units=units.itertuples()),
-            # SE
-        # expand("analysis/fastq_screen/{units.sample}-SE_screen.html", units=units.itertuples()),
-        # expand("analysis/fastq_screen/{units.sample}-SE_screen.txt", units=units.itertuples()),
-        # Trim_Galore
-            # SE
-        # expand("analysis/trimmed_data/{units.sample}-SE_trimmed.fq.gz", units=units.itertuples()),
-        # expand("analysis/trimmed_data/{units.sample}-SE_fastqc.html", units=units.itertuples()),
-        # expand("analysis/trimmed_data/{units.sample}-SE_fastqc.zip", units=units.itertuples()),
-        # expand("analysis/trimmed_data/{units.sample}-SE.fastq.gz_trimming_report.txt", units=units.itertuples()),
-            # PE
-        # expand("analysis/trimmed_data/{units.sample}_R{read}_val_{read}.fq.gz", read=[1,2], units=units.itertuples()),
-        # expand("analysis/trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.html", read=[1,2], units=units.itertuples()),
-        # expand("analysis/trimmed_data/{units.sample}-R{read}_val_{read}_fastqc.zip", read=[1,2], units=units.itertuples()),
-        # expand("analysis/trimmed_data/{units.sample}-R{read}.fastq.gz_trimming_report.txt", read=[1,2], units=units.itertuples()),
-        # STAR alignment
-        # expand("analysis/star/{units.sample}.Aligned.sortedByCoord.out.bam", units=units.itertuples()),
-        # expand("analysis/star/{units.sample}.Log.out", units=units.itertuples()),
-        # multiQC
         "analysis/multiqc/multiqc_report.html",
-        #expand("analysis/02_splitncigar/{units.sample}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.bam", units=var_calling_units.itertuples())
-        # edgeR
-        #"bin/diffExp.html",
-        #seqtk
-        #expand("analysis/subsample/{units.sample}_R{read}.fq.gz", read=avail_read, units=units.itertuples())
 
 
 def get_orig_fastq(wildcards):
@@ -111,16 +71,14 @@ rule rename_fastqs:
         get_orig_fastq
     output:
         "analysis/rename_fastqs/{sample}_{read}.fastq.gz"
-    log:
-        stdout="logs/rename_fastqs/{sample}_{read}.o",
-        stderr="logs/rename_fastqs/{sample}_{read}.e",
     benchmark:
         "benchmarks/rename_fastqs/{sample}_{read}.txt"
     params:
         cat_or_symlink=lambda wildcards, input: "cat " + " ".join(input) + " > " if len(input) > 1 else "ln -sr " + input[0]
     threads: 1
     resources:
-        mem_gb=8
+        mem_gb=8,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     envmodules:
     shell:
         """
@@ -133,18 +91,17 @@ rule fastq_screen:
     output:
         html =      "analysis/fastq_screen/{fq_pref}_screen.html",
         txt =       "analysis/fastq_screen/{fq_pref}_screen.txt",
-    log:
-                    "logs/fastq_screen/{fq_pref}.log",
     benchmark:
                     "benchmarks/fastq_screen/{fq_pref}.bmk"
     threads: 8
     resources:
         nodes =     1,
         mem_gb =    64,
-    envmodules:     "bbc/fastq_screen/fastq_screen-0.14.0"
+        log_prefix=lambda wildcards: "_".join(wildcards)
+    envmodules: config['modules']['fastq_screen']
     shell:
         """
-        fastq_screen --outdir analysis/fastq_screen/ {input} 2> {log}
+        fastq_screen --outdir analysis/fastq_screen/ {input} 
         """
 
 def trim_galore_input(wildcards):
@@ -170,17 +127,15 @@ rule trim_galore_PE:
         "analysis/trimmed_data/{sample}_R2.fastq.gz_trimming_report.txt"
     params:
         outdir="analysis/trimmed_data/"
-    log:
-        stdout="logs/trim_galore/{sample}.o",
-        stderr="logs/trim_galore/{sample}.e"
     benchmark:
         "benchmarks/trim_galore/{sample}.txt"
     envmodules:
-        "bbc/trim_galore/trim_galore-0.6.0"
+        config['modules']['trim_galore']
     threads: 4
     resources:
         nodes =   1,
         mem_gb =  80,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         trim_galore \
@@ -189,8 +144,7 @@ rule trim_galore_PE:
         --output_dir {params.outdir} \
         --cores {threads} \
         -q 20 \
-        --fastqc \
-        2> {log.stderr} 1> {log.stdout}
+        --fastqc
         """
 
 rule trim_galore_SE:
@@ -203,17 +157,15 @@ rule trim_galore_SE:
         "analysis/trimmed_data/{sample}_R1.fastq.gz_trimming_report.txt",
     params:
         outdir="analysis/trimmed_data/"
-    log:
-        stdout="logs/trim_galore/{sample}.o",
-        stderr="logs/trim_galore/{sample}.e"
     benchmark:
         "benchmarks/trim_galore/{sample}.txt"
     envmodules:
-        "bbc/trim_galore/trim_galore-0.6.0"
+        config['modules']['trim_galore']
     threads: 4
     resources:
         nodes =   1,
         mem_gb =  80,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         trim_galore \
@@ -221,8 +173,7 @@ rule trim_galore_SE:
         --output_dir {params.outdir} \
         --cores {threads} \
         -q 20 \
-        --fastqc \
-        2> {log.stderr} 1> {log.stdout}
+        --fastqc 
         """
 
 def STAR_input(wildcards):
@@ -251,17 +202,16 @@ rule STAR:
         # path to STAR reference genome index
         index = config["ref"]["index"],
         outprefix = "analysis/star/{sample}."
-    log:
-        "logs/star/{sample}.log"
     benchmark:
         "benchmarks/star/{sample}.txt"
     envmodules:
-        "bbc/STAR/STAR-2.7.8a",
-        "bbc/samtools/samtools-1.9"
+        config['modules']['star'],
+        config['modules']['samtools']
     threads: 8
     resources:
         nodes =   1,
         mem_gb =  120,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         STAR \
@@ -273,7 +223,7 @@ rule STAR:
         --outSAMtype BAM SortedByCoordinate \
         --outFileNamePrefix {params.outprefix} \
         --quantMode GeneCounts \
-        --outStd Log 2> {log}
+        --outStd Log 
 
         samtools index {output.bam}
         """
@@ -287,16 +237,15 @@ rule salmon:
     params:
         outdir=directory("analysis/salmon/{sample}"),
         reads=lambda wildcards, input: "-1 {fq1} -2 {fq2}".format(fq1=input[0], fq2=input[1]) if config["PE_or_SE"] == "PE" else "-r {fq1}".format(fq1=input[0])
-    log:
-        "logs/salmon/{sample}.log"
     benchmark:
         "benchmarks/salmon/{sample}.txt"
     envmodules:
-        "bbc/salmon/salmon-1.5.2"
+        config['modules']['salmon']
     threads: 8
     resources:
         nodes =   1,
         mem_gb =  120,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         salmon quant \
@@ -305,7 +254,7 @@ rule salmon:
                 -i {input.index} \
                 {params.reads} \
                 --validateMappings \
-                -o {params.outdir} 2>&1 {log}
+                -o {params.outdir}
         """
 
 
@@ -345,24 +294,22 @@ rule multiqc:
         "analysis/multiqc/multiqc_report_data/multiqc_general_stats.txt",
         "analysis/multiqc/multiqc_report_data/multiqc_sources.txt",
         "analysis/multiqc/multiqc_report_data/multiqc_star.txt",
-    log:
-        "logs/multiqc.log"
     benchmark:
         "benchmarks/multiqc/multiqc.txt"
     threads: 1
     resources:
         nodes = 1,
         mem_gb = 32,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     envmodules:
-        "bbc/multiqc/multiqc-1.11"
+        config['modules']['multiqc']
     shell:
         """
         multiqc -f {params} \
         -o analysis/multiqc \
         --ignore '*._STARpass1/*' \
         -n multiqc_report.html \
-        --cl-config 'max_table_rows: 999999' \
-        2> {log}
+        --cl-config 'max_table_rows: 999999' 
         """
 
 rule seqtk_SE:
@@ -370,17 +317,15 @@ rule seqtk_SE:
         fq1 = STAR_input,
     output:
         fq1 = "analysis/subsample/{sample}_R1_trimmed.fq.gz",
-    log:
-        stderr = "logs/seqtk/{sample}.e",
-        stdout = "logs/seqtk/{sample}.o",
     envmodules:
-        "bbc/seqtk/seqtk-1.3-r115-dirty",
+        config['modules']['seqtk']
     params:
         num_subsamp = 50000,
     threads: 1
     resources:
         nodes = 1,
         mem_gb = 16,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         seqtk sample -s 100 {input.fq1} {params.num_subsamp} | gzip -c > {output.fq1}
@@ -393,17 +338,15 @@ rule seqtk_PE:
     output:
         fq1 = "analysis/subsample/{sample}_R1_val_1.fq.gz",
         fq2 = "analysis/subsample/{sample}_R2_val_2.fq.gz",
-    log:
-        stderr = "logs/seqtk/{sample}.e",
-        stdout = "logs/seqtk/{sample}.o",
     envmodules:
-        "bbc/seqtk/seqtk-1.3-r115-dirty",
+        config['modules']['seqtk']
     params:
         num_subsamp = 50000,
     threads: 1
     resources:
         nodes = 1,
         mem_gb = 16,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         seqtk sample -s 100 {input.fq1} {params.num_subsamp} | gzip -c > {output.fq1}
@@ -424,11 +367,8 @@ rule sortmerna_SE:
         fq1 = sortmerna_input,
     output:
         directory("analysis/sortmerna/{sample}")
-    log:
-        stderr = "logs/sortmerna/{sample}.e",
-        stdout = "logs/sortmerna/{sample}.o",
     envmodules:
-        "bbc/sortmerna/sortmerna-4.3.4",
+        config['modules']['sortmerna']
     params:
         rfam5_8s = config["sortmerna"]["rfam5_8s"],
         rfam5s = config['sortmerna']['rfam5s'],
@@ -443,6 +383,7 @@ rule sortmerna_SE:
     resources:
         nodes = 1,
         mem_gb = 16,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         sortmerna --threads {threads} -reads {input.fq1} --workdir {output}  \
@@ -463,11 +404,8 @@ rule sortmerna_PE:
         fq2 = lambda wildcards: sortmerna_input(wildcards)[1],
     output:
         directory("analysis/sortmerna/{sample}")
-    log:
-        stderr = "logs/sortmerna/{sample}.e",
-        stdout = "logs/sortmerna/{sample}.o",
     envmodules:
-        "bbc/sortmerna/sortmerna-4.3.4",
+        config['modules']['sortmerna']
     params:
         rfam5_8s = config["sortmerna"]["rfam5_8s"],
         rfam5s = config['sortmerna']['rfam5s'],
@@ -482,6 +420,7 @@ rule sortmerna_PE:
     resources:
         nodes = 1,
         mem_gb = 16,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         sortmerna --threads {threads} -reads {input.fq1} -reads {input.fq2} --workdir {output}  \
@@ -496,38 +435,16 @@ rule sortmerna_PE:
         --ref {params.silva_euk_28s}
         """
 
-rule edgeR:
-    input:
-        expand("analysis/star/{units.sample}.Aligned.sortedByCoord.out.bam", units=units.itertuples()),
-        "analysis/multiqc/multiqc_report.html" # require multiQC to be run before this analysis
-    output:
-        "bin/diffExp.html"
-    log:
-        "logs/edgeR.log"
-    benchmark:
-        "benchmarks/edgeR/edgeR.txt"
-    envmodules:
-        #use node095 RStudio Server R install
-    threads: 1
-    resources:
-        nodes = 1,
-        mem_gb = 16,
-    script:
-        "bin/diffExp.Rmd"
-
 
 rule addRG:
     input:
         "analysis/star/{sample}.Aligned.sortedByCoord.out.bam"
     output:
         bam="analysis/00_addRG/{sample}.Aligned.sortedByCoord.out.addRG.bam",
-    log:
-        out="logs/00_addRG/{sample}.o",
-        err="logs/00_addRG/{sample}.e"
     benchmark:
         "benchmarks/00_addRG/{sample}.txt"
     envmodules:
-        "bbc/picard/picard-2.23.3"
+        config['modules']['picard']
     params:
         unit=lambda wildcards: var_calling_units[var_calling_units["unit"]==wildcards.sample]['unit'].values[0],
         lib=lambda wildcards: var_calling_units[var_calling_units["unit"]==wildcards.sample]['library'].values[0],
@@ -535,7 +452,8 @@ rule addRG:
         platform_unit=lambda wildcards: var_calling_units[var_calling_units["unit"]==wildcards.sample]['platform_unit'].values[0]
     threads: 4
     resources: 
-        mem_gb = 64
+        mem_gb = 64,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         java -Xms16g -Xmx64g -Djava.io.tmpdir=./tmp -jar $PICARD AddOrReplaceReadGroups \
@@ -545,7 +463,7 @@ rule addRG:
         --RGLB {params.lib} \
         --RGPL ILLUMINA \
         --RGPU {params.platform_unit} \
-        --RGSM {params.sample} 1>{log.out} 2>{log.err}
+        --RGSM {params.sample} 
         """
 
 
@@ -559,16 +477,14 @@ rule markdups:
         metrics="analysis/01_markdup/{sample}.Aligned.sortedByCoord.out.addRG.mrkdup.metrics"
     params: 
         input_params=lambda wildcards: expand("--INPUT analysis/00_addRG/{sample}.Aligned.sortedByCoord.out.addRG.bam", sample=var_calling_units[var_calling_units["sample"]==wildcards.sample].index.values)
-    log:
-        out="logs/01_markdup/{sample}.o",
-        err="logs/01_markdup/{sample}.e"
     benchmark:
         "benchmarks/01_markdup/{sample}.txt"
     envmodules:
-        "bbc/picard/picard-2.23.3"
+        config['modules']['picard']
     threads: 4
     resources: 
-        mem_gb = 64
+        mem_gb = 64,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         java -Xms16g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $PICARD MarkDuplicates \
@@ -576,7 +492,7 @@ rule markdups:
         --OUTPUT {output.bam} \
         --CREATE_INDEX true \
         --VALIDATION_STRINGENCY SILENT \
-        --METRICS_FILE {output.metrics} 1>{log.out} 2>{log.err}
+        --METRICS_FILE {output.metrics} 
         """
 
 rule splitncigar:
@@ -584,25 +500,23 @@ rule splitncigar:
         "analysis/01_markdup/{sample}.Aligned.sortedByCoord.out.addRG.mrkdup.bam"
     output:
         "analysis/02_splitncigar/{sample}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.bam"
-    log:
-        out="logs/02_splitncigar/{sample}.o",
-        err="logs/02_splitncigar/{sample}.e"
     benchmark:
         "benchmarks/02_splitncigar/{sample}.txt"
     params:
         ref_fasta=config["ref"]["sequence"],
     envmodules:
-        "bbc/gatk/gatk-4.1.8.1"
+        config['modules']['gatk']
     threads: 4
     resources: 
-        mem_gb = 64
+        mem_gb = 64,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
         SplitNCigarReads \
         -R {params.ref_fasta} \
         -I {input} \
-        -O {output} 1>{log.out} 2>{log.err}
+        -O {output} 
 
         """
 
@@ -611,9 +525,6 @@ rule base_recalibrate:
         "analysis/02_splitncigar/{sample}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.bam"
     output:
         "analysis/03_base_recal/{sample}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.bam.recal_data.table"
-    log:
-        out="logs/03_base_recal/{sample}.o",
-        err="logs/03_base_recal/{sample}.e"
     benchmark:
         "benchmarks/03_base_recal/{sample}.txt"
     params:
@@ -621,10 +532,11 @@ rule base_recalibrate:
         known_snps=config["ref"]["known_snps"],
         known_indels=config["ref"]["known_indels"]
     envmodules:
-        "bbc/gatk/gatk-4.1.8.1"
+        config['modules']['gatk']
     threads: 4
     resources: 
-        mem_gb = 64
+        mem_gb = 64,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -XX:+UseParallelGC -XX:ParallelGCThreads={threads} -Djava.io.tmpdir=./tmp" \
@@ -633,7 +545,7 @@ rule base_recalibrate:
             -I {input} \
             -O {output} \
             -known-sites {params.known_snps} \
-            -known-sites {params.known_indels} 1>{log.out} 2>{log.err}
+            -known-sites {params.known_indels} 
 
         """
 
@@ -643,18 +555,16 @@ rule applyBQSR:
         recal_table="analysis/03_base_recal/{sample}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.bam.recal_data.table"
     output:
         "analysis/04_apply_base_recal/{sample}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.baserecal.bam"
-    log:
-        out="logs/04_apply_base_recal/{sample}.o",
-        err="logs/04_apply_base_recal/{sample}.e"
     benchmark:
         "benchmarks/04_apply_base_recal/{sample}.txt"
     params:
         ref_fasta=config["ref"]["sequence"],
     envmodules:
-        "bbc/gatk/gatk-4.1.8.1"
+        config['modules']['gatk']
     threads: 4
     resources: 
-        mem_gb = 64
+        mem_gb = 64,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g  -XX:+UseParallelGC -XX:ParallelGCThreads={threads} -Djava.io.tmpdir=./tmp" \
@@ -663,7 +573,7 @@ rule applyBQSR:
             -R {params.ref_fasta} \
             -I {input.bam} \
             -O {output} \
-            --bqsr-recal-file {input.recal_table} 1>{log.out} 2>{log.err}
+            --bqsr-recal-file {input.recal_table} 
 
         """
 
@@ -672,9 +582,6 @@ rule haplotypecaller:
         bam="analysis/04_apply_base_recal/{sample}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.baserecal.bam"
     output:
         "analysis/05_haplotypecaller/{sample}.{contig_group}.Aligned.sortedByCoord.out.addRG.mrkdup.splitncigar.baserecal.g.vcf.gz"
-    log:
-        out="logs/05_haplotypecaller/{sample}.{contig_group}.o",
-        err="logs/05_haplotypecaller/{sample}.{contig_group}.e"
     benchmark:
         "benchmarks/05_haplotypecaller/{sample}.{contig_group}.txt"
     params:
@@ -683,10 +590,11 @@ rule haplotypecaller:
         contigs = lambda wildcards: "-L " + contig_groups[contig_groups.name == wildcards.contig_group]['contigs'].values[0].replace(",", " -L "),
         
     envmodules:
-        "bbc/gatk/gatk-4.1.8.1"
+        config['modules']['gatk']
     threads: 4
     resources: 
-        mem_gb = 80
+        mem_gb = 80,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
@@ -699,7 +607,7 @@ rule haplotypecaller:
         --native-pair-hmm-threads {threads} \
         --standard-min-confidence-threshold-for-calling 20 \
         --dbsnp {params.dbsnp} \
-        {params.contigs} 1>{log.out} 2>{log.err}
+        {params.contigs} 
 
         """
 
@@ -710,55 +618,50 @@ rule combinevar:
     output:
         touch=touch("analysis/06_combinevar/{contig_group}.done"),
         genomicsdb=directory("analysis/06_combinevar/{contig_group}.genomicsdb"),
-    log:
-        out="logs/06_combinevar/all.{contig_group}.o",
-        err="logs/06_combinevar/all.{contig_group}.e"
     benchmark:
         "benchmarks/06_combinevar/{contig_group}.txt"
     params:
         sample_gvcfs = lambda wildcards, input: list(map("-V {}".format, input)),
         contigs = lambda wildcards: "-L " + contig_groups[contig_groups.name == wildcards.contig_group]['contigs'].values[0].replace(",", " -L "),
     envmodules:
-        "bbc/gatk/gatk-4.1.8.1"
+        config['modules']['gatk']
     threads: 4
     resources: 
-        mem_gb = 80
+        mem_gb = 80,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
         GenomicsDBImport \
         {params.sample_gvcfs} \
         --genomicsdb-workspace-path {output.genomicsdb} \
-        {params.contigs} 1>{log.out} 2>{log.err}
+        {params.contigs} 
 
         """
 
 rule jointgeno:
     input:
         "analysis/06_combinevar/{contig_group}.done"
-        #"analysis/06_combinevar/{contig_group}.genomicsdb"
     output:
         vcf="analysis/07_jointgeno/all.{contig_group}.vcf.gz",
-    log:
-        out="logs/07_jointgeno/all.{contig_group}.o",
-        err="logs/07_jointgeno/all.{contig_group}.e"
     benchmark:
         "benchmarks/07_jointgeno/all.{contig_group}.txt"
     params:
         ref_fasta=config["ref"]["sequence"],
         genomicsdb="analysis/06_combinevar/{contig_group}.genomicsdb"
     envmodules:
-        "bbc/gatk/gatk-4.1.8.1"
+        config['modules']['gatk']
     threads: 4
     resources: 
-        mem_gb = 80
+        mem_gb = 80,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
         GenotypeGVCFs \
         -R {params.ref_fasta} \
         -V gendb://{params.genomicsdb} \
-        -O {output.vcf} 1>>{log.out} 2>>{log.err}
+        -O {output.vcf} 
         """
 
 rule merge_and_filter_vcf:
@@ -770,32 +673,29 @@ rule merge_and_filter_vcf:
         pass_only="analysis/08_merge_and_filter/all.merged.filt.PASS.vcf.gz",
         vt_peek_raw="analysis/08_merge_and_filter/all.merged.vcf.gz.vt_peek.txt",
         vt_peek_pass="analysis/08_merge_and_filter/all.merged.filt.PASS.vcf.gz.vt_peek.txt"
-    log:
-        out="logs/08_merge_and_filter/out.o",
-        err="logs/08_merge_and_filter/out.e"
     benchmark:
         "benchmarks/08_merge_and_filter/benchmark.txt"
     params:
         ref_fasta=config["ref"]["sequence"],
         in_vcfs=expand("--INPUT analysis/07_jointgeno/all.{contig_grp}.vcf.gz", contig_grp=contig_groups.name)
     envmodules:
-        "bbc/gatk/gatk-4.1.8.1",
-        "bbc/vt/vt-0.1.16"
+        config['modules']['gatk'],
+        config['modules']['vt']
     threads: 4
     resources: 
-        mem_gb = 80
+        mem_gb = 80,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
         MergeVcfs \
         {params.in_vcfs} \
-        --OUTPUT {output.raw} \
-        1>>{log.out} 2>>{log.err}
+        --OUTPUT {output.raw} 
 
-        vt peek -r {params.ref_fasta} {output.raw} 2> {output.vt_peek_raw} 1>>{log.out}
+        vt peek -r {params.ref_fasta} {output.raw} 2> {output.vt_peek_raw}
 
-        echo "mergeVcfs done." >> {log.out}
-        echo "mergeVcfs done." >> {log.err}
+        echo "mergeVcfs done."
+        echo "mergeVcfs done." 1>&2
 
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
         VariantFiltration \
@@ -807,24 +707,22 @@ rule merge_and_filter_vcf:
         --filter "FS > 30.0" \
         --filter-name "QD" \
         --filter "QD < 2.0" \
-        -O {output.filt} \
-        1>>{log.out} 2>>{log.err}
+        -O {output.filt} 
         
-        echo "VariantFiltration done." >> {log.out}
-        echo "VariantFiltration done." >> {log.err}
+        echo "VariantFiltration done." 
+        echo "VariantFiltration done." 1>&2
 
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
         SelectVariants \
         -R {params.ref_fasta} \
         -V {output.filt} \
         --exclude-filtered \
-        -O {output.pass_only} \
-        1>>{log.out} 2>>{log.err}
+        -O {output.pass_only} 
         
-        echo "SelectVariants done." >> {log.out}
-        echo "SelectVariants done." >> {log.err}
+        echo "SelectVariants done."
+        echo "SelectVariants done." 1>&2
 
-        vt peek -r {params.ref_fasta} {output.pass_only} 2> {output.vt_peek_pass} 1>>{log.out}
+        vt peek -r {params.ref_fasta} {output.pass_only} 2> {output.vt_peek_pass} 
         """
 
 rule variant_annot:
@@ -837,19 +735,17 @@ rule variant_annot:
         html_canon="analysis/09a_variant_annot/all.merged.filt.PASS.snpeff_canonical.html",
         vcf_canon="analysis/09a_variant_annot/all.merged.filt.PASS.snpeff_canonical.vcf.gz",
         tbi_canon="analysis/09a_variant_annot/all.merged.filt.PASS.snpeff_canonical.vcf.gz.tbi",
-    log:
-        out="logs/09a_variant_annot/out.o",
-        err="logs/09a_variant_annot/out.e"
     benchmark:
         "benchmarks/09a_variant_annot/benchmark.txt"
     params:
         db_id=config["ref"]["snpeff_db_id"],
     envmodules:
-        "bbc/SnpEff/SnpEff-4.3t",
-        "bbc/htslib/htslib-1.10.2"
+        config['modules']['snpeff'],
+        config['modules']['htslib']
     threads: 4
     resources: 
-        mem_gb = 80
+        mem_gb = 80,
+        log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $SNPEFF/snpEff.jar eff \
@@ -858,11 +754,10 @@ rule variant_annot:
         -onlyProtein \
         -stats {output.html_canon} \
         {params.db_id} \
-        {input} \
-        2>>{log.err} | \
+        {input} | \
         bgzip > {output.vcf_canon}
 
-        tabix {output.vcf_canon} 2>>{log.err} 1>>{log.out}
+        tabix {output.vcf_canon} 
 
 
         java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $SNPEFF/snpEff.jar eff \
@@ -870,11 +765,10 @@ rule variant_annot:
         -onlyProtein \
         -stats {output.html} \
         {params.db_id} \
-        {input} \
-        2>>{log.err} | \
+        {input} | \
         bgzip > {output.vcf}
 
-        tabix {output.vcf} 2>>{log.err} 1>>{log.out}
+        tabix {output.vcf} 
         """
 
 
@@ -885,12 +779,10 @@ rule snprelate:
         "analysis/09b_snp_pca_and_dendro/report.html"
     params:
         gds="analysis/09b_snp_pca_and_dendro/all.gds"
+    envmodules:
+        config['modules']['R']
     conda:
         "envs/R.yaml"
-    #envmodules:
-    #    "bbc/cairo/cairo-1.16.0",
-    #    "bbc/R/R-3.6.0",
-    #    "bbc/pandoc/pandoc-2.7.3",
     threads: 1
     resources:
         mem_gb = 60
