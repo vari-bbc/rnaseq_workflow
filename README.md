@@ -5,7 +5,7 @@ This workflow read trimming and read alignment with STAR, producing a read count
 * [Bulk RNAseq Workflow](#bulk-rnaseq-workflow)
    * [Usage](#usage)
       * [Step 1: Configure the workflow](#step-1-configure-the-workflow)
-      * [Step 2: Test and run the workflow](#step-2-test-the-workflow)
+      * [Step 2: Test and run the workflow](#step-2-test-and-run-the-workflow)
       * [Optional: Variant calling](#optional-variant-calling)
 
 
