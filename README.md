@@ -15,8 +15,9 @@ This workflow read trimming and read alignment with STAR, producing a read count
 
 
 ### Step 1: Configure the workflow
-* Modify the config and any necessary sheets, e.g.:
 * Move your sequencing reads to `raw_data/`
+
+* Modify the config and any necessary sheets, e.g.:
   * bin/units.tsv; To make a template based in the files in `raw_data/`, run `module load bbc2/R/alt/R-4.2.1-setR_LIBS_USER; Rscript bin/make_units_template.R`.
     * **sample**        - ID of biological sample
     * **group**         - comparison group for DE contrast
@@ -26,6 +27,7 @@ This workflow read trimming and read alignment with STAR, producing a read count
     * **strandedness**  - strandedness of library prep
       * typically reverse for Illumina
       * used to identify column to count reads from STAR output.
+
   * bin/config.yaml
     * **PE_or_SE** - designates the sequencing protocol as paired-end or single-end. (e.g. "PE")
     * **ref**
