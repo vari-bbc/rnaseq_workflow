@@ -16,7 +16,8 @@ This workflow read trimming and read alignment with STAR, producing a read count
 
 ### Step 1: Configure the workflow
 * Modify the config and any necessary sheets, e.g.:
-  * bin/units.tsv
+* Move your sequencing reads to `raw_data/`
+  * bin/units.tsv; To make a template based in the files in `raw_data/`, run `module load bbc2/R/alt/R-4.2.1-setR_LIBS_USER; Rscript bin/make_units_template.R`.
     * **sample**        - ID of biological sample
     * **group**         - comparison group for DE contrast
     * **unit**          - description of sequencing unit ("lane1" or "flowcell1", etc.)
@@ -30,7 +31,6 @@ This workflow read trimming and read alignment with STAR, producing a read count
     * **ref**
       * **index** - absolute path to your STAR index directory
       * **annotation** - absolute path to your genome annotation.gtf
-* Move your sequencing reads to `raw_data/`
 
 ### Step 2: Test and run the workflow
 Test your configuration by performing a dry-run via
