@@ -4,11 +4,8 @@ This workflow read trimming and read alignment with STAR, producing a read count
 
 * [Bulk RNAseq Workflow](#bulk-rnaseq-workflow)
    * [Usage](#usage)
-      * [Step 1: Installation](#step-1-installation)
-      * [Step 2: Configure the workflow](#step-2-configure-the-workflow)
-      * [Step 3: Test the workflow](#step-3-test-the-workflow)
-      * [Step 4: Investigate Results](#step-4-investigate-results)
-      * [Step 5: 'Housekeeping'](#step-5-housekeeping)
+      * [Step 1: Configure the workflow](#step-1-configure-the-workflow)
+      * [Step 2: Test and run the workflow](#step-2-test-the-workflow)
       * [Optional: Variant calling](#optional-variant-calling)
 
 
@@ -17,7 +14,7 @@ This workflow read trimming and read alignment with STAR, producing a read count
 **NOTE** this workflow is optimized for HPC3 @ Van Andel Institute.
 
 
-### Step 2: Configure the workflow
+### Step 1: Configure the workflow
 * Modify the config and any necessary sheets, e.g.:
   * bin/units.tsv
     * **sample**        - ID of biological sample
@@ -35,7 +32,7 @@ This workflow read trimming and read alignment with STAR, producing a read count
       * **annotation** - absolute path to your genome annotation.gtf
 * Move your sequencing reads to `raw_data/`
 
-### Step 3: Test the workflow
+### Step 2: Test and run the workflow
 Test your configuration by performing a dry-run via
 
     $ snakemake -np
@@ -45,7 +42,6 @@ Execute from within your project directory as a SLURM job.
     $ sbatch bin/run_snake.sh
 
 This job script will produce DAG (.txt & .png) and .html with run stats for the workflow to be executed in `logs/runs/bulk_rnaseq-workflow_(TIME)`
-
 
 
 ### Optional: Variant calling
