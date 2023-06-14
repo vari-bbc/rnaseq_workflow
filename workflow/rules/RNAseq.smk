@@ -180,3 +180,25 @@ rule salmon:
                 -o {params.outdir}
         """
 
+rule SummarizedExperiment:
+    input:
+        star = expand("results/star/{samples.sample}.ReadsPerGene.out.tab", samples=samples.itertuples()),
+        salmon = expand("results/salmon/{samples.sample}/{file}", samples=samples.itertuples(), file=['lib_format_counts.json', 'quant.sf'])
+    output:
+        se="results/SummarizedExperiment/SummarizedExperiment.rds",
+        sce="results/SummarizedExperiment/sce.rds"
+    benchmark:
+        "benchmarks/SummarizedExperiment/SummarizedExperiment.txt"
+    params:
+        gtf=config['ref']['annotation'],
+        orgdb=config['orgdb']
+    threads: 1
+    envmodules:
+        config['modules']['R']
+    resources:
+        mem_gb=64,
+        log_prefix="SummarizedExperiment"
+    shell:
+        """
+        Rscript --vanilla workflow/scripts/make_sce.R {params.gtf} {params.orgdb} {output.se} {output.sce}
+        """

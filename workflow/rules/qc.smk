@@ -21,7 +21,7 @@ rule seqtk_SE:
     input:
         fq1 = STAR_input,
     output:
-        fq1 = "results/subsample/{sample}_R1_trimmed.fq.gz",
+        fq1 = temp("results/subsample/{sample}_R1_trimmed.fq.gz"),
     envmodules:
         config['modules']['seqtk']
     params:
@@ -41,8 +41,8 @@ rule seqtk_PE:
         fq1 = lambda wildcards:  STAR_input(wildcards)[0],
         fq2 = lambda wildcards:  STAR_input(wildcards)[1],
     output:
-        fq1 = "results/subsample/{sample}_R1_val_1.fq.gz",
-        fq2 = "results/subsample/{sample}_R2_val_2.fq.gz",
+        fq1 = temp("results/subsample/{sample}_R1_val_1.fq.gz"),
+        fq2 = temp("results/subsample/{sample}_R2_val_2.fq.gz"),
     envmodules:
         config['modules']['seqtk']
     params:
@@ -143,22 +143,20 @@ rule sortmerna_PE:
 
 multiqc_input = []
 if config["PE_or_SE"] =="SE":
-    multiqc_input.append(expand("results/fastq_screen/{units.sample}_R1_screen.txt", units=units.itertuples()))
-    multiqc_input.append(expand("results/trimmed_data/{units.sample}_R1_trimmed.fq.gz", units=units.itertuples()))
-    multiqc_input.append(expand("results/trimmed_data/{units.sample}_R1_trimmed_fastqc.zip", units=units.itertuples()))
-    multiqc_input.append(expand("results/trimmed_data/{units.sample}_R1_trimmed_fastqc.html", units=units.itertuples()))
-    multiqc_input.append(expand("results/star/{units.sample}.Log.final.out", units=units.itertuples()))
-    multiqc_input.append(expand("results/sortmerna/{units.sample}",units=units.itertuples()))
-    multiqc_input.append(expand("results/salmon/{units.sample}/{file}", units=units.itertuples(), file=["aux_info/meta_info.json"]))
+    multiqc_input.append(expand("results/fastq_screen/{samples.sample}_R1_screen.txt", samples=samples.itertuples()))
+    multiqc_input.append(expand("results/trimmed_data/{samples.sample}_R1_trimmed_fastqc.zip", samples=samples.itertuples()))
+    multiqc_input.append(expand("results/trimmed_data/{samples.sample}_R1_trimmed_fastqc.html", samples=samples.itertuples()))
+    multiqc_input.append(expand("results/star/{samples.sample}.Log.final.out", samples=samples.itertuples()))
+    multiqc_input.append(expand("results/sortmerna/{samples.sample}",samples=samples.itertuples()))
+    multiqc_input.append(expand("results/salmon/{samples.sample}/{file}", samples=samples.itertuples(), file=["aux_info/meta_info.json"]))
 elif config["PE_or_SE"] =="PE":
-    multiqc_input.append(expand("results/fastq_screen/{units.sample}_R{read}_screen.txt", units=units.itertuples(), read=["1","2"]))
-    multiqc_input.append(expand("results/trimmed_data/{units.sample}_R{read}_val_{read}.fq.gz", units=units.itertuples(), read=["1","2"]))
-    multiqc_input.append(expand("results/trimmed_data/{units.sample}_R{read}_val_{read}_fastqc.html", units=units.itertuples(), read=["1","2"]))
-    multiqc_input.append(expand("results/trimmed_data/{units.sample}_R{read}_val_{read}_fastqc.zip", units=units.itertuples(), read=["1","2"]))
-    multiqc_input.append(expand("results/trimmed_data/{units.sample}_R{read}.fastq.gz_trimming_report.txt", units=units.itertuples(), read=["1","2"]))
-    multiqc_input.append(expand("results/star/{units.sample}.Log.final.out", units=units.itertuples()))
-    multiqc_input.append(expand("results/salmon/{units.sample}/{file}", units=units.itertuples(), file=["libParams/flenDist.txt","aux_info/meta_info.json"]))
-    multiqc_input.append(expand("results/sortmerna/{units.sample}",units=units.itertuples()))
+    multiqc_input.append(expand("results/fastq_screen/{samples.sample}_R{read}_screen.txt", samples=samples.itertuples(), read=["1","2"]))
+    multiqc_input.append(expand("results/trimmed_data/{samples.sample}_R{read}_val_{read}_fastqc.html", samples=samples.itertuples(), read=["1","2"]))
+    multiqc_input.append(expand("results/trimmed_data/{samples.sample}_R{read}_val_{read}_fastqc.zip", samples=samples.itertuples(), read=["1","2"]))
+    multiqc_input.append(expand("results/trimmed_data/{samples.sample}_R{read}.fastq.gz_trimming_report.txt", samples=samples.itertuples(), read=["1","2"]))
+    multiqc_input.append(expand("results/star/{samples.sample}.Log.final.out", samples=samples.itertuples()))
+    multiqc_input.append(expand("results/salmon/{samples.sample}/{file}", samples=samples.itertuples(), file=["libParams/flenDist.txt","aux_info/meta_info.json"]))
+    multiqc_input.append(expand("results/sortmerna/{samples.sample}",samples=samples.itertuples()))
 
 
 rule multiqc:

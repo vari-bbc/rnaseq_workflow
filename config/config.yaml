@@ -5,10 +5,11 @@ ref:
   salmon_index:   /varidata/research/projects/bbc/versioned_references/2021-08-10_11.12.27_v6/data/mm10_gencode/indexes/salmon/mm10_gencode
   annotation:     /varidata/research/projects/bbc/versioned_references/2021-08-10_11.12.27_v6/data/mm10_gencode/annotation/mm10_gencode.gtf
 
+# OrgDB R package for covnerting gene names. Common choices are 'org.Mm.eg.db' for mouse and 'org.Hs.eg.db' for human.
+orgdb: org.Mm.eg.db
+
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
-
-
 
 ####################################################################
 # FOR MOST STANDARD USE CASES, THE BELOW DO NOT NEED TO BE CHANGED.#

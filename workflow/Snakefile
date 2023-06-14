@@ -9,12 +9,10 @@ min_version("7.25.0")
 
 configfile: "config/config.yaml"
 
-units = pd.read_table(config["units"]).set_index("sample", drop=False)
-
-if not os.path.exists('tmp'):
-    os.mkdir('tmp')
-
-avail_read = ["1", "2"] if config["PE_or_SE"] == "PE" else ["1"]
+units = pd.read_table(config["units"], dtype={"sample" : str, "group" : str }).set_index("sample", drop=False)
+samples = units[["sample","group"]].drop_duplicates()
+if not samples['sample'].is_unique:
+    raise Exception('A sample has more than one group.')
 
 # Need this directive because both PE and SE versions of these rules produce the trimmed R1 output files.
 ruleorder: trim_galore_PE > trim_galore_SE
@@ -24,6 +22,7 @@ ruleorder: sortmerna_PE > sortmerna_SE
 rule all:
     input:
         "results/multiqc/multiqc_report.html",
+        expand("results/SummarizedExperiment/{pref}.rds", pref=['SummarizedExperiment', 'sce'])
 
 include:
     'rules/RNAseq.smk'
