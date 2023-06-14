@@ -9,12 +9,12 @@ rule fastq_screen:
     threads: 8
     resources:
         nodes =     1,
-        mem_gb =    64,
+        mem_gb =    32,
         log_prefix=lambda wildcards: "_".join(wildcards)
     envmodules: config['modules']['fastq_screen']
     shell:
         """
-        fastq_screen --outdir results/fastq_screen/ {input} 
+        fastq_screen --threads {threads} --outdir results/fastq_screen/ {input} 
         """
 
 rule seqtk_SE:

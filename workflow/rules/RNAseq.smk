@@ -19,7 +19,7 @@ rule rename_fastqs:
         cat_or_symlink=lambda wildcards, input: "cat " + " ".join(input) + " > " if len(input) > 1 else "ln -sr " + input[0]
     threads: 1
     resources:
-        mem_gb=8,
+        mem_gb=4,
         log_prefix=lambda wildcards: "_".join(wildcards)
     envmodules:
     shell:
