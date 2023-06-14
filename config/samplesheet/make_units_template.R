@@ -15,7 +15,7 @@ opt_parser <- OptionParser(option_list=option_list);
 opt <- parse_args(opt_parser);
 
 
-fq_files <- list.files("../raw_data/", pattern = "*fastq.gz", recursive=TRUE)
+fq_files <- list.files("../../raw_data/", pattern = "*fastq.gz", recursive=TRUE)
 R1_files <- grep("_R1[_\\.]", fq_files, value = TRUE)
 
 # sample    group    genotype    condition    unit    fq1    fq2    strandedness
