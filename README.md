@@ -26,11 +26,14 @@
 ### Step 2: Test and run the workflow
 Test your configuration by performing a dry-run via
 
-`snakemake -npr`
+```
+snakemake -npr
+```
 
 Execute from within your project directory as a SLURM job.
 
-`sbatch bin/run_snake.sh`
-
+```
+sbatch bin/run_snake.sh
+```
 
 
