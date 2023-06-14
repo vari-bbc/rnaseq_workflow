@@ -1,0 +1,198 @@
+---
+title: "deseq2"
+author: "BBC"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  html_document:
+    code_folding: hide
+    self_contained: yes
+    toc: true
+    toc_depth: 5
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+    number_sections: true
+---
+
+```{r keep_figures, cache=TRUE}
+# this chunk is just to keep the _files directory even when we turn off cacheing
+```
+
+```{r starttime, echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE}
+# save start time for script
+start_tm <- Sys.time()
+start_tm
+```
+
+```{r make_outdir, echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE}
+outdir <- "./deseq2_out_files/"
+
+dir.create(outdir, recursive=TRUE)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE, dev=c('png','pdf'), fig.width=4, fig.height=4, fig.path=paste0(outdir, "individual_figures/"))
+
+```
+
+# Load packages
+
+```{r load_pkges}
+library(dplyr)
+library(stringr)
+library(DESeq2)
+library(ggplot2)
+library(readr)
+library(ggrepel)
+```
+
+# DE analysis 
+
+```{r deseq2}
+se <- readRDS("../results/SummarizedExperiment/SummarizedExperiment.rds")
+dds <- DESeqDataSet(se, design = ~ group)
+
+# prefilter genes, keeping only genes with 10 or more total read counts across samples
+keep <- rowSums(counts(dds)) >= 10
+message(str_glue("Keeping {sum(keep)} genes."))
+dds <- dds[keep, ]
+dds <- DESeq(dds)
+message(paste0("Coefficient names are: ", paste(resultsNames(dds), collapse = " ")))
+
+contrast <- c("group", "trt", "untrt")
+fdr_cutoff <- 0.1
+
+res <- results(dds, contrast=contrast, alpha=fdr_cutoff)
+lfc_shrink <- lfcShrink(dds, contrast=contrast, type="ashr")
+
+res <- res[order(res$pvalue), ]
+lfc_shrink <- lfc_shrink[order(lfc_shrink$pvalue), ]
+
+```
+
+# Summarize DE results
+
+```{r de_summ}
+df <- as.data.frame(lfc_shrink)
+data.frame(
+  UP=sum(df$padj <= fdr_cutoff & df$log2FoldChange > 0, na.rm = TRUE), 
+  DWN=sum(df$padj <= fdr_cutoff & df$log2FoldChange < 0, na.rm = TRUE), 
+  Tested=sum(!is.na(df$padj))
+)
+```
+
+# MA plots - default LFCs
+
+```{r ma_plots, fig.width=5, fig.height=5}
+DESeq2::plotMA(res, main="Default LFC")
+
+```
+
+
+# MA plots - Shrunken LFC
+
+```{r ma_plots_shrunken, fig.width=5, fig.height=5}
+DESeq2::plotMA(lfc_shrink, main="Shrunken LFC")
+
+```
+
+# P value distribution
+
+```{r pval, fig.width=4, fig.height=4}
+
+ggplot(data = as.data.frame(lfc_shrink) %>% 
+         dplyr::filter(!is.na(pvalue)), 
+       aes(x = pvalue)) + 
+  geom_histogram(color = "black", fill = "gray55", 
+                 breaks = seq(0, 1, 0.05)) + theme_bw() + theme(plot.title=element_text(size=10))
+
+```
+
+# Output DE results
+
+```{r out_de_res}
+df <- cbind(as.data.frame(rowData(dds)[rownames(lfc_shrink), 1:4]), 
+      as.data.frame(lfc_shrink)) %>%
+  tibble::rownames_to_column("ens_gene")
+
+write_tsv(df, file.path(outdir, "de_res.tsv"))
+```
+
+# Look for specific genes
+
+```{r specific_genes}
+# https://pubmed.ncbi.nlm.nih.gov/24926665/
+df %>% dplyr::filter(Symbol %in% c("DUSP1", "KLF15", "CRISPLD2"))
+```
+
+# Output counts
+
+```{r out_counts}
+df <- cbind(as.data.frame(rowData(dds)[, 1:4]), 
+            assay(dds, "counts")) %>%
+  tibble::rownames_to_column("ens_gene")
+
+write_tsv(df, file.path(outdir, "counts.tsv"))
+```
+
+# Output TPMs
+
+```{r out_tpms}
+df <- cbind(as.data.frame(rowData(dds)[, 1:4]), 
+            assay(dds, "tpms")) %>%
+  tibble::rownames_to_column("ens_gene")
+
+write_tsv(df, file.path(outdir, "tpms.tsv"))
+```
+
+
+# Volcano
+
+```{r make_volc_func}
+make_volcano <- function(df, pval_nm, pval_cutoff=0.1){
+  # remove genes with NA for pvalue
+  df <- df[which(!is.na(df[[pval_nm]])), ]
+  
+  # add gene names
+  df <- cbind(df, rowData(dds)[rownames(df), 1:4])
+  
+  top_genes <- df %>% 
+    dplyr::arrange(desc(abs(df$log2FoldChange))) %>% 
+    dplyr::filter(row_number() <= 10) %>% 
+    rownames()
+
+  df$Sig <- ifelse(df$padj <= pval_cutoff, "Sig", "NS")
+  
+  df[[pval_nm]] <- -log10(df[[pval_nm]])
+
+
+  ggplot(df, aes_string(x="log2FoldChange", y=pval_nm)) + 
+    geom_point(aes(color=Sig), size=0.6) + 
+    scale_color_manual(values=c("black", "salmon")) + 
+    theme_bw() + ylab(str_glue("-log10(", pval_nm,")")) +
+    geom_text_repel(data=df[top_genes, ], 
+                    aes(label=Uniq_syms), max.overlaps=Inf, min.segment.length = 0)
+}
+```
+
+```{r volcano, fig.width=4, fig.height=4}
+make_volcano(as.data.frame(lfc_shrink), 
+             pval_nm="padj", pval_cutoff=fdr_cutoff)
+```
+
+
+# SessionInfo
+
+```{r sessioninfo}
+sessionInfo()
+```
+
+# Time
+
+```{r endtime}
+# output time taken to run script
+end_tm <- Sys.time()
+end_tm
+end_tm - start_tm
+
+```
