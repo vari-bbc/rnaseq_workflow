@@ -30,7 +30,7 @@ Test your configuration by performing a dry-run via
 
 Execute from within your project directory as a SLURM job.
 
-    $ sbatch -p big bin/run_snake.sh
+    $ sbatch bin/run_snake.sh
 
 
 

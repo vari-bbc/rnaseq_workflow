@@ -6,6 +6,7 @@
 #SBATCH --ntasks 1
 #SBATCH --time 24:00:00
 #SBATCH --mem=8G
+#SBATCH --partition=long
 
 cd $SLURM_SUBMIT_DIR
 
