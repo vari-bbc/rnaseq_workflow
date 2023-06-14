@@ -1,7 +1,0 @@
-channels:
-  - conda-forge
-dependencies:
-  - r-base =3.6.0
-  - r::r-stringi
-  - r-rmarkdown
-  - pandoc

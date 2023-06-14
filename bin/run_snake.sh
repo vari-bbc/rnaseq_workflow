@@ -24,7 +24,6 @@ echo "Start snakemake workflow." >&2
 snakemake \
 -p \
 --latency-wait 20 \
---snakefile 'Snakefile' \
 --use-envmodules \
 --jobs 100 \
 --cluster "ssh ${SLURM_JOB_USER}@access.hpc.vai.org 'module load $snakemake_module; cd $SLURM_SUBMIT_DIR; mkdir -p logs/{rule}; sbatch \
