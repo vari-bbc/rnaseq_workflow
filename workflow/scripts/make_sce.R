@@ -123,13 +123,14 @@ count_data <- list(counts=raw_cts, tpms=tpms[rownames(raw_cts), ])
 
 se <- SummarizedExperiment(assays = count_data, colData = data_for_DE, rowData = gene_names_df)
 se <- se[, order(se$group)] # order samples by group
-write_rds(se, out_se)
 
 # Add vst
 dds <- DESeqDataSet(se, design = ~ group)
 vsd <- vst(dds, blind=FALSE)
 
 assays(se)$vst <- assay(vsd)
+
+write_rds(se, out_se)
 
 # PCA
 sce <- as(se, "SingleCellExperiment")
