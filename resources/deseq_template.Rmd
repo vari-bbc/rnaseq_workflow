@@ -35,151 +35,250 @@ knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.
 
 ```
 
-# Load packages
+
+### **Load packages**
 
 ```{r load_pkges}
 library(dplyr)
 library(stringr)
-library(DESeq2)
 library(ggplot2)
 library(readr)
 library(ggrepel)
+library(ComplexHeatmap)
+library(DESeq2)
 ```
 
-# DE analysis 
+### **Set up your DESeq object**
 
-```{r deseq2}
+```{r read_se}
 se <- readRDS("../results/SummarizedExperiment/SummarizedExperiment.rds")
-dds <- DESeqDataSet(se, design = ~ group)
+```
 
+
+Let's take a look to see what assays are stored in the SummarizedExperiment object. Note that DESeq2 assumes the first assay is the raw counts.
+
+```{r check_assays}
+assayNames(se)
+
+stopifnot(assayNames(se)[1] == "counts")
+```
+
+To print more information about this SummarizedExperiment object, you can just type its name.
+
+```{r look_se}
+se
+```
+
+The counts and the meta data need to be stored inside a special DESeq2 object called a 'DESeqDataSet'. Here, we also specify that each gene will be fit with a model design of '~ group'.
+
+```{r make_dds}
+dds <- DESeqDataSet(se, design = ~ group)
+```
+
+### **Remove genes with low/no expression**
+
+We cannot do meaningful analyses of genes with very low counts. This will speed up the analysis.
+
+```{r filter_low_genes}
 # prefilter genes, keeping only genes with 10 or more total read counts across samples
 keep <- rowSums(counts(dds)) >= 10
+
 message(str_glue("Keeping {sum(keep)} genes."))
+
 dds <- dds[keep, ]
+```
+
+### **Different normalization approaches for different biases**
+
+[Types of biases in RNA-seq](https://vanandelinstitute-my.sharepoint.com/:b:/g/personal/kin_lau_vai_org/EcruvwL-OrBIvCzXZ7HMPlcBo65fu0pucrivMmCwzM98dA?e=yCkfTa)
+
+
+### **Run the DE workflow**
+
+The [DESeq](https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/DESeq) function is a convenience function from DESeq2 that estimates size factors (normalization) and fits negative binomial GLMs.
+
+```{r run_deseq2}
 dds <- DESeq(dds)
 message(paste0("Coefficient names are: ", paste(resultsNames(dds), collapse = " ")))
+```
 
+After the models are fitted, we can test specific pairs of groups for differential expression. For DESeq2, it is recommended to provide the significance cutoff that you wish to use as it affects the multiple testing correction procedure (see [docs](https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/results)).
+
+```{r run_contrast}
 contrast <- c("group", "trt", "untrt")
 fdr_cutoff <- 0.1
 
 res <- results(dds, contrast=contrast, alpha=fdr_cutoff)
-lfc_shrink <- lfcShrink(dds, contrast=contrast, type="ashr")
-
 res <- res[order(res$pvalue), ]
-lfc_shrink <- lfc_shrink[order(lfc_shrink$pvalue), ]
-
 ```
 
-# Summarize DE results
+### **Summarize DE results**
 
 ```{r de_summ}
-df <- as.data.frame(lfc_shrink)
+df <- as.data.frame(res)
 data.frame(
-  UP=sum(df$padj <= fdr_cutoff & df$log2FoldChange > 0, na.rm = TRUE), 
-  DWN=sum(df$padj <= fdr_cutoff & df$log2FoldChange < 0, na.rm = TRUE), 
+  UP=sum(df$padj <= fdr_cutoff & df$log2FoldChange > 0, na.rm = TRUE),
+  DWN=sum(df$padj <= fdr_cutoff & df$log2FoldChange < 0, na.rm = TRUE),
   Tested=sum(!is.na(df$padj))
 )
 ```
 
-# MA plots - default LFCs
+
+### **Shrink log fold changes for lowly expressed genes**
+
+This step does not affect the identification of DE genes, but it can be useful to perform this to obtain more reliable estimates of the log fold changes for visualizations or for ranking genes (e.g. GSEA).
+
+```{r lfc_shrink}
+lfc_shrink <- lfcShrink(dds, contrast=contrast, type="ashr")
+
+lfc_shrink <- lfc_shrink[order(lfc_shrink$pvalue), ]
+
+```
 
 ```{r ma_plots, fig.width=5, fig.height=5}
 DESeq2::plotMA(res, main="Default LFC")
 
 ```
 
-
-# MA plots - Shrunken LFC
-
 ```{r ma_plots_shrunken, fig.width=5, fig.height=5}
 DESeq2::plotMA(lfc_shrink, main="Shrunken LFC")
 
 ```
 
-# P value distribution
+### **Output DE results**
 
-```{r pval, fig.width=4, fig.height=4}
+Here, we merge the different gene name columns to the DE results and output to a tab-delimited file, which can be opened in Excel for manual perusal.
 
-ggplot(data = as.data.frame(lfc_shrink) %>% 
-         dplyr::filter(!is.na(pvalue)), 
-       aes(x = pvalue)) + 
-  geom_histogram(color = "black", fill = "gray55", 
-                 breaks = seq(0, 1, 0.05)) + theme_bw() + theme(plot.title=element_text(size=10))
-
+```{r out_de_res_prep}
+df <- cbind(as.data.frame(rowData(dds)[rownames(lfc_shrink), 1:4]),
+            as.data.frame(lfc_shrink)) %>%
+  tibble::rownames_to_column("ens_gene")
 ```
 
-# Output DE results
-
 ```{r out_de_res}
-df <- cbind(as.data.frame(rowData(dds)[rownames(lfc_shrink), 1:4]), 
-      as.data.frame(lfc_shrink)) %>%
-  tibble::rownames_to_column("ens_gene")
-
 write_tsv(df, file.path(outdir, "de_res.tsv"))
 ```
 
-# Look for specific genes
+### **Look for specific genes**
+
+We know certain genes should be differentially expressed based on the [paper](https://pubmed.ncbi.nlm.nih.gov/24926665/) that this dataset came from. We can check that these genes were significantly DE in our analysis.
+
+Likewise, this would be a good time to check for knocked down, knocked out etc genes if such prior knowledge is available, though that is not always the case.
 
 ```{r specific_genes}
-# https://pubmed.ncbi.nlm.nih.gov/24926665/
 df %>% dplyr::filter(Symbol %in% c("DUSP1", "KLF15", "CRISPLD2"))
 ```
 
-# Output counts
+### **Output tables with raw counts**
 
-```{r out_counts}
-df <- cbind(as.data.frame(rowData(dds)[, 1:4]), 
+Some folks also find it useful to have tables of the raw counts or the normalized counts. The raw counts can be extracted from the DESeq2 object using either `assay()` or `counts()`.
+
+```{r out_counts_prep}
+df <- cbind(as.data.frame(rowData(dds)[, 1:4]),
             assay(dds, "counts")) %>%
   tibble::rownames_to_column("ens_gene")
+```
 
+```{r out_counts}
 write_tsv(df, file.path(outdir, "counts.tsv"))
 ```
 
-# Output TPMs
+### **Output tables with log2 normalized counts**
 
-```{r out_tpms}
-df <- cbind(as.data.frame(rowData(dds)[, 1:4]), 
-            assay(dds, "tpms")) %>%
+For the log2 normalized counts, we commonly use the variance stabilized transformation ([VST](https://rdrr.io/bioc/DESeq2/man/varianceStabilizingTransformation.html)). These values can be used for heatmaps, clustering or other downstream applications.
+
+```{r out_vst_prep}
+vsd <- vst(dds, blind=FALSE)
+
+vst_df <- as.data.frame(cbind(rowData(vsd)[, 1:4], assay(vsd))) %>%
   tibble::rownames_to_column("ens_gene")
-
-write_tsv(df, file.path(outdir, "tpms.tsv"))
 ```
 
+```{r out_vst}
+write_tsv(vst_df, file.path(outdir, "vst.tsv"))
 
-# Volcano
+```
+
+## **Some common plots for DEG analysis**
+
+
+### **Volcano plot**
 
 ```{r make_volc_func}
 make_volcano <- function(df, pval_nm, pval_cutoff=0.1){
   # remove genes with NA for pvalue
   df <- df[which(!is.na(df[[pval_nm]])), ]
-  
+
   # add gene names
   df <- cbind(df, rowData(dds)[rownames(df), 1:4])
-  
-  top_genes <- df %>% 
-    dplyr::arrange(desc(abs(df$log2FoldChange))) %>% 
-    dplyr::filter(row_number() <= 10) %>% 
+
+  top_genes <- df %>%
+    dplyr::arrange(desc(abs(df$log2FoldChange))) %>%
+    dplyr::filter(row_number() <= 10) %>%
     rownames()
 
   df$Sig <- ifelse(df$padj <= pval_cutoff, "Sig", "NS")
-  
+
   df[[pval_nm]] <- -log10(df[[pval_nm]])
 
 
-  ggplot(df, aes_string(x="log2FoldChange", y=pval_nm)) + 
-    geom_point(aes(color=Sig), size=0.6) + 
-    scale_color_manual(values=c("black", "salmon")) + 
+  ggplot(df, aes_string(x="log2FoldChange", y=pval_nm)) +
+    geom_point(aes(color=Sig), size=0.6) +
+    scale_color_manual(values=c("black", "salmon")) +
     theme_bw() + ylab(str_glue("-log10(", pval_nm,")")) +
-    geom_text_repel(data=df[top_genes, ], 
+    geom_text_repel(data=df[top_genes, ],
                     aes(label=Uniq_syms), max.overlaps=Inf, min.segment.length = 0)
 }
 ```
 
 ```{r volcano, fig.width=4, fig.height=4}
-make_volcano(as.data.frame(lfc_shrink), 
+make_volcano(as.data.frame(lfc_shrink),
              pval_nm="padj", pval_cutoff=fdr_cutoff)
 ```
 
+### **Heatmap**
+
+```{r heatmap, fig.width=6, fig.height=6}
+top_genes <- rownames(res)[1:20]
+
+top_se <- se[top_genes, ]
+mat <- assay(top_se, "vst")
+mat <- t(scale(t(mat), scale=FALSE, center = TRUE))
+
+# column annot
+ht_col_annot <- as.data.frame(colData(top_se)[, "group", drop=FALSE])
+
+group_lvls <- unique(ht_col_annot$group)
+ht_col_colors <- list(group=setNames(c("#440154FF","#2A788EFF"),
+                                         nm=group_lvls))
+
+Heatmap(mat,
+        name = "Mean-centered",
+        cluster_columns = FALSE,
+        row_labels=rowData(top_se)$Uniq_syms,
+        show_column_names = FALSE,
+        top_annotation=HeatmapAnnotation(df=ht_col_annot,
+                                         col=ht_col_colors),
+        column_title = "Top DE genes",
+        row_title = paste0(nrow(mat), " genes")
+)
+
+
+```
+
+### **P value distribution**
+
+Ideally, we will see an anti-conservative (if there are many DE genes) or uniform pattern (not many DE genes). See [here](http://varianceexplained.org/statistics/interpreting-pvalue-histogram/) for more details about how to interpret these.
+
+```{r pval, fig.width=4, fig.height=4}
+
+ggplot(data = as.data.frame(lfc_shrink) %>%
+         dplyr::filter(!is.na(pvalue)),
+       aes(x = pvalue)) +
+  geom_histogram(color = "black", fill = "gray55",
+                 breaks = seq(0, 1, 0.05)) + theme_bw() + theme(plot.title=element_text(size=10))
+
+```
 
 # SessionInfo
 
