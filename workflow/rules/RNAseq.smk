@@ -186,7 +186,8 @@ rule SummarizedExperiment:
         salmon = expand("results/salmon/{samples.sample}/{file}", samples=samples.itertuples(), file=['lib_format_counts.json', 'quant.sf'])
     output:
         se="results/SummarizedExperiment/SummarizedExperiment.rds",
-        sce="results/SummarizedExperiment/sce.rds"
+        sce="results/SummarizedExperiment/sce.rds",
+        sizeFactors="results/SummarizedExperiment/DESeq2_sizeFactors_reciprocal.tsv"
     benchmark:
         "benchmarks/SummarizedExperiment/SummarizedExperiment.txt"
     params:
@@ -200,5 +201,5 @@ rule SummarizedExperiment:
         log_prefix="SummarizedExperiment"
     shell:
         """
-        Rscript --vanilla workflow/scripts/make_sce.R {params.gtf} {params.orgdb} {output.se} {output.sce}
+        Rscript --vanilla workflow/scripts/make_sce.R {params.gtf} {params.orgdb} {output.se} {output.sce} {output.sizeFactors}
         """

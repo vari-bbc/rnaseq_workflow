@@ -22,9 +22,12 @@ ruleorder: sortmerna_PE > sortmerna_SE
 rule all:
     input:
         "results/multiqc/multiqc_report.html",
-        expand("results/SummarizedExperiment/{pref}.rds", pref=['SummarizedExperiment', 'sce'])
+        expand("results/SummarizedExperiment/{pref}.rds", pref=['SummarizedExperiment', 'sce']),
+        expand("results/avg_bigwigs/{group}.unstr.bw", group=pd.unique(samples['group']))
 
 include:
     'rules/RNAseq.smk'
 include:
     'rules/qc.smk'
+include:
+    'rules/visualisation.smk'
