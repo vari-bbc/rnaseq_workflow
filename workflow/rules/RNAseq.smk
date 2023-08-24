@@ -1,22 +1,23 @@
+import gzip
+
 def get_orig_fastq(wildcards):
     if wildcards.read == "R1":
-            fastq = expand("raw_data/{fq}", fq = units[units["sample"] == wildcards.sample]["fq1"].values)
+            fastq = units[(units["sample"] == wildcards.sample) & (units["group_index"] == wildcards.group_index)]["fq1"]
     elif wildcards.read == "R2":
-            fastq = expand("raw_data/{fq}", fq = units[units["sample"] == wildcards.sample]["fq2"].values)
-    return fastq
+            fastq = units[(units["sample"] == wildcards.sample) & (units["group_index"] == wildcards.group_index)]["fq2"]
+    return 'raw_data/' + fastq
 
 rule rename_fastqs:
     """
-    Rename fastqs by biologically meaningful name. Concatenate different runs of same library.
+    Rename fastqs by biologically meaningful name.
     """
     input:
         get_orig_fastq
     output:
-        "results/rename_fastqs/{sample}_{read}.fastq.gz"
+        "results/rename_fastqs/{sample}_{group_index}_{read}.fastq.gz"
     benchmark:
-        "benchmarks/rename_fastqs/{sample}_{read}.txt"
+        "benchmarks/rename_fastqs/{sample}_{group_index}_{read}.txt"
     params:
-        cat_or_symlink=lambda wildcards, input: "cat " + " ".join(input) + " > " if len(input) > 1 else "ln -sr " + input[0]
     threads: 1
     resources:
         mem_gb=4,
@@ -24,34 +25,34 @@ rule rename_fastqs:
     envmodules:
     shell:
         """
-        {params.cat_or_symlink} {output}
+        ln -sr {input} {output} 
         """
 
 def trim_galore_input(wildcards):
     if config["PE_or_SE"] == "SE":
-        reads = "results/rename_fastqs/{sample}_R1.fastq.gz".format(**wildcards)
+        reads = "results/rename_fastqs/{sample}_{group_index}_R1.fastq.gz".format(**wildcards)
         return reads
     elif config["PE_or_SE"] == "PE":
-        R1 = "results/rename_fastqs/{sample}_R1.fastq.gz".format(**wildcards)
-        R2 = "results/rename_fastqs/{sample}_R2.fastq.gz".format(**wildcards)
+        R1 = "results/rename_fastqs/{sample}_{group_index}_R1.fastq.gz".format(**wildcards)
+        R2 = "results/rename_fastqs/{sample}_{group_index}_R2.fastq.gz".format(**wildcards)
         return [R1,R2]
 
 rule trim_galore_PE:
     input:
         trim_galore_input
     output:
-        temp("results/trimmed_data/{sample}_R1_val_1.fq.gz"),
-        "results/trimmed_data/{sample}_R1_val_1_fastqc.html",
-        "results/trimmed_data/{sample}_R1_val_1_fastqc.zip",
-        "results/trimmed_data/{sample}_R1.fastq.gz_trimming_report.txt",
-        temp("results/trimmed_data/{sample}_R2_val_2.fq.gz"),
-        "results/trimmed_data/{sample}_R2_val_2_fastqc.html",
-        "results/trimmed_data/{sample}_R2_val_2_fastqc.zip",
-        "results/trimmed_data/{sample}_R2.fastq.gz_trimming_report.txt"
+        temp("results/trimmed_data/{sample}_{group_index}_R1_val_1.fq.gz"),
+        "results/trimmed_data/{sample}_{group_index}_R1_val_1_fastqc.html",
+        "results/trimmed_data/{sample}_{group_index}_R1_val_1_fastqc.zip",
+        "results/trimmed_data/{sample}_{group_index}_R1.fastq.gz_trimming_report.txt",
+        temp("results/trimmed_data/{sample}_{group_index}_R2_val_2.fq.gz"),
+        "results/trimmed_data/{sample}_{group_index}_R2_val_2_fastqc.html",
+        "results/trimmed_data/{sample}_{group_index}_R2_val_2_fastqc.zip",
+        "results/trimmed_data/{sample}_{group_index}_R2.fastq.gz_trimming_report.txt"
     params:
         outdir="results/trimmed_data/"
     benchmark:
-        "benchmarks/trim_galore/{sample}.txt"
+        "benchmarks/trim_galore/{sample}_{group_index}.txt"
     envmodules:
         config['modules']['trim_galore']
     threads: 4
@@ -74,14 +75,14 @@ rule trim_galore_SE:
     input:
         trim_galore_input
     output:
-        temp("results/trimmed_data/{sample}_R1_trimmed.fq.gz"),
-        "results/trimmed_data/{sample}_R1_trimmed_fastqc.zip",
-        "results/trimmed_data/{sample}_R1_trimmed_fastqc.html",
-        "results/trimmed_data/{sample}_R1.fastq.gz_trimming_report.txt",
+        temp("results/trimmed_data/{sample}_{group_index}_R1_trimmed.fq.gz"),
+        "results/trimmed_data/{sample}_{group_index}_R1_trimmed_fastqc.zip",
+        "results/trimmed_data/{sample}_{group_index}_R1_trimmed_fastqc.html",
+        "results/trimmed_data/{sample}_{group_index}_R1.fastq.gz_trimming_report.txt",
     params:
         outdir="results/trimmed_data/"
     benchmark:
-        "benchmarks/trim_galore/{sample}.txt"
+        "benchmarks/trim_galore/{sample}_{group_index}.txt"
     envmodules:
         config['modules']['trim_galore']
     threads: 4
@@ -100,17 +101,56 @@ rule trim_galore_SE:
         """
 
 def STAR_input(wildcards):
+    group_indices = units[units['sample'] == wildcards.sample]['group_index']
     if config["PE_or_SE"] == "SE":
-        fq1="results/trimmed_data/{sample}_R1_trimmed.fq.gz".format(**wildcards)
-        return fq1
+        fq1 = expand("results/trimmed_data/{sample}_{group_index}_R1_trimmed.fq.gz", sample=wildcards.sample, group_index=group_indices)
+        fq2 = []
     elif config["PE_or_SE"] == "PE":
-        fq1 = "results/trimmed_data/{sample}_R1_val_1.fq.gz".format(**wildcards)
-        fq2 = "results/trimmed_data/{sample}_R2_val_2.fq.gz".format(**wildcards)
-        return [fq1,fq2]
+        fq1 = expand("results/trimmed_data/{sample}_{group_index}_R1_val_1.fq.gz", sample=wildcards.sample, group_index=group_indices)
+        fq2 = expand("results/trimmed_data/{sample}_{group_index}_R2_val_2.fq.gz", sample=wildcards.sample, group_index=group_indices)
+    return {'fq1_files': fq1, 'fq2_files': fq2}
+
+def get_RG(wildcards, input):
+    fq1_files = input.fq1_files
+
+    ## Use the user-specified read group info if available
+    rg_lines = units[units['sample'] == wildcards.sample]['RG'].values
+    
+    if(pd.isnull(rg_lines).any()):
+
+        rg_lines = []
+        
+        ## Extract the first line of each fq1 file
+        first_lines = []
+        for fq_file in fq1_files:
+            with gzip.open(fq_file,'rt') as f:
+                first_lines.append(f.readline().strip())
+
+        ## Compile the read group line for each library
+        for i in range(len(fq1_files)):
+            first_line_split = first_lines[i].split(':')
+         
+            flowcell = first_line_split[2]
+            lane = first_line_split[3]
+            lib_barcode = first_line_split[9]
+         
+            sample = wildcards.sample
+         
+            rgid = '.'.join([flowcell, lane])
+            rgpu = '.'.join([flowcell, lane, lib_barcode])
+            rgsm = sample
+
+            # Assumes one library per sample
+            rg_line = "ID:" + rgid + " PU:" + rgpu + " LB:" + rgsm + " PL:ILLUMINA SM:" + rgsm
+            rg_lines.append(rg_line)
+
+    read_groups = ' , '.join(rg_lines)
+
+    return read_groups
 
 rule STAR:
     input:
-        STAR_input
+        unpack(STAR_input)
     output:
         # see STAR manual for additional output files
         bam =                 "results/star/{sample}.Aligned.sortedByCoord.out.bam",
@@ -124,7 +164,9 @@ rule STAR:
     params:
         # path to STAR reference genome index
         index = config["ref"]["index"],
-        outprefix = "results/star/{sample}."
+        outprefix = "results/star/{sample}.",
+        in_fastqs = lambda wildcards, input: ','.join(input.fq1_files) + ' ' + ','.join(input.fq2_files),
+        read_groups = get_RG
     benchmark:
         "benchmarks/star/{sample}.txt"
     envmodules:
@@ -140,7 +182,8 @@ rule STAR:
         STAR \
         --runThreadN {threads} \
         --genomeDir {params.index} \
-        --readFilesIn {input} \
+        --readFilesIn {params.in_fastqs} \
+        --outSAMattrRGline {params.read_groups} \
         --twopassMode Basic \
         --readFilesCommand zcat \
         --outSAMtype BAM SortedByCoordinate \
@@ -153,13 +196,13 @@ rule STAR:
 
 rule salmon:
     input:
-        STAR_input,
+        unpack(STAR_input),
         index=config["ref"]["salmon_index"]
     output:
         expand("results/salmon/{{sample}}/{file}", file=["libParams/flenDist.txt","aux_info/meta_info.json","quant.sf","lib_format_counts.json","cmd_info.json","logs/salmon_quant.log"])
     params:
         outdir=directory("results/salmon/{sample}"),
-        reads=lambda wildcards, input: "-1 {fq1} -2 {fq2}".format(fq1=input[0], fq2=input[1]) if config["PE_or_SE"] == "PE" else "-r {fq1}".format(fq1=input[0])
+        reads=lambda wildcards, input: "-1 {fq1} -2 {fq2}".format(fq1=input.fq1_files, fq2=input.fq2_files) if config["PE_or_SE"] == "PE" else "-r {fq1}".format(fq1=input.fq1_files)
     benchmark:
         "benchmarks/salmon/{sample}.txt"
     envmodules:

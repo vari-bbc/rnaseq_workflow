@@ -22,9 +22,10 @@ R1_files <- grep("_R1[_\\.]", fq_files, value = TRUE)
 df <- data.frame(fq1 = R1_files) %>%
 mutate(sample = str_extract(basename(fq1), opt$sample_rgx),
        group = str_extract(basename(fq1), opt$group_rgx),
-       fq2 = str_replace(fq1, "_R1([_\\.])", "_R2\\1")) %>%
+       fq2 = str_replace(fq1, "_R1([_\\.])", "_R2\\1"),
+       RG="") %>%
 arrange(sample) %>%
-select(sample,group,fq1,fq2)
+select(sample,group,fq1,fq2,RG)
 
 # make sure no fq file listed more than once.
 stopifnot(length(df$fq1) == length(unique(df$fq1)))
