@@ -144,7 +144,7 @@ def get_RG(wildcards, input):
             rg_line = "ID:" + rgid + " PU:" + rgpu + " LB:" + rgsm + " PL:ILLUMINA SM:" + rgsm
             rg_lines.append(rg_line)
 
-    read_groups = ' , '.join(rg_lines)
+    read_groups = "'" + ' , '.join(rg_lines) + "'"
 
     return read_groups
 
