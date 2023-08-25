@@ -41,11 +41,13 @@ rule trim_galore_PE:
     input:
         trim_galore_input
     output:
-        temp("results/trimmed_data/{sample}_{group_index}_R1_val_1.fq.gz"),
+        #temp("results/trimmed_data/{sample}_{group_index}_R1_val_1.fq.gz"),
+        "results/trimmed_data/{sample}_{group_index}_R1_val_1.fq.gz",
         "results/trimmed_data/{sample}_{group_index}_R1_val_1_fastqc.html",
         "results/trimmed_data/{sample}_{group_index}_R1_val_1_fastqc.zip",
         "results/trimmed_data/{sample}_{group_index}_R1.fastq.gz_trimming_report.txt",
-        temp("results/trimmed_data/{sample}_{group_index}_R2_val_2.fq.gz"),
+        #temp("results/trimmed_data/{sample}_{group_index}_R2_val_2.fq.gz"),
+        "results/trimmed_data/{sample}_{group_index}_R2_val_2.fq.gz",
         "results/trimmed_data/{sample}_{group_index}_R2_val_2_fastqc.html",
         "results/trimmed_data/{sample}_{group_index}_R2_val_2_fastqc.zip",
         "results/trimmed_data/{sample}_{group_index}_R2.fastq.gz_trimming_report.txt"
@@ -136,7 +138,7 @@ def get_RG(wildcards, input):
          
             sample = wildcards.sample
          
-            rgid = '.'.join([flowcell, lane])
+            rgid = '.'.join([flowcell, lane, lib_barcode])
             rgpu = '.'.join([flowcell, lane, lib_barcode])
             rgsm = sample
 
