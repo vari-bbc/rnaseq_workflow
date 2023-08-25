@@ -18,8 +18,6 @@ if not samples['sample'].is_unique:
 
 # Need this directive because both PE and SE versions of these rules produce the trimmed R1 output files.
 ruleorder: trim_galore_PE > trim_galore_SE
-ruleorder: seqtk_PE > seqtk_SE
-ruleorder: sortmerna_PE > sortmerna_SE
 
 rule all:
     input:

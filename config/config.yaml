@@ -29,6 +29,7 @@ sortmerna:
 
 modules:
   deeptools: bbc2/deeptools/deeptools-3.5.2
+  fastqc: bbc2/fastqc/fastqc-0.12.1
   fastq_screen: bbc2/fastq_screen/fastq_screen-0.14.0
   gatk: bbc2/gatk/gatk-4.3.0.0
   htslib: bbc2/htslib/htslib-1.17
