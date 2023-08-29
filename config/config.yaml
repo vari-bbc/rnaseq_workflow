@@ -2,12 +2,22 @@ ref:
   index:          /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/star
   salmon_index:   /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/salmon/hg38_gencode
   annotation:     /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/annotation/hg38_gencode.gtf
+  # Below used only for variant calling
+  dict: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.dict
+  snpeff_db_id: hg38 
+  known_snps: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/gatk_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
+  known_indels: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/gatk_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
+  sequence: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.fa
+  fai:  /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.fa.fai
 
 # OrgDB R package for covnerting gene names. Common choices are 'org.Mm.eg.db' for mouse and 'org.Hs.eg.db' for human.
 orgdb: org.Hs.eg.db
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
+
+call_variants: True
+grouped_contigs: config/grouped_contigs.tsv 
 
 ####################################################################
 # FOR MOST STANDARD USE CASES, THE BELOW DO NOT NEED TO BE CHANGED.#
@@ -39,6 +49,8 @@ modules:
   salmon: bbc2/salmon/salmon-1.10.0
   samtools: bbc2/samtools/samtools-1.17
   seqtk: bbc2/seqtk/seqtk-1.3-r115-dirty
+  snpeff: bbc2/SnpEff/SnpEff-5.1
   sortmerna: bbc2/sortmerna/sortmerna-4.3.6
   star: bbc2/STAR/STAR-2.7.10a
   trim_galore: bbc2/trim_galore/trim_galore-0.6.10
+  vt: bbc2/vt/vt-0.1.16
