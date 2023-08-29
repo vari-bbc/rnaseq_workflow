@@ -164,7 +164,6 @@ rule multiqc:
     output:
         "results/multiqc/multiqc_report.html",
         "results/multiqc/multiqc_report_data/multiqc.log",
-        "results/multiqc/multiqc_report_data/multiqc_cutadapt.txt",
         "results/multiqc/multiqc_report_data/multiqc_fastqc.txt",
         "results/multiqc/multiqc_report_data/multiqc_general_stats.txt",
         "results/multiqc/multiqc_report_data/multiqc_sources.txt",
@@ -175,7 +174,7 @@ rule multiqc:
     resources:
         nodes = 1,
         mem_gb = 32,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix='multiqc'
     envmodules:
         config['modules']['multiqc']
     shell:
