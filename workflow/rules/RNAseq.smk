@@ -155,14 +155,15 @@ rule STAR:
         unpack(STAR_input)
     output:
         # see STAR manual for additional output files
-        bam =                 "results/star/{sample}.Aligned.sortedByCoord.out.bam",
-        bai =                 "results/star/{sample}.Aligned.sortedByCoord.out.bam.bai",
+        unsorted_bam =        temp("results/star/{sample}.Aligned.out.bam"),
         log_final =           "results/star/{sample}.Log.final.out",
         log =                 "results/star/{sample}.Log.out",
         rpg =                 "results/star/{sample}.ReadsPerGene.out.tab",
         sj =                  "results/star/{sample}.SJ.out.tab",
         g_dir =     directory("results/star/{sample}._STARgenome"),
         pass1_dir = directory("results/star/{sample}._STARpass1"),
+        bam =                 "results/star/{sample}.sorted.bam",
+        bai =                 "results/star/{sample}.sorted.bam.bai",
     params:
         # path to STAR reference genome index
         index = config["ref"]["index"],
@@ -188,11 +189,12 @@ rule STAR:
         --outSAMattrRGline {params.read_groups} \
         --twopassMode Basic \
         --readFilesCommand zcat \
-        --outSAMtype BAM SortedByCoordinate \
+        --outSAMtype BAM Unsorted \
         --outFileNamePrefix {params.outprefix} \
         --quantMode GeneCounts \
         --outStd Log 
 
+        samtools sort -@ {threads} -o {output.bam} {output.unsorted_bam}
         samtools index {output.bam}
         """
 

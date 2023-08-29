@@ -13,7 +13,7 @@ def get_bw_strand_param (wildcards):
 
 rule bigwigs:
     input:
-        bam="results/star/{sample}.Aligned.sortedByCoord.out.bam",
+        bam="results/star/{sample}.sorted.bam",
         norm_factors="results/SummarizedExperiment/DESeq2_sizeFactors_reciprocal.tsv"
     output:
         bw="results/bigwigs/{sample}.{dir}.bw"

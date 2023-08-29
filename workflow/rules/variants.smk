@@ -2,34 +2,35 @@
 
 rule markdups:
     input:
-        "results/star/{sample}.Aligned.sortedByCoord.out.bam"
+        "results/star/{sample}.Aligned.out.bam"
     output:
-        bam="results/variant_calling/markdup/{sample}.Aligned.sortedByCoord.out.mrkdup.bam",
-        metrics="results/variant_calling/markdup/{sample}.Aligned.sortedByCoord.out.mrkdup.metrics"
+        bam="results/variant_calling/markdup/{sample}.Aligned.out.mrkdup.bam",
+        metrics="results/variant_calling/markdup/{sample}.Aligned.out.mrkdup.metrics"
     params: 
     benchmark:
         "benchmarks/variant_calling/markdup/{sample}.txt"
     envmodules:
-        config['modules']['picard']
+        config['modules']['gatk']
     threads: 4
     resources: 
-        mem_gb = 64,
+        mem_gb = 120,
         log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
-        java -Xms16g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $PICARD MarkDuplicates \
-        --INPUT {input} \
-        --OUTPUT {output.bam} \
-        --CREATE_INDEX true \
-        --VALIDATION_STRINGENCY SILENT \
-        --METRICS_FILE {output.metrics} 
+        gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
+            MarkDuplicatesSpark \
+            -I {input} \
+            -O {output.bam} \
+            -M {output.metrics} \
+            --conf 'spark.executor.cores={threads}' \
+            --conf 'spark.local.dir=./tmp'
         """
 
 rule splitncigar:
     input:
-        "results/variant_calling/markdup/{sample}.Aligned.sortedByCoord.out.mrkdup.bam"
+        "results/variant_calling/markdup/{sample}.Aligned.out.mrkdup.bam"
     output:
-        "results/variant_calling/splitncigar/{sample}.Aligned.sortedByCoord.out.mrkdup.splitncigar.bam"
+        "results/variant_calling/splitncigar/{sample}.Aligned.out.mrkdup.splitncigar.bam"
     benchmark:
         "benchmarks/variant_calling/splitncigar/{sample}.txt"
     params:
@@ -51,7 +52,7 @@ rule splitncigar:
 
 rule haplotypecaller:
     input:
-        bam=lambda wildcards: "results/variant_calling/splitncigar/{sample}.Aligned.sortedByCoord.out.mrkdup.splitncigar.bam" if wildcards.round == "bqsr" else "results/variant_calling/final/00_BQSR/{sample}.bqsr.bam"
+        bam=lambda wildcards: "results/variant_calling/splitncigar/{sample}.Aligned.out.mrkdup.splitncigar.bam" if wildcards.round == "bqsr" else "results/variant_calling/final/00_BQSR/{sample}.bqsr.bam"
     output:
         "results/variant_calling/{round}/01_haplotypecaller/{sample}.{contig_group}.g.vcf.gz"
     benchmark:
@@ -277,7 +278,7 @@ rule BQSR:
     Base quality score recalibrator
     """
     input:
-        bam="results/variant_calling/splitncigar/{sample}.Aligned.sortedByCoord.out.mrkdup.splitncigar.bam",
+        bam="results/variant_calling/splitncigar/{sample}.Aligned.out.mrkdup.splitncigar.bam",
         known_snps_vcf=config["ref"]["known_snps"] if config["ref"]["known_snps"] else "results/variant_calling/bqsr/06_filter_vcf/all.merged.filt.PASS.SNP.vcf.gz",
         known_indels_vcf=config["ref"]["known_indels"] if config["ref"]["known_indels"] else "results/variant_calling/bqsr/06_filter_vcf/all.merged.filt.PASS.INDEL.vcf.gz",
     output:
