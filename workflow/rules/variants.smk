@@ -339,7 +339,7 @@ rule variant_annot:
     threads: 4
     resources: 
         mem_gb = 80,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix='variant_annot'
     shell:
         """
         java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $SNPEFF/snpEff.jar eff \
@@ -367,15 +367,29 @@ rule variant_annot:
 
 rule snprelate:
     input:
-        "results/variant_calling/final/06_filter_vcf/all.merged.filt.PASS.SNP.vcf.gz"
+        vcf="results/variant_calling/final/06_filter_vcf/all.merged.filt.PASS.SNP.vcf.gz"
     output:
-        "results/variant_calling/final/07b_snp_pca_and_dendro/report.html"
+        symlink_rmd = "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.Rmd",
+        symlink_vcf = "results/variant_calling/final/07b_snp_pca_and_dendro/all.merged.filt.PASS.SNP.vcf.gz",
+        html = "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.html",
+        outdir = directory("results/variant_calling/final/07b_snp_pca_and_dendro/snprelate_out_files")
     params:
-        gds="results/variant_calling/final/07b_snp_pca_and_dendro/all.gds"
+        rmd='workflow/scripts/snprelate.Rmd',
+        wd = lambda wildcards, output: os.path.dirname(output.html),
+        in_vcf = lambda wildcards, input: os.path.basename(input.vcf),
+        outdir = lambda wildcards, output: os.path.basename(output.outdir)
     envmodules:
         config['modules']['R']
     threads: 1
     resources:
-        mem_gb = 60
-    script:
-        "workflow/scripts/snprelate.Rmd"
+        mem_gb = 60,
+        log_prefix='snprelate'
+    shell:
+        """
+        ln -sr {input.vcf} {output.symlink_vcf}
+        ln -sr {params.rmd} {output.symlink_rmd}
+
+        cd {params.wd}
+
+        Rscript --vanilla -e "rmarkdown::render('snprelate.Rmd', params = list(in_vcf = '{params.in_vcf}', outdir = '{params.outdir}'))"
+        """
