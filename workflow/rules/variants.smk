@@ -378,4 +378,4 @@ rule snprelate:
     resources:
         mem_gb = 60
     script:
-        "bin/snprelate.Rmd"
+        "workflow/scripts/snprelate.Rmd"
