@@ -4,7 +4,7 @@
 #SBATCH -o rnaseq_workflow.o
 #SBATCH -e rnaseq_workflow.e
 #SBATCH --ntasks 1
-#SBATCH --time 24:00:00
+#SBATCH --time 72:00:00
 #SBATCH --mem=8G
 #SBATCH --partition=long
 
