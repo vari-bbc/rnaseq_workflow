@@ -19,11 +19,15 @@ rule markdups:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
             MarkDuplicatesSpark \
+            --spark-master local[{threads}] \
             -I {input} \
             -O {output.bam} \
             -M {output.metrics} \
-            --conf 'spark.executor.cores={threads}' \
-            --conf 'spark.local.dir=./tmp'
+            --conf spark.executor.cores={threads} \
+            --conf spark.local.dir=./tmp \
+            --conf spark.driver.memory=6g \
+            --conf spark.executor.memory=5g
+
         """
 
 rule splitncigar:
