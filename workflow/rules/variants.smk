@@ -103,13 +103,14 @@ rule combinevar:
         config["modules"]["gatk"]
     threads: 4
     resources: 
-        mem_gb = 80,
+        mem_gb = 120,
         log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
         GenomicsDBImport \
         {params.sample_gvcfs} \
+        --reader-threads {threads} \
         --genomicsdb-workspace-path {output.genomicsdb} \
         {params.contigs}
         """
