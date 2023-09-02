@@ -378,6 +378,8 @@ rule snprelate:
         symlink_vcf = "results/variant_calling/final/07b_snp_pca_and_dendro/all.merged.filt.PASS.SNP.vcf.gz",
         html = "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.html",
         outdir = directory("results/variant_calling/final/07b_snp_pca_and_dendro/snprelate_out_files")
+    benchmark:
+        "benchmarks/variant_calling/final/07b_snprelate/benchmark.txt"
     params:
         rmd='workflow/scripts/snprelate.Rmd',
         wd = lambda wildcards, output: os.path.dirname(output.html),
