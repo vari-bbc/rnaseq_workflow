@@ -4,7 +4,7 @@
 * [Bulk RNAseq Workflow](#bulk-rnaseq-workflow)
    * [Usage](#usage)
       * [Step 1: Configure the workflow](#step-1-configure-the-workflow)
-      * [Step 1b (_optional_): Specify contig groups for variant calling](#step-1b-specify-config-groups-for-variant-calling)
+      * [Step 1b (<em>optional</em>): Specify contig groups for variant calling](#step-1b-optional-specify-contig-groups-for-variant-calling)
       * [Step 2: Test and run the workflow](#step-2-test-and-run-the-workflow)
 
 ## Usage
