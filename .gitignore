@@ -13,3 +13,5 @@ config/samplesheet/*
 iSEE/.*
 resources/*
 !resources/deseq_template.Rmd
+tmp/
+.Rproj.user

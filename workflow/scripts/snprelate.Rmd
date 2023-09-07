@@ -1,0 +1,244 @@
+---
+title: "snprelate"
+author: "Kin Lau"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  html_document:
+    code_folding: hide
+    self_contained: yes
+    toc: true
+    toc_depth: 5
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+    number_sections: true
+params:
+    in_vcf: ""
+    outdir: ""
+---
+
+```{r starttime}
+# save start time for script
+start_ptm <- proc.time()
+start_ptm
+
+outdir <- params$outdir
+dir.create(outdir, recursive=TRUE)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, fig.path=file.path(outdir, "individual_figures/"))
+```
+
+# Packages loaded
+
+```{r loadlibs, echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE}
+library(SNPRelate)
+library(ggplot2)
+library(dplyr)
+```
+
+# Convert VCF to GDS
+
+We keep only the biallelic variants.
+
+```{r readvcf}
+vcf.fn <- params$in_vcf
+
+# convert to GDS
+gds_file <- file.path(outdir, 'all.gds')
+
+snpgdsVCF2GDS(vcf.fn, gds_file, method="biallelic.only")
+
+```
+
+# Open the GDS file
+
+```{r opengds}
+genofile <- snpgdsOpen(gds_file)
+
+```
+
+# LD-pruned
+
+We use an LD threshold of 0.5. SNPrelate scans the genome with a sliding window, discarding SNPs within each window of the LD exceeds 0.5. 
+
+We also keep only SNPs with a missing rate of 0 (no missing data).
+
+```{r ldprune}
+set.seed(1000)
+
+# Try different LD thresholds for sensitivity analysis
+snpset <- snpgdsLDpruning(genofile, ld.threshold=0.5, missing.rate=0) # using LD threshold default used in SNPhylo
+
+# Get all selected snp id
+snpset.id <- unlist(snpset)
+```
+
+## Identity-By-State (IBS)
+
+Average IBS is a metric for each pair of samples describing the average porportion of shared alleles for each locus.
+
+```{r ibs_mat}
+set.seed(100)
+ibs <- snpgdsIBS(genofile, num.thread=1, autosome.only=TRUE, missing.rate=0, snp.id = snpset.id)
+
+# we find 1- ibs so that the values become 'distances' where higher values represent more dissimilar pairs of samples
+one_minus_ibs <- 1 - ibs$ibs
+colnames(one_minus_ibs) <- ibs$sample.id
+rownames(one_minus_ibs) <- ibs$sample.id
+```
+
+### MDS
+
+```{r mds}
+loc <- cmdscale(one_minus_ibs, k = 2)
+#x <- loc[, 1]; y <- loc[, 2]
+df <- tibble::as_tibble(loc, rownames="sample.id") %>%
+  dplyr::rename(Dimension1=V1, Dimension2=V2)
+#df$sample.id <- ibs$sample.id
+
+# plot(x, y, xlab = "", ylab = "",
+#     main = "Multidimensional Scaling Analysis (IBS)")
+
+ggplot(df, aes(x=Dimension1, y=Dimension2, label=sample.id)) + 
+  geom_point() + ggrepel::geom_label_repel() + ggtitle("MDS (based on IBS)")
+
+```
+
+### Dendrogram
+
+Make dendrogram using hierarchical clustering on the IBS.
+
+```{r makedendro}
+ibs.hc <- snpgdsHCluster(ibs)
+
+rv <- snpgdsCutTree(ibs.hc)
+
+```
+
+```{r plot_dendro}
+plot(rv$dendrogram, main="Dendrogram based on IBS")
+
+```
+
+## PCA
+
+```{r pca}
+#pca <- snpgdsPCA(genofile, snp.id=snpset.id, num.thread=1)
+pca <- snpgdsPCA(genofile, num.thread=1, autosome.only=TRUE, missing.rate=0, snp.id = snpset.id)
+
+# variance proportion (%)
+pc.percent <- pca$varprop*100
+head(round(pc.percent, 2))
+
+tab <- data.frame(sample.id = pca$sample.id,
+    EV1 = pca$eigenvect[,1],    # the first eigenvector
+    EV2 = pca$eigenvect[,2],    # the second eigenvector
+    EV3 = pca$eigenvect[,3],
+    EV4 = pca$eigenvect[,4],
+    EV5 = pca$eigenvect[,5],
+    stringsAsFactors = FALSE)
+head(tab)
+
+#plot(tab$EV1, tab$EV2, xlab="eigenvector 1", ylab="eigenvector 2")
+ggplot(tab, aes(x=EV1, y=EV2, label=sample.id)) + geom_point() + ggrepel::geom_label_repel() + ggtitle("PC1 and 2")
+ggplot(tab, aes(x=EV3, y=EV4, label=sample.id)) + geom_point() + ggrepel::geom_label_repel() + ggtitle("PC3 and 4")
+
+```
+
+# No LD pruning
+
+Here we don't prune for LD but we keep the other filters of biallelic SNPs and no missing data.
+
+## Identity-By-State (IBS)
+
+Average IBS is a metric for each pair of samples describing the average porportion of shared alleles for each locus.
+
+```{r ibs_mat_noLDpruning}
+set.seed(100)
+ibs <- snpgdsIBS(genofile, num.thread=1, autosome.only=TRUE, missing.rate=0)
+
+# we find 1- ibs so that the values become 'distances' where higher values represent more dissimilar pairs of samples
+one_minus_ibs <- 1 - ibs$ibs
+colnames(one_minus_ibs) <- ibs$sample.id
+rownames(one_minus_ibs) <- ibs$sample.id
+```
+
+### MDS
+
+```{r mds_noLDpruning}
+loc <- cmdscale(one_minus_ibs, k = 2)
+
+df <- tibble::as_tibble(loc, rownames="sample.id") %>%
+  dplyr::rename(Dimension1=V1, Dimension2=V2)
+
+ggplot(df, aes(x=Dimension1, y=Dimension2, label=sample.id)) + 
+  geom_point() + ggrepel::geom_label_repel() + ggtitle("MDS (based on IBS)")
+
+```
+
+### Dendrogram
+
+Make dendrogram using hierarchical clustering on the IBS.
+
+```{r makedendro_noLDpruning}
+ibs.hc <- snpgdsHCluster(ibs)
+
+rv <- snpgdsCutTree(ibs.hc)
+
+```
+
+```{r plot_dendro_noLDpruning}
+plot(rv$dendrogram, main="Dendrogram based on IBS")
+
+```
+
+## PCA
+
+```{r pca_noLDpruning}
+#pca <- snpgdsPCA(genofile, snp.id=snpset.id, num.thread=1)
+pca <- snpgdsPCA(genofile, num.thread=1, autosome.only=TRUE, missing.rate=0)
+
+# variance proportion (%)
+pc.percent <- pca$varprop*100
+head(round(pc.percent, 2))
+
+tab <- data.frame(sample.id = pca$sample.id,
+    EV1 = pca$eigenvect[,1],    # the first eigenvector
+    EV2 = pca$eigenvect[,2],    # the second eigenvector
+    EV3 = pca$eigenvect[,3],
+    EV4 = pca$eigenvect[,4],
+    EV5 = pca$eigenvect[,5],
+    stringsAsFactors = FALSE)
+head(tab)
+
+#plot(tab$EV1, tab$EV2, xlab="eigenvector 1", ylab="eigenvector 2")
+ggplot(tab, aes(x=EV1, y=EV2, label=sample.id)) + geom_point() + ggrepel::geom_label_repel() + ggtitle("PC1 and 2")
+ggplot(tab, aes(x=EV3, y=EV4, label=sample.id)) + geom_point() + ggrepel::geom_label_repel() + ggtitle("PC3 and 4")
+
+```
+
+
+# Close GDS
+
+```{r closegds}
+closefn.gds(genofile)
+
+```
+
+# SessionInfo
+
+```{r sessioninfo}
+sessionInfo()
+```
+
+# Time
+
+```{r endtime}
+# output time taken to run script
+end_ptm <- proc.time()
+end_ptm
+end_ptm - start_ptm
+
+```

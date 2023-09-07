@@ -2,6 +2,8 @@ import pandas as pd
 import os
 from shutil import which
 from snakemake.utils import validate, min_version
+import itertools
+
 ##### set minimum snakemake version #####
 min_version("7.25.0")
 
@@ -9,21 +11,39 @@ min_version("7.25.0")
 
 configfile: "config/config.yaml"
 
-units = pd.read_table(config["units"], dtype={"sample" : str, "group" : str }).set_index("sample", drop=False)
+units = pd.read_table(config["units"], dtype={"sample" : str, "group" : str })
+units['group_index'] = units.groupby('sample').cumcount().astype(str)
+
+if not (units['fq1'].is_unique and units['fq2'].is_unique):
+    raise Exception('Same fastq specified in more than one row.')
+
 samples = units[["sample","group"]].drop_duplicates()
 if not samples['sample'].is_unique:
     raise Exception('A sample has more than one group.')
 
+# read grouped contigs
+contigs_file = config["grouped_contigs"]
+contig_groups = pd.read_table(contigs_file)
+
+# check chromosomes/contigs parsed correctly by comparing to fai.
+fai_file = config["ref"]["fai"]
+contigs_fai = sorted(pd.read_table(fai_file, names=['name','len','offset','linebases','linewidth'])['name'].values)
+
+contigs_parsed = [x.split(',') for x in contig_groups['contigs'].values]
+contigs_parsed_flat = sorted(list(itertools.chain.from_iterable(contigs_parsed)))
+
+assert contigs_fai == contigs_parsed_flat, "Chromosomes in grouped contigs file do not match fai."
+
 # Need this directive because both PE and SE versions of these rules produce the trimmed R1 output files.
 ruleorder: trim_galore_PE > trim_galore_SE
-ruleorder: seqtk_PE > seqtk_SE
-ruleorder: sortmerna_PE > sortmerna_SE
 
 rule all:
     input:
         "results/multiqc/multiqc_report.html",
         expand("results/SummarizedExperiment/{pref}.rds", pref=['SummarizedExperiment', 'sce']),
-        expand("results/avg_bigwigs/{group}.unstr.bw", group=pd.unique(samples['group']))
+        expand("results/avg_bigwigs/{group}.unstr.bw", group=pd.unique(samples['group'])),
+        "results/variant_calling/final/07a_variant_annot/all.merged.filt.PASS.snpeff.vcf.gz" if (config["call_variants"]) else [],
+        "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.html" if (config["call_variants"]) else [],
 
 include:
     'rules/RNAseq.smk'
@@ -31,3 +51,5 @@ include:
     'rules/qc.smk'
 include:
     'rules/visualisation.smk'
+include:
+    'rules/variants.smk'
