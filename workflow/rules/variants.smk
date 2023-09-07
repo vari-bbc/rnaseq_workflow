@@ -43,7 +43,7 @@ rule splitncigar:
         config['modules']['gatk']
     threads: 4
     resources: 
-        mem_gb = 64,
+        mem_gb = 96,
         log_prefix=lambda wildcards: "_".join(wildcards)
     shell:
         """
