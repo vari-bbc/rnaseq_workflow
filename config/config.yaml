@@ -16,7 +16,7 @@ orgdb: org.Hs.eg.db
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
 
-call_variants: True
+call_variants: False
 grouped_contigs: config/grouped_contigs.tsv 
 
 ####################################################################
