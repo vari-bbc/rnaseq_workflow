@@ -146,16 +146,15 @@ if config["PE_or_SE"] =="SE":
     multiqc_input.append(expand("results/fastq_screen/{samples.sample}_R1_screen.txt", samples=samples.itertuples()))
     multiqc_input.append(expand("results/trimmed_data/{samples.sample}_R1_trimmed_fastqc.zip", samples=samples.itertuples()))
     multiqc_input.append(expand("results/trimmed_data/{samples.sample}_R1_trimmed_fastqc.html", samples=samples.itertuples()))
-    multiqc_input.append(expand("results/star/{samples.sample}.Log.final.out", samples=samples.itertuples()))
-    multiqc_input.append(expand("results/sortmerna/{samples.sample}",samples=samples.itertuples()))
     multiqc_input.append(expand("results/salmon/{samples.sample}/{file}", samples=samples.itertuples(), file=["aux_info/meta_info.json"]))
 elif config["PE_or_SE"] =="PE":
     multiqc_input.append(expand("results/fastq_screen/{samples.sample}_R{read}_screen.txt", samples=samples.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("results/trimmed_data/{samples.sample}_R{read}_val_{read}_fastqc.html", samples=samples.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("results/trimmed_data/{samples.sample}_R{read}_val_{read}_fastqc.zip", samples=samples.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("results/trimmed_data/{samples.sample}_R{read}.fastq.gz_trimming_report.txt", samples=samples.itertuples(), read=["1","2"]))
-    multiqc_input.append(expand("results/star/{samples.sample}.Log.final.out", samples=samples.itertuples()))
     multiqc_input.append(expand("results/salmon/{samples.sample}/{file}", samples=samples.itertuples(), file=["libParams/flenDist.txt","aux_info/meta_info.json"]))
+# plus things that are always there...
+multiqc_input.append(expand("results/star/{samples.sample}.Log.final.out", samples=samples.itertuples()))
     multiqc_input.append(expand("results/sortmerna/{samples.sample}",samples=samples.itertuples()))
 
 
