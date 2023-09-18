@@ -1,0 +1,1 @@
+../../../supp_analysis/insert_size/insert_size.smk
