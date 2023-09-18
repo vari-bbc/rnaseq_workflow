@@ -181,15 +181,16 @@ rule multiqc:
     resources:
         nodes = 1,
         mem_gb = 32,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix="MultiQC"
     envmodules:
         config['modules']['multiqc']
     shell:
         """
         multiqc -f {params} \
         -o results/multiqc \
-        --ignore '*._STARpass1/*' \
+        --ignore '*._STARpass1' \
         -n multiqc_report.html \
-        --cl-config 'max_table_rows: 999999' 
+        --cl-config 'max_table_rows: 999999' \
+        --cl-config 'extra_fn_clean_exts: {{_val_1, _val_2}}'
         """
 
