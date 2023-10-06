@@ -30,7 +30,8 @@ snakemake \
 --cluster "mkdir -p logs/{rule}; sbatch \
 -p ${SLURM_JOB_PARTITION} \
 --export=ALL \
---ntasks {threads} \
+--nodes 1 \
+--ntasks-per-node {threads} \
 --mem={resources.mem_gb}G \
 -t 120:00:00 \
 -o logs/{rule}/{resources.log_prefix}.o \
