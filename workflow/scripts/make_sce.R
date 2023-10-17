@@ -18,7 +18,11 @@ library(stringr)
 library(readr)
 library(tibble)
 library(edgeR)
-library(orgdb, character.only=TRUE) # load the org.db for your organism
+# load the org.db for your organism
+if(!require(orgdb, character.only=TRUE)){
+    BiocManager::install(orgdb)
+    library(orgdb, character.only=TRUE)
+}
 library(DESeq2)
 library(AnnotationDbi)
 library(tximport)
