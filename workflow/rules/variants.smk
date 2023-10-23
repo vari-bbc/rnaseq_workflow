@@ -14,7 +14,7 @@ rule markdups:
     threads: 4
     resources: 
         mem_gb = 120,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
@@ -44,7 +44,7 @@ rule splitncigar:
     threads: 4
     resources: 
         mem_gb = 96,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
@@ -71,7 +71,7 @@ rule haplotypecaller:
     threads: 4
     resources: 
         mem_gb = 80,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
@@ -104,7 +104,7 @@ rule combinevar:
     threads: 4
     resources: 
         mem_gb = 120,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
@@ -130,7 +130,7 @@ rule jointgeno:
     threads: 4
     resources: 
         mem_gb = 80,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
@@ -157,7 +157,7 @@ rule sortVCF:
     threads: 4
     resources: 
         mem_gb = 80,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
@@ -189,7 +189,7 @@ rule merge_vcf:
     threads: 4
     resources: 
         mem_gb = 80,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
@@ -242,7 +242,7 @@ rule filter_vcf:
     threads: 4
     resources: 
         mem_gb = 80,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
@@ -298,7 +298,7 @@ rule BQSR:
     threads: 4
     resources: 
         mem_gb = 80,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         gatk --java-options "-Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp" \
@@ -344,7 +344,7 @@ rule variant_annot:
     threads: 4
     resources: 
         mem_gb = 80,
-        log_prefix='variant_annot'
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $SNPEFF/snpEff.jar eff \
@@ -390,7 +390,7 @@ rule snprelate:
     threads: 1
     resources:
         mem_gb = 60,
-        log_prefix='snprelate'
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         ln -sr {input.vcf} {output.symlink_vcf}

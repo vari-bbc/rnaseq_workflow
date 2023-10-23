@@ -20,7 +20,7 @@ rule concat_fastqs:
     threads: 1
     resources:
         mem_gb=4,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     envmodules:
     shell:
         """
@@ -39,7 +39,7 @@ rule fastq_screen:
     resources:
         nodes =     1,
         mem_gb =    32,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     envmodules: config['modules']['fastq_screen']
     shell:
         """
@@ -64,7 +64,7 @@ rule fastqc:
     threads: 1
     resources:
         mem_gb = 32,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         fastqc --outdir {params.outdir} {input}
@@ -83,7 +83,7 @@ rule seqtk:
     resources:
         nodes = 1,
         mem_gb = 16,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         seqtk sample -s 100 {input} {params.num_subsamp} | gzip -c > {output}
@@ -120,7 +120,7 @@ rule sortmerna:
     resources:
         nodes = 1,
         mem_gb = 16,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         sortmerna --threads {threads} {params.fastqs} --workdir {output}  \
@@ -174,7 +174,7 @@ rule multiqc:
     resources:
         nodes = 1,
         mem_gb = 32,
-        log_prefix='multiqc'
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     envmodules:
         config['modules']['multiqc']
     shell:

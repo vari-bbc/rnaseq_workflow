@@ -28,7 +28,7 @@ rule bigwigs:
     resources:
         nodes = 1,
         mem_gb = 16,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         bamCoverage -b {input.bam} -o {output.bw}  --minMappingQuality 30  \
@@ -50,7 +50,7 @@ rule avg_bigwigs:
     resources:
         nodes = 1,
         mem_gb = 72,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         bigwigAverage -b {input} --binSize 10 -p {threads} -o {output.bw} -of "bigwig"

@@ -21,7 +21,7 @@ rule rename_fastqs:
     threads: 1
     resources:
         mem_gb=4,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     envmodules:
     shell:
         """
@@ -61,7 +61,7 @@ rule trim_galore_PE:
     resources:
         nodes =   1,
         mem_gb =  32,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         trim_galore \
@@ -91,7 +91,7 @@ rule trim_galore_SE:
     resources:
         nodes =   1,
         mem_gb =  32,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         trim_galore \
@@ -179,7 +179,7 @@ rule STAR:
     resources:
         nodes =   1,
         mem_gb =  120,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         STAR \
@@ -215,7 +215,7 @@ rule salmon:
     resources:
         nodes =   1,
         mem_gb =  120,
-        log_prefix=lambda wildcards: "_".join(wildcards)
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         salmon quant \
@@ -245,7 +245,7 @@ rule SummarizedExperiment:
         config['modules']['R']
     resources:
         mem_gb=64,
-        log_prefix="SummarizedExperiment"
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
         Rscript --vanilla workflow/scripts/make_sce.R {params.gtf} {params.orgdb} {output.se} {output.sce} {output.sizeFactors}
