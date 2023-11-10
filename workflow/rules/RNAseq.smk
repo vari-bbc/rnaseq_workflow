@@ -234,7 +234,8 @@ rule SummarizedExperiment:
     output:
         se="results/SummarizedExperiment/SummarizedExperiment.rds",
         sce="results/SummarizedExperiment/sce.rds",
-        sizeFactors="results/SummarizedExperiment/DESeq2_sizeFactors_reciprocal.tsv"
+        sizeFactors="results/SummarizedExperiment/DESeq2_sizeFactors_reciprocal.tsv",
+        txi="results/SummarizedExperiment/txi.rds"
     benchmark:
         "benchmarks/SummarizedExperiment/SummarizedExperiment.txt"
     params:
@@ -248,5 +249,5 @@ rule SummarizedExperiment:
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
-        Rscript --vanilla workflow/scripts/make_sce.R {params.gtf} {params.orgdb} {output.se} {output.sce} {output.sizeFactors}
+        Rscript --vanilla workflow/scripts/make_sce.R {params.gtf} {params.orgdb} {output.se} {output.sce} {output.sizeFactors} {output.txi}
         """
