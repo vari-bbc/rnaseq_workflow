@@ -1,4 +1,3 @@
-
 import os
 import gzip
 import subprocess
@@ -22,23 +21,42 @@ if list_o_files[0][1:2] == "b'":
 	list_o_files[0] = list_o_files[0].replace("b'","") # Removes the "b" signifying the sample as a bit type
 		
 if list_o_files[-1] == "'": 
-	list_o_files = list_o_files[1:-1]
+	list_o_files = list_o_files[1:-1] # Take everything, but the last thing.
+
 
 # Set up dictionary for sample read_group successes! 
 sample_rg_dict = {}
 arb_cutoff = 20
 
+symlinks_present_bool = 0
+
 # Intake actual fastq files from symlinks and read through lines
 for filenames in list_o_files: 
 
 	lineNum = 0 
-	symlink_filename = os.readlink(path_to_raw_data + filenames)
+	aug_path = "/".join(path_to_raw_data.split("/")[0:2]) + "/" # Removes "raw_data" to map symlink to file accurately
+	sample_name	= filenames.split("_")[0]
+	# sample_name = "_".join(filenames.split(".")[0].split("_")[:-1]) # Full file name up to "_R1" or "_R2"
 
-	shorter_path = "/".join(path_to_raw_data.split("/")[0:2]) + "/" # Removes "raw_data" to map symlink to file accurately
+	try:
+		symlink_filename = os.readlink(path_to_raw_data + filenames)
+		final_path = aug_path + symlink_filename
+		symlinks_present_bool = 1
+
+	except FileNotFoundError: 
+		print("Cannot find FastQ files or symlinks in the", path_to_raw_data, "directory. Make sure they are present.")
+		quit()
+
+	except OSError: 
+		if symlinks_present_bool: # This will only be triggered if files successfully went through the os.readlink
+			print("\nWarning: FastQ files may be mixed with symlinks of FastQ files in '" + path_to_raw_data + "'. Careful!\n" )
+			symlinks_present_bool = 0 # Only prints once!
+
+		final_path = path_to_raw_data + filenames
 
 	readGroup = ""
 
-	with gzip.open(shorter_path + symlink_filename) as tfile:
+	with gzip.open(final_path) as tfile:
 
 		success_count = 0 
 
@@ -46,7 +64,6 @@ for filenames in list_o_files:
 			lines = str(lines) # Convert from bit type to string
 
 			if lineNum == 0: #Extract the sample name to ID into dictionary
-				sample_name = lines[3:13]
 				readGroup = "ID:" + sample_name + " PU:" + sample_name + " LB:" + sample_name + " PL:ILLUMINA SM:" + sample_name
 				# print(readGroup)
 				sample_rg_dict[ sample_name ] = [readGroup, 1] # Default to automatically entering read groups
@@ -63,30 +80,51 @@ for filenames in list_o_files:
 		if success_count >= arb_cutoff: 
 			sample_rg_dict[ sample_name ][1] = 0 # If the criteria is met for all sample reads, turn off the read groupings
 
-		
-#	
-# 	gzipped_fastq_locale = symlink_path
-
-# 	lineNum = 0
-
-# 	BIG_BOOL_LIST = []
-
-# 	for line in tfile: 
-
-# 		with gzip.open(path_to_raw_data + gzipped_fastq_locale) as fastq_file: 
-
-# 			for line in fastq_file: 
-# 				if lineNum > 400: 
-# 					break
-				
-# 				if (lineNum % 4) == 0: 
-# 					nine_on_the_line_bool = (len(str(line).split(":")) >= 9) # Check if there are there 9 items in the list
-# 					BIG_BOOL_LIST.append(nine_on_the_line_bool)
-
-# 				lineNum += 1
-
-# print(sum(BIG_BOOL_LIST))
+	tfile.close()
 
 
-# Open the file; find header lines and get 'em counted. Make sure they are less than
+# Next thing to do is to write the 
+new_line_list = []
+
+with open("units_template.tsv", "r") as ufile:
+
+	header_bool = 1
+
+	for lines in ufile: 
+
+		if header_bool: 
+			header = lines.strip() + "\n"
+			header_bool = 0
+			new_line_list.append(header)
+			continue
+
+		line_list = lines.split("\t")
+
+		sample = line_list[0]
+		group = line_list[1]
+		fq1 = line_list[2]
+		fq2 = line_list[3]
+
+		# If there's something funky going on with read groups, it's probably here: 
+		if sample_rg_dict[sample_name][1]:
+			RG = sample_rg_dict[sample_name][0]
+		else: 
+			RG = ""
+
+		new_line = "\t".join([sample, group, fq1, fq2, RG])
+		new_line_list.append(new_line)
+
+ufile.close()
+
+# Rewrite units_template.tsv
+new_file = open("units_template.tsv", "w")
+
+for lines in new_line_list: 
+
+	print(lines.strip(), file = new_file)
+	
+new_file.close()
+
+
+
 
