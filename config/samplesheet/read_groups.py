@@ -117,7 +117,8 @@ with open("units_template.tsv", "r") as ufile:
 ufile.close()
 
 # Rewrite units_template.tsv
-new_file = open("units_template.tsv", "w")
+# new_file = open("units_template.tsv", "w")
+new_file = open("units.tsv", "w")
 
 for lines in new_line_list: 
 

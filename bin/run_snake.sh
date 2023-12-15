@@ -14,7 +14,8 @@ snakemake_module="bbc2/snakemake/snakemake-7.25.0"
 
 module load $snakemake_module
 
-# make logs dir if it does not exist already. 
+python3 ../config/samplesheet/read_groups.py
+
 logs_dir="logs/"
 [[ -d $logs_dir ]] || mkdir -p $logs_dir
 

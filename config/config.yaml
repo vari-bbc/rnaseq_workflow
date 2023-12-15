@@ -1,21 +1,54 @@
-ref:
-  index:          /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/star
-  salmon_index:   /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/salmon/hg38_gencode
-  annotation:     /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/annotation/hg38_gencode.gtf
-  # Below used only for variant calling
-  dict: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.dict
-  snpeff_db_id: hg38 
-  known_snps: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/gatk_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
-  known_indels: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/gatk_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
-  sequence: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.fa
-  fai:  /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.fa.fai
+# Indicate your organism, either "human", "mouse" or "fly"
+organism: human
 
-# OrgDB R package for covnerting gene names. Common choices are 'org.Mm.eg.db' for mouse and 'org.Hs.eg.db' for human.
-orgdb: org.Hs.eg.db
+ref:
+  human:
+    index:          /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/star
+    salmon_index:   /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/salmon/hg38_gencode
+    annotation:     /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/annotation/hg38_gencode.gtf
+    # Below used only for variant calling
+    dict: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.dict
+    snpeff_db_id: hg38 
+    known_snps: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/gatk_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
+    known_indels: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/gatk_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
+    sequence: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.fa
+    fai:  /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.fa.fai
+  mouse: 
+    index:          /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/mm10_gencode/indexes/star
+    salmon_index:   /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/mm10_gencode/indexes/salmon/mm10_gencode
+    annotation:     /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/mm10_gencode/annotation/mm10_gencode.gtf
+    # Below used only for variant calling
+    dict: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/mm10_gencode/sequence/mm10_gencode.dict
+    snpeff_db_id: mm10
+    known_snps: 
+    known_indels: 
+    sequence: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/mm10_gencode/sequence/mm10_gencode.fa
+    fai:  /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/mm10_gencode/sequence/mm10_gencode.fa.fai
+  fly: 
+    index:          /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/dm6_BDGP6.28.100/indexes/star
+    salmon_index:   /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/dm6_BDGP6.28.100/indexes/salmon/dm6_BDGP6.28.100
+    annotation:     /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/dm6_BDGP6.28.100/annotation/dm6_BDGP6.28.100.gtf
+    # Below used only for variant calling
+    dict: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/dm6_BDGP6.28.100/sequence/dm6_BDGP6.28.100.dict
+    snpeff_db_id: 
+    known_snps: 
+    known_indels: 
+    sequence: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/dm6_BDGP6.28.100/sequence/dm6_BDGP6.28.100.fa
+    fai:  /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/dm6_BDGP6.28.100/sequence/dm6_BDGP6.28.100.fa.fai
+
+# OrgDB R package for covnerting gene names. Selected for automatically when you select an organism.
+orgdb: 
+  human: 
+    org.Hs.eg.db
+  mouse: 
+    org.Mm.eg.db
+  fly: 
+    org.Dm.eg.db
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
 
+# MUST BE FALSE FOR MOUSE AND FLY UNLESS WE GET NECESSARY FILES 
 call_variants: False
 grouped_contigs: config/grouped_contigs.tsv 
 
