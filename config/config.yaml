@@ -35,6 +35,17 @@ ref:
     known_indels: 
     sequence: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/dm6_BDGP6.28.100/sequence/dm6_BDGP6.28.100.fa
     fai:  /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/dm6_BDGP6.28.100/sequence/dm6_BDGP6.28.100.fa.fai
+  worm: 
+    index:          /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/c.elegans-WBcel235/indexes/star
+    salmon_index:   /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/c.elegans-WBcel235/indexes/salmon/c.elegans-WBcel235
+    annotation:     /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/c.elegans-WBcel235/annotation/c.elegans-WBcel235.gtf
+    # Below used only for variant calling
+    dict: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/c.elegans-WBcel235/sequence/c.elegans-WBcel235.dict
+    snpeff_db_id: 
+    known_snps: 
+    known_indels: 
+    sequence: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/c.elegans-WBcel235/sequence/c.elegans-WBcel235.fa
+    fai:  /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/c.elegans-WBcel235/sequence/c.elegans-WBcel235.fa.fai
 
 # OrgDB R package for covnerting gene names. Selected for automatically when you select an organism.
 orgdb: 
@@ -44,6 +55,8 @@ orgdb:
     org.Mm.eg.db
   fly: 
     org.Dm.eg.db
+  worm:
+    org.Ce.eg.db
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
