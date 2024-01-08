@@ -1,4 +1,8 @@
-# Indicate your organism, either "human", "mouse" or "fly"
+# Indicate your organism, either "human" (Homo sapiens hg38), 
+#                                "mouse" (Mus musculus mm10), 
+#                                "fly" (Drosophila melanogaster dm6_BDGP6.28.100), or 
+#                                "worm" (Caenorhabditis elegans c.elegans-WBcel235)
+
 organism: human
 
 ref:
@@ -91,7 +95,7 @@ modules:
   htslib: bbc2/htslib/htslib-1.17
   multiqc: bbc2/multiqc/multiqc-1.14
   picard: bbc2/picard/picard-2.27.5
-  R: bbc2/R/alt/R-4.3.0-setR_LIBS_USER
+  R: bbc2/R/alt/R-4.2.1-setR_LIBS_USER
   salmon: bbc2/salmon/salmon-1.10.0
   samtools: bbc2/samtools/samtools-1.17
   seqtk: bbc2/seqtk/seqtk-1.3-r115-dirty
