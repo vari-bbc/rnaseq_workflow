@@ -240,7 +240,7 @@ rule SummarizedExperiment:
         "benchmarks/SummarizedExperiment/SummarizedExperiment.txt"
     params:
         gtf=config['ref'][ORG]['annotation'],
-        orgdb=config['orgdb']
+        orgdb=config['orgdb'][ORG]
     threads: 1
     envmodules:
         config['modules']['R']

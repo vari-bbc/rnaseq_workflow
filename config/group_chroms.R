@@ -5,7 +5,18 @@ suppressPackageStartupMessages(library(magrittr))
 suppressPackageStartupMessages(library(Rsamtools))
 
 # params from workflow
-ref_fasta <- read_yaml("config.yaml")$ref$sequence
+organism <- read_yaml("config.yaml")$organism
+
+if (organism == "human"){
+	ref_fasta <- read_yaml("config.yaml")$ref$human$sequence
+} else if (organism == "mouse"){
+	ref_fasta <- read_yaml("config.yaml")$ref$mouse$sequence
+} else if (organism == "fly"){
+	ref_fasta <- read_yaml("config.yaml")$ref$fly$sequence
+} else if (organism == "worm"){
+	ref_fasta <- read_yaml("config.yaml")$ref$worm$sequence
+}
+
 outfile <- "grouped_contigs.tsv"
 
 # make GenomicRanges from the genome
