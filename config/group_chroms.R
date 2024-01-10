@@ -15,6 +15,8 @@ if (organism == "human"){
 	ref_fasta <- read_yaml("config.yaml")$ref$fly$sequence
 } else if (organism == "worm"){
 	ref_fasta <- read_yaml("config.yaml")$ref$worm$sequence
+} else if (organism == "other"){
+	ref_fasta <- read_yaml("config.yaml")$ref$other$sequence
 }
 
 outfile <- "grouped_contigs.tsv"
