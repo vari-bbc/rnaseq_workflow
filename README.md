@@ -35,6 +35,15 @@ module load bbc2/R/alt/R-4.2.1-setR_LIBS_USER
 Rscript --vanilla group_chroms.R 
 ```
 
+### Step 1c (_optional_): Check read groups for `fastq` files
+
+Some FASTQ files processed by older Illumina machines, or pulled from SRA, will have short read headers. Running this step finds `.fastq` files with these deprecated headers and writes their read groups into `units_template.tsv` file. 
+
+```
+cd config/samplesheet
+python3 read_groups.py
+```
+
 ### Step 2: Test and run the workflow
 Test your configuration by performing a dry-run via
 

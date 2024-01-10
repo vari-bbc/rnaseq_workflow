@@ -21,7 +21,7 @@ if list_o_files[0][1:2] == "b'":
 	list_o_files[0] = list_o_files[0].replace("b'","") # Removes the "b" signifying the sample as a bit type
 		
 if list_o_files[-1] == "'": 
-	list_o_files = list_o_files[1:-1] # Take everything, but the last thing.
+	list_o_files = list_o_files[1:-1] # Take everything except the last thing.
 
 
 # Set up dictionary for sample read_group successes! 
@@ -34,7 +34,7 @@ symlinks_present_bool = 0
 for filenames in list_o_files: 
 
 	lineNum = 0 
-	aug_path = "/".join(path_to_raw_data.split("/")[0:2]) + "/" # Removes "raw_data" to map symlink to file accurately
+	aug_path = "/".join(path_to_raw_data.split("/"))  # Removes "raw_data" to map symlink to file accurately
 	sample_name	= filenames.split("_")[0]
 	# sample_name = "_".join(filenames.split(".")[0].split("_")[:-1]) # Full file name up to "_R1" or "_R2"
 
@@ -86,6 +86,7 @@ for filenames in list_o_files:
 # Next thing to do is to write the 
 new_line_list = []
 
+# Next bit might be better as a function. That way, you can check, modify, and pass path names without the rest of the loop
 with open("units_template.tsv", "r") as ufile:
 
 	header_bool = 1
@@ -117,8 +118,8 @@ with open("units_template.tsv", "r") as ufile:
 ufile.close()
 
 # Rewrite units_template.tsv
-# new_file = open("units_template.tsv", "w")
-new_file = open("units.tsv", "w")
+new_file = open("units_template.tsv", "w")
+# new_file = open("units.tsv", "w")
 
 for lines in new_line_list: 
 
