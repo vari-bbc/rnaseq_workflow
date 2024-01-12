@@ -18,4 +18,10 @@ nonstd <- seqlevels(ref_gr)[which(!seqlevels(ref_gr) %in% std_chroms)]
 std_df <- data.frame(name=std_chroms, contigs=std_chroms)
 nonstd_df <- data.frame(name="unplaced_contigs", contigs=paste(nonstd, collapse=','))
 
-rbind(std_df, nonstd_df) %>% write_tsv(outfile)
+if(nonstd_df$contigs != ""){
+    outdf <- rbind(std_df, nonstd_df)
+} else{
+    outdf <- std_df
+}
+
+write_tsv(outdf, outfile)

@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import os
 from shutil import which
 from snakemake.utils import validate, min_version
@@ -24,6 +25,8 @@ if not samples['sample'].is_unique:
 # read grouped contigs
 contigs_file = config["grouped_contigs"]
 contig_groups = pd.read_table(contigs_file)
+contig_groups['contigs'].replace('', np.nan, inplace=True) # unplaced_contigs can be empty for certain references.
+contig_groups.dropna(subset=['contigs'], inplace=True)
 
 # check chromosomes/contigs parsed correctly by comparing to fai.
 fai_file = config["ref"]["fai"]
