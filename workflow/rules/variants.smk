@@ -38,7 +38,7 @@ rule splitncigar:
     benchmark:
         "benchmarks/variant_calling/splitncigar/{sample}.txt"
     params:
-        ref_fasta=config["ref"]["sequence"],
+        ref_fasta=config["ref"][ORG]["sequence"],
     envmodules:
         config['modules']['gatk']
     threads: 4
@@ -62,8 +62,8 @@ rule haplotypecaller:
     benchmark:
         "benchmarks/variant_calling/{round}/01_haplotypecaller/{sample}.{contig_group}.txt"
     params:
-        dbsnp=lambda wildcards: f'--dbsnp {config["ref"]["known_snps"]}' if config["ref"]["known_snps"] != "" else "",
-        ref_fasta=config["ref"]["sequence"],
+        dbsnp=lambda wildcards: f'--dbsnp {config["ref"][ORG]["known_snps"]}' if config["ref"][ORG]["known_snps"] != "" else "",
+        ref_fasta=config["ref"][ORG]["sequence"],
         contigs = lambda wildcards: "-L " + contig_groups[contig_groups.name == wildcards.contig_group]['contigs'].values[0].replace(",", " -L "),
         
     envmodules:
@@ -123,7 +123,7 @@ rule jointgeno:
     benchmark:
         "benchmarks/variant_calling/{round}/03_jointgeno/all.{contig_group}.txt"
     params:
-        ref_fasta=config["ref"]["sequence"],
+        ref_fasta=config["ref"][ORG]["sequence"],
         genomicsdb="results/variant_calling/{round}/02_combinevar/{contig_group}.genomicsdb"
     envmodules:
         config["modules"]["gatk"]
@@ -151,7 +151,7 @@ rule sortVCF:
     benchmark:
         "benchmarks/variant_calling/{round}/04_sortvcf/all.{contig_group}.txt"
     params:
-        dictionary=config['ref']['dict'],
+        dictionary=config['ref'][ORG]['dict'],
     envmodules:
         config["modules"]["gatk"]
     threads: 4
@@ -180,8 +180,8 @@ rule merge_vcf:
     benchmark:
         "benchmarks/variant_calling/{round}/05_merge_vcf/benchmark.txt"
     params:
-        ref_fasta=config["ref"]["sequence"],
-        dictionary=config['ref']['dict'],
+        ref_fasta=config["ref"][ORG]["sequence"],
+        dictionary=config['ref'][ORG]['dict'],
         in_vcfs = lambda wildcards, input: ' '.join(['--INPUT ' + vcf for vcf in input]) 
     envmodules:
         config["modules"]["gatk"],
@@ -234,7 +234,7 @@ rule filter_vcf:
     benchmark:
         "benchmarks/variant_calling/{round}/06_filter_vcf/{var_type}.txt"
     params:
-        ref_fasta=config["ref"]["sequence"],
+        ref_fasta=config["ref"][ORG]["sequence"],
         filt_params=get_filt_params
     envmodules:
         config["modules"]["gatk"],
@@ -284,15 +284,15 @@ rule BQSR:
     """
     input:
         bam="results/variant_calling/splitncigar/{sample}.Aligned.out.mrkdup.splitncigar.bam",
-        known_snps_vcf=config["ref"]["known_snps"] if config["ref"]["known_snps"] else "results/variant_calling/bqsr/06_filter_vcf/all.merged.filt.PASS.SNP.vcf.gz",
-        known_indels_vcf=config["ref"]["known_indels"] if config["ref"]["known_indels"] else "results/variant_calling/bqsr/06_filter_vcf/all.merged.filt.PASS.INDEL.vcf.gz",
+        known_snps_vcf=config["ref"][ORG]["known_snps"] if config["ref"][ORG]["known_snps"] else "results/variant_calling/bqsr/06_filter_vcf/all.merged.filt.PASS.SNP.vcf.gz",
+        known_indels_vcf=config["ref"][ORG]["known_indels"] if config["ref"][ORG]["known_indels"] else "results/variant_calling/bqsr/06_filter_vcf/all.merged.filt.PASS.INDEL.vcf.gz",
     output:
         recal_table="results/variant_calling/final/00_BQSR/{sample}.bqsr.table",
         recal_bam="results/variant_calling/final/00_BQSR/{sample}.bqsr.bam"
     benchmark:
         "benchmarks/variant_calling/final/00_BQSR/{sample}.txt"
     params:
-        ref_fasta=config["ref"]["sequence"],
+        ref_fasta=config["ref"][ORG]["sequence"],
     envmodules:
         config["modules"]["gatk"],
     threads: 4
@@ -337,7 +337,7 @@ rule variant_annot:
     benchmark:
         "benchmarks/variant_calling/final/07a_variant_annot/benchmark.txt"
     params:
-        db_id=config["ref"]["snpeff_db_id"],
+        db_id=config["ref"][ORG]["snpeff_db_id"],
     envmodules:
         config['modules']['snpeff'],
         config['modules']['htslib']
