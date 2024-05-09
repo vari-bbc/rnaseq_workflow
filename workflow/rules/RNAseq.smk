@@ -130,11 +130,18 @@ def get_RG(wildcards, input):
 
         ## Compile the read group line for each library
         for i in range(len(fq1_files)):
-            first_line_split = first_lines[i].split(':')
+
+            # replace spaces with underscore, mainly to account for accession ID for GEO/SRA samples, then split by colon
+            first_line_split = first_lines[i].replace(" ", "_").split(':')
          
             flowcell = first_line_split[2]
             lane = first_line_split[3]
-            lib_barcode = first_line_split[9]
+
+            # if library barcode is in the header, parse it. If not, just use the sample name.
+            if (len(first_line_split) >= 10):
+                lib_barcode = first_line_split[9]
+            else:
+                lib_barcode = wildcards.sample
          
             sample = wildcards.sample
          
