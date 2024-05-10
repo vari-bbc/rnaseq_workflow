@@ -1,5 +1,5 @@
 def get_bigwig_norm_factor(wildcards, input):
-    df = pd.read_table(input.norm_factors)
+    df = pd.read_table(input.norm_factors, dtype={"sample" : str, "sizefactor" : float })
     scalefactor = df[df['sample']==wildcards.sample]['sizefactor'].values[0]
     return str(scalefactor)
 
