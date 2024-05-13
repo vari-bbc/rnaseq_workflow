@@ -6,7 +6,6 @@ logs/
 benchmarks/
 .snakemake/
 config/samplesheet/*
-!config/samplesheet/read_groups.py
 !config/samplesheet/make_units_template*
 !config/samplesheet/units.tsv
 *.DS_Store
