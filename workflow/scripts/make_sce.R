@@ -10,6 +10,7 @@ out_txi <- args[6]
 
 star_dir <- "results/star"
 salmon_dir <- "results/salmon"
+sumExp_dir <- "results/SummarizedExperiment"
 samplesheet <- "config/samplesheet/units.tsv"
 
 # Packages loaded
@@ -76,6 +77,7 @@ files <- list.files(salmon_dir, recursive=TRUE, pattern = "quant.sf", full.names
 names(files) <- basename(str_remove(files, "\\/quant.sf"))
 
 txi.salmon <- tximport(files, type = "salmon", tx2gene = tx2gene)
+
 write_rds(txi.salmon, out_txi)
 
 tpms <- txi.salmon$abundance

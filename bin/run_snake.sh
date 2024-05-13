@@ -14,7 +14,6 @@ snakemake_module="bbc2/snakemake/snakemake-7.25.0"
 
 module load $snakemake_module
 
-# make logs dir if it does not exist already. 
 logs_dir="logs/"
 [[ -d $logs_dir ]] || mkdir -p $logs_dir
 
@@ -39,5 +38,5 @@ snakemake \
 #--slurm \
 #--default-resources slurm_account=${SLURM_JOB_USER} slurm_partition=${SLURM_JOB_PARTITION}
 
-echo "snakemake workflow done." >&1                   
-echo "snakemake workflow done." >&2                
+echo "snakemake workflow done." >&1
+echo "snakemake workflow done." >&2

@@ -11,6 +11,7 @@ min_version("7.25.0")
 ##### load config and sample sheets #####
 
 configfile: "config/config.yaml"
+ORG = config['organism']
 
 units = pd.read_table(config["units"], dtype={"sample" : str, "group" : str })
 units['group_index'] = units.groupby('sample').cumcount().astype(str)
@@ -29,7 +30,7 @@ contig_groups['contigs'].replace('', np.nan, inplace=True) # unplaced_contigs ca
 contig_groups.dropna(subset=['contigs'], inplace=True)
 
 # check chromosomes/contigs parsed correctly by comparing to fai.
-fai_file = config["ref"]["fai"]
+fai_file = config["ref"][ORG]["fai"]
 contigs_fai = sorted(pd.read_table(fai_file, names=['name','len','offset','linebases','linewidth'])['name'].values)
 
 contigs_parsed = [x.split(',') for x in contig_groups['contigs'].values]
