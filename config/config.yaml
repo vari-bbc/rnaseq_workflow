@@ -45,7 +45,7 @@ modules:
   htslib: bbc2/htslib/htslib-1.17
   multiqc: bbc2/multiqc/multiqc-1.14
   picard: bbc2/picard/picard-2.27.5
-  R: bbc2/R/alt/R-4.3.0-setR_LIBS_USER
+  R: bbc2/R/R-4.3.0
   salmon: bbc2/salmon/salmon-1.10.0
   samtools: bbc2/samtools/samtools-1.17
   seqtk: bbc2/seqtk/seqtk-1.3-r115-dirty
