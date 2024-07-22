@@ -173,7 +173,7 @@ rule STAR:
         bai =                 "results/star/{sample}.sorted.bam.bai",
     params:
         # path to STAR reference genome index
-        index = config["ref"]["index"],
+        index = config["ref"][ORG]["index"],
         outprefix = "results/star/{sample}.",
         in_fastqs = lambda wildcards, input: ','.join(input.fq1_files) + ' ' + ','.join(input.fq2_files),
         read_groups = get_RG
@@ -208,7 +208,7 @@ rule STAR:
 rule salmon:
     input:
         unpack(STAR_input),
-        index=config["ref"]["salmon_index"]
+        index=config["ref"][ORG]["salmon_index"]
     output:
         expand("results/salmon/{{sample}}/{file}", file=["libParams/flenDist.txt","aux_info/meta_info.json","quant.sf","lib_format_counts.json","cmd_info.json","logs/salmon_quant.log"])
     params:
@@ -246,8 +246,8 @@ rule SummarizedExperiment:
     benchmark:
         "benchmarks/SummarizedExperiment/SummarizedExperiment.txt"
     params:
-        gtf=config['ref']['annotation'],
-        orgdb=config['orgdb']
+        gtf=config['ref'][ORG]['annotation'],
+        orgdb=config['orgdb'][ORG]
     threads: 1
     envmodules:
         config['modules']['R']
