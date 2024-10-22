@@ -133,15 +133,13 @@ def get_RG(wildcards, input):
 
             # replace spaces with underscore, mainly to account for accession ID for GEO/SRA samples, then split by colon
             first_line_split = first_lines[i].replace(" ", "_").split(':')
-         
-            flowcell = first_line_split[2]
-            lane = first_line_split[3]
+            
+
+            flowcell = first_line_split[2] if (len(first_line_split) >= 3) else 'ABC'
+            lane = first_line_split[3] if (len(first_line_split) >= 4) else '0'
 
             # if library barcode is in the header, parse it. If not, just use the sample name.
-            if (len(first_line_split) >= 10):
-                lib_barcode = first_line_split[9]
-            else:
-                lib_barcode = wildcards.sample
+            lib_barcode = first_line_split[9] if (len(first_line_split) >= 10) else wildcards.sample
          
             sample = wildcards.sample
          
