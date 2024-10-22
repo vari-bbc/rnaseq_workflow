@@ -118,7 +118,7 @@ def get_RG(wildcards, input):
     ## Use the user-specified read group info if available
     rg_lines = units[units['sample'] == wildcards.sample]['RG'].values
     
-    if(pd.isnull(rg_lines).any()):
+    if(pd.isnull(rg_lines).any() or any(ele == '' for ele in rg_lines)):
 
         rg_lines = []
         
