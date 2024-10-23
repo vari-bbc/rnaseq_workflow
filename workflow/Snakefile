@@ -23,6 +23,10 @@ if not (units['fq1'].is_unique and units['fq2'].is_unique):
 samples = units[["sample","group"]].drop_duplicates()
 if not samples['sample'].is_unique:
     raise Exception('A sample has more than one group.')
+valid_groups = samples.groupby(['group'])['group'].count() > 1
+
+if not (valid_groups.all()):
+    raise Exception('Each group in the samplesheet must have at least two samples.')
 
 # read grouped contigs
 contigs_file = config["grouped_contigs"]
