@@ -13,7 +13,9 @@ min_version("7.25.0")
 configfile: "config/config.yaml"
 ORG = config['organism']
 
-units = pd.read_table(config["units"], dtype={"sample" : str, "group" : str })
+units = pd.read_table(config["units"], dtype={"sample" : str, "group" : str, "fq1" : str, "fq2" : str, "RG" : str})
+units["RG"] = units["RG"].fillna("")
+validate(units, "../schema/units.schema.yaml")
 units['group_index'] = units.groupby('sample').cumcount().astype(str)
 
 if not (units['fq1'].is_unique and units['fq2'].is_unique):
@@ -22,6 +24,10 @@ if not (units['fq1'].is_unique and units['fq2'].is_unique):
 samples = units[["sample","group"]].drop_duplicates()
 if not samples['sample'].is_unique:
     raise Exception('A sample has more than one group.')
+valid_groups = samples.groupby(['group'])['group'].count() > 1
+
+if not (valid_groups.all()):
+    raise Exception('Each group in the samplesheet must have at least two samples.')
 
 # read grouped contigs
 contigs_file = config["grouped_contigs"]
