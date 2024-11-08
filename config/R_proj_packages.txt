@@ -17,5 +17,6 @@ PCAtools
 ReactomePA
 rjson
 scater
+SNPRelate
 tidyverse
 tximport

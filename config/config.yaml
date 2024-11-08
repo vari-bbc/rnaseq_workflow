@@ -20,7 +20,13 @@ call_variants: False
 grouped_contigs: config/grouped_contigs.tsv 
 
 # R project config
-Rproj_dirname: foobar_Rproj
+Rproj_dirname: VBCS-000_Rproj
+## use renv cache or install/copy all packages in project.
+renv_use_cache: True
+## copy packages from user library if available?
+renv_use_user_lib: True
+## if using renv cache, this is the path to where the cache is/will be stored.
+renv_root_path: /varidata/research/projects/bbc/tools/renv_root
 
 
 ####################################################################
@@ -49,7 +55,8 @@ modules:
   htslib: bbc2/htslib/htslib-1.17
   multiqc: bbc2/multiqc/multiqc-1.14
   picard: bbc2/picard/picard-2.27.5
-  R: bbc2/R/alt/R-4.3.0-setR_LIBS_USER
+  # The easiest way to get renv to work is to make sure all packages are already installed and up to date in your user library which will then be simply copied to the project library
+  R: bbc2/R/alt/R-4.4.0-setR_LIBS_USER-extra
   salmon: bbc2/salmon/salmon-1.10.0
   samtools: bbc2/samtools/samtools-1.17
   seqtk: bbc2/seqtk/seqtk-1.3-r115-dirty
