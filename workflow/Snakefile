@@ -28,6 +28,11 @@ valid_groups = samples.groupby(['group'])['group'].count() > 1
 if not (valid_groups.all()):
     raise Exception('Each group in the samplesheet must have at least two samples.')
 
+# comparisons: list of comparisons (contrasts) to be tested
+comparisons = pd.read_table(config["comparisons"]) #, dtype={"comparison_name" : str, "group_test" : str, "group_reference" : str})
+if not (comparisons['group_test'].isin(samples['group']).all() and comparisons['group_reference'].isin(samples['group']).all()):
+    raise Exception('A group in the comparisons file is not in the samplesheet.')
+
 # read grouped contigs
 contigs_file = config["grouped_contigs"]
 contig_groups = pd.read_table(contigs_file)
@@ -51,6 +56,7 @@ rule all:
         "results/multiqc/multiqc_report.html",
         expand("results/SummarizedExperiment/{pref}.rds", pref=['SummarizedExperiment', 'sce']),
         expand("results/avg_bigwigs/{group}.unstr.bw", group=pd.unique(samples['group'])),
+        expand("results/deseq2/DESeq2_{comparison_name}.html", comparison_name=pd.unique(comparisons["comparison_name"])),
         "results/variant_calling/final/07a_variant_annot/all.merged.filt.PASS.snpeff.vcf.gz" if (config["call_variants"]) else [],
         "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.html" if (config["call_variants"]) else [],
 
@@ -62,3 +68,5 @@ include:
     'rules/visualisation.smk'
 include:
     'rules/variants.smk'
+include:
+    'rules/deseq2.smk'
