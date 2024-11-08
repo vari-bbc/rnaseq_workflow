@@ -1,0 +1,40 @@
+rule deseq2:
+    input:
+        se="results/SummarizedExperiment/SummarizedExperiment.rds"
+    output:
+        rmd="results/deseq2/DESeq2_{comparison}.Rmd",
+        html="results/deseq2/DESeq2_{comparison}.html",
+        de_res="results/deseq2/deseq2_out_files/{comparison}/de_res.tsv",
+        de_res_rds="results/deseq2/deseq2_out_files/{comparison}/de_res.rds",
+        counts="results/deseq2/deseq2_out_files/{comparison}/counts.tsv",
+        vst="results/deseq2/deseq2_out_files/{comparison}/vst.tsv",
+        vsd_rds="results/deseq2/deseq2_out_files/{comparison}/vsd.rds"
+    benchmark:
+        "benchmarks/deseq2/{comparison}.txt"
+    params:
+        deseq_template = "resources/deseq_template.Rmd",
+        fdr_cutoff = config['fdr_cutoff'],
+        comparison = lambda wildcards: wildcards.comparison,
+        group_test = lambda wildcards: comparisons.loc[comparisons['comparison_name'] == wildcards.comparison, 'group_test'].values[0],
+        group_reference = lambda wildcards: comparisons.loc[comparisons['comparison_name'] == wildcards.comparison, 'group_reference'].values[0],
+        genes_of_interest = config['genes_of_interest']
+    envmodules:
+        config['modules']['R'],
+        config['modules']['pandoc']
+    threads: 8
+    resources:
+        nodes = 1,
+        mem_gb = 16,
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
+    shell:
+        """
+        cp {params.deseq_template} {output.rmd}
+
+        Rscript --vanilla -e "rmarkdown::render('{output.rmd}', 
+                              params = list(se_obj = '{input.se}',
+                                            comparison_name = '{params.comparison}',
+                                            group_test = '{params.group_test}', 
+                                            group_reference = '{params.group_reference}',
+                                            fdr_cutoff = {params.fdr_cutoff},
+                                            genes_of_interest = '{params.genes_of_interest}'))"
+        """
