@@ -19,6 +19,10 @@ PE_or_SE: PE
 call_variants: False
 grouped_contigs: config/grouped_contigs.tsv 
 
+# R project config
+Rproj_dirname: foobar_Rproj
+
+
 ####################################################################
 # FOR MOST STANDARD USE CASES, THE BELOW DO NOT NEED TO BE CHANGED.#
 ####################################################################

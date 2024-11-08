@@ -28,6 +28,10 @@ valid_groups = samples.groupby(['group'])['group'].count() > 1
 if not (valid_groups.all()):
     raise Exception('Each group in the samplesheet must have at least two samples.')
 
+
+Rproj_packages_vals = pd.read_table("config/R_proj_packages.txt", header=None)[0].values
+Rproj_packages = "c('" + "','".join(Rproj_packages_vals) + "')"
+
 # read grouped contigs
 contigs_file = config["grouped_contigs"]
 contig_groups = pd.read_table(contigs_file)
@@ -53,6 +57,7 @@ rule all:
         expand("results/avg_bigwigs/{group}.unstr.bw", group=pd.unique(samples['group'])),
         "results/variant_calling/final/07a_variant_annot/all.merged.filt.PASS.snpeff.vcf.gz" if (config["call_variants"]) else [],
         "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.html" if (config["call_variants"]) else [],
+        "{Rproj}/{Rproj}.Rproj".format(Rproj=config['Rproj_dirname'])    
 
 include:
     'rules/RNAseq.smk'
@@ -62,3 +67,5 @@ include:
     'rules/visualisation.smk'
 include:
     'rules/variants.smk'
+include:
+    'rules/make_Rprojects.smk'

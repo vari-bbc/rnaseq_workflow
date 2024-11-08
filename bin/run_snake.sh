@@ -28,7 +28,7 @@ snakemake \
 --use-envmodules \
 --jobs 100 \
 --cluster "mkdir -p logs/{rule}; sbatch \
--p ${SLURM_JOB_PARTITION} \
+-p ${SLURM_JOB_PARTITION},short,long \
 --export=ALL \
 --nodes 1 \
 --ntasks-per-node {threads} \
