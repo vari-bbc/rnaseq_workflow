@@ -19,6 +19,7 @@ rule make_Rproject:
         set_use_renv_cache = lambda wildcards, output: "" if config['renv_use_cache'] else "printf \"RENV_CONFIG_CACHE_ENABLED=FALSE\\n\" >> {renviron}".format(renviron=output.renviron),
         # tell renv not to copy from user library if requested in config file.
         set_use_user_lib = lambda wildcards, output: "" if config['renv_use_user_lib'] else "printf \"RENV_CONFIG_INSTALL_SHORTCUTS=FALSE\\n\" >> {renviron}".format(renviron=output.renviron),
+        unix_res_dir = lambda wildcards,output: os.path.basename(output.unix_res_dir),
     threads: 1
     envmodules:
         config['modules']['R']
@@ -50,10 +51,13 @@ rule make_Rproject:
         
         # Set up git
         git init
+        git add -A 
+        echo "{params.unix_res_dir}/" >> .gitignore
+        git commit -m "initial commit"
         
         # symlink unix results to R project folder
-        mkdir unix_res
-        cd unix_res
+        mkdir {params.unix_res_dir}
+        cd {params.unix_res_dir}
         ln -sr ../../{input.se} .
         
         """
