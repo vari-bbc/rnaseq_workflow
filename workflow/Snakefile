@@ -49,18 +49,6 @@ if (config['call_variants']):
 # Need this directive because both PE and SE versions of these rules produce the trimmed R1 output files.
 ruleorder: trim_galore_PE > trim_galore_SE
 
-# below is to process quick ref genome information: 
-ref_base_dir="/varidata/research/projects/bbc/versioned_references/"
-
-if config['quick_ref']['species_name'] and not config['quick_ref']['ref_genome_version']:
-    config['ref']['index']=ref_base_dir+"latest/data/"+config['quick_ref']['species_name']+"/indexes/star"
-    config['ref']['salmon_index']=ref_base_dir+"latest/data/"+config['quick_ref']['species_name']+"/indexes/salmon/"+config['quick_ref']['species_name']
-    config['ref']['annotation']=ref_base_dir+"latest/data/"+config['quick_ref']['species_name']+"/annotation/"+config['quick_ref']['species_name']+".gtf"
-if config['quick_ref']['species_name'] and config['quick_ref']['ref_genome_version']: 
-    config['ref']['index']=ref_base_dir+config['quick_ref']['ref_genome_version']+"/data/"+config['quick_ref']['species_name']+"/indexes/star"
-    config['ref']['salmon_index']=ref_base_dir+config['quick_ref']['ref_genome_version']+"/data/"+config['quick_ref']['species_name']+"/indexes/salmon/"+config['quick_ref']['species_name']
-    config['ref']['annotation']=ref_base_dir+config['quick_ref']['ref_genome_version']+"/data/"+config['quick_ref']['species_name']+"/annotation/"+config['quick_ref']['species_name']+".gtf"
-
 rule all:
     input:
         "results/multiqc/multiqc_report.html",

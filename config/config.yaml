@@ -1,10 +1,11 @@
-quick_ref:   ## quick_ref section is for RNA-seq part of the workflow only. If you plan to do SNP calling, do not set quick_ref, fill the fileds in ref section instead.
-  ref_genome_version: 2021-08-02_20.40.24_v5 # Only fill this if you are NOT doing SNP calling. This is the dir name of the dates of the reference. Check what is available at /varidata/research/projects/bbc/versioned_references. This field is optional, if you do not set it, it will use the "latest" compiled reference version.  
-  species_name: mm10_gencode # This is required, it is the dir name of the reference genome, check /varidata/research/projects/bbc/versioned_references/latest/data/ to see what species are there. The most commonly used species are mmm10_gencode and hg38_gencode. If you have spike-in in your samples, there are usually correseponding reference with spike-in. 
+quick_ref:  
+## quick_ref section is for RNA-seq part of the workflow only. If you plan to do SNP calling, do not set quick_ref, fill the fields in ref section instead. ref_genome_version is the dir name of the dates of the reference. Check what is available at /varidata/research/projects/bbc/versioned_references. ref_genome_version is optional, if you do not set it, it will use the "latest" compiled reference version. species_name IS REQUIRED, it is the dir name of the reference genome, check /varidata/research/projects/bbc/versioned_references/latest/data/ to see what species are there. The most commonly used species are mmm10_gencode and hg38_gencode. If you have spike-in in your samples, there are usually correseponding reference with spike-in. If you want to specify your own pass for referecen in ref section, leave quick_ref blank.      
+  ref_genome_version: 
+  species_name: hg38_gencode
 ref: 
-  index:          
-  salmon_index:   
-  annotation:     
+  index:  /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/star        
+  salmon_index:   /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/salmon/hg38_gencode
+  annotation:     /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/annotation/hg38_gencode.gtf
   # Below used only for variant calling
   dict: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.dict
   snpeff_db_id: hg38 
@@ -14,7 +15,7 @@ ref:
   fai:  /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.fa.fai
 
 # OrgDB R package for covnerting gene names. Common choices are 'org.Mm.eg.db' for mouse and 'org.Hs.eg.db' for human.
-orgdb: org.Mm.eg.db
+orgdb: org.Hs.eg.db
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
