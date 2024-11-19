@@ -10,7 +10,7 @@
 
 cd $SLURM_SUBMIT_DIR
 
-snakemake_module="bbc2/snakemake/snakemake-7.25.0"
+snakemake_module="bbc2/snakemake/snakemake-8.25.2"
 
 module load $snakemake_module
 
@@ -27,7 +27,7 @@ snakemake \
 --latency-wait 20 \
 --use-envmodules \
 --jobs 100 \
---cluster "mkdir -p logs/{rule}; sbatch \
+--executor cluster-generic --cluster-generic-submit-cmd "mkdir -p logs/{rule}; sbatch \
 -p ${SLURM_JOB_PARTITION} \
 --export=ALL \
 --nodes 1 \
