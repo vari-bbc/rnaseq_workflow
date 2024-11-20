@@ -24,7 +24,7 @@
     * **RG**            - space-delimited read group specification e.g. ID:XYZ PU:XYZ LB:LIB01 PL:ILLUMINA SM:SAMPLE01
 
   * config/samplesheet/comparisons.tsv; fill this out with you 
-    * **comparison_name**    - Name of your comparison
+    * **comparison_name**    - Name of your comparison (use only letters, numbers, and underscores -- special characters or spaces will result in errors).
     * **group_test**         - Experimental group (treated/condition/phenotype)
     * **group_reference**    - Reference group (control/wildtype/baseline)
 
