@@ -16,7 +16,7 @@ units = pd.read_table(config["units"], dtype={"sample" : str, "group" : str, "fq
 units["RG"] = units["RG"].fillna("")
 validate(units, "../schema/units.schema.yaml")
 units['group_index'] = units.groupby('sample').cumcount().astype(str)
-
+print(units)
 if not (units['fq1'].is_unique and units['fq2'].is_unique):
     raise Exception('Same fastq specified in more than one row.')
 
@@ -32,21 +32,25 @@ if not (valid_groups.all()):
 comparisons = pd.read_table(config["comparisons"]) #, dtype={"comparison_name" : str, "group_test" : str, "group_reference" : str})
 if not (comparisons['group_test'].isin(samples['group']).all() and comparisons['group_reference'].isin(samples['group']).all()):
     raise Exception('A group in the comparisons file is not in the samplesheet.')
+    
 
-# read grouped contigs
-contigs_file = config["grouped_contigs"]
-contig_groups = pd.read_table(contigs_file)
-contig_groups['contigs'].replace('', np.nan, inplace=True) # unplaced_contigs can be empty for certain references.
-contig_groups.dropna(subset=['contigs'], inplace=True)
+if (config['call_variants']):
+    # read grouped contigs
+    contigs_file = config["grouped_contigs"]
+    contig_groups = pd.read_table(contigs_file)
+    contig_groups['contigs'].replace('', np.nan, inplace=True) # unplaced_contigs can be empty for certain references.
+    contig_groups.dropna(subset=['contigs'], inplace=True)
 
-# check chromosomes/contigs parsed correctly by comparing to fai.
-fai_file = config["ref"]["fai"]
-contigs_fai = sorted(pd.read_table(fai_file, names=['name','len','offset','linebases','linewidth'])['name'].values)
+    # check chromosomes/contigs parsed correctly by comparing to fai.
+    fai_file = config["ref"]["fai"]
+    contigs_fai = sorted(pd.read_table(fai_file, names=['name','len','offset','linebases','linewidth'])['name'].values)
 
-contigs_parsed = [x.split(',') for x in contig_groups['contigs'].values]
-contigs_parsed_flat = sorted(list(itertools.chain.from_iterable(contigs_parsed)))
+    contigs_parsed = [x.split(',') for x in contig_groups['contigs'].values]
+    contigs_parsed_flat = sorted(list(itertools.chain.from_iterable(contigs_parsed)))
 
-assert contigs_fai == contigs_parsed_flat, "Chromosomes in grouped contigs file do not match fai."
+    assert contigs_fai == contigs_parsed_flat, "Chromosomes in grouped contigs file do not match fai."
+
+    include: 'rules/variants.smk'
 
 # Need this directive because both PE and SE versions of these rules produce the trimmed R1 output files.
 ruleorder: trim_galore_PE > trim_galore_SE
@@ -66,7 +70,5 @@ include:
     'rules/qc.smk'
 include:
     'rules/visualisation.smk'
-include:
-    'rules/variants.smk'
 include:
     'rules/deseq2.smk'
