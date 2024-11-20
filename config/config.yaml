@@ -12,6 +12,8 @@ ref:
 
 # OrgDB R package for covnerting gene names. Common choices are 'org.Mm.eg.db' for mouse and 'org.Hs.eg.db' for human.
 orgdb: org.Hs.eg.db
+fdr_cutoff: 0.1
+genes_of_interest: DUSP1,KLF15,CRISPLD2
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
@@ -25,6 +27,7 @@ grouped_contigs: config/grouped_contigs.tsv
 
 # path to sample sheet relative to the base project directory (containing config/, workflow/ etc)
 units: config/samplesheet/units.tsv
+comparisons: config/samplesheet/comparisons.tsv
 
 sortmerna:
     rfam5_8s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.6-Linux/rRNA_databases/rfam-5.8s-database-id98.fasta
@@ -44,6 +47,7 @@ modules:
   gatk: bbc2/gatk/gatk-4.3.0.0
   htslib: bbc2/htslib/htslib-1.17
   multiqc: bbc2/multiqc/multiqc-1.14
+  pandoc: bbc2/pandoc/pandoc-3.1.2
   picard: bbc2/picard/picard-2.27.5
   R: bbc2/R/alt/R-4.3.0-setR_LIBS_USER
   salmon: bbc2/salmon/salmon-1.10.0
