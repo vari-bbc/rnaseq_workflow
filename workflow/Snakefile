@@ -63,7 +63,7 @@ if quick_ref_id:
     # erase manually specified files to prevent accidentally mixing files from different versions
     config['ref'] = {}
 
-    ref_base_dir = "/varidata/research/projects/bbc/versioned_references/"
+    ref_base_dir = "/varidata/research/projects/bbc/versioned_references"
     
     if quick_vers:
         ref_base_dir = f'{ref_base_dir}/{quick_vers}'
