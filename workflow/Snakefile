@@ -16,7 +16,7 @@ units = pd.read_table(config["units"], dtype={"sample" : str, "group" : str, "fq
 units["RG"] = units["RG"].fillna("")
 validate(units, "../schema/units.schema.yaml")
 units['group_index'] = units.groupby('sample').cumcount().astype(str)
-
+print(units)
 if not (units['fq1'].is_unique and units['fq2'].is_unique):
     raise Exception('Same fastq specified in more than one row.')
 
@@ -28,23 +28,58 @@ valid_groups = samples.groupby(['group'])['group'].count() > 1
 if not (valid_groups.all()):
     raise Exception('Each group in the samplesheet must have at least two samples.')
 
-# read grouped contigs
-contigs_file = config["grouped_contigs"]
-contig_groups = pd.read_table(contigs_file)
-contig_groups['contigs'] = contig_groups['contigs'].replace('', np.nan) # unplaced_contigs can be empty for certain references.
-contig_groups.dropna(subset=['contigs'], inplace=True)
+if (config['call_variants']):
+    # read grouped contigs
+    contigs_file = config["grouped_contigs"]
+    contig_groups = pd.read_table(contigs_file)
+    contig_groups['contigs'] = contig_groups['contigs'].replace('', np.nan) # unplaced_contigs can be empty for certain references.
+    contig_groups.dropna(subset=['contigs'], inplace=True)
 
-# check chromosomes/contigs parsed correctly by comparing to fai.
-fai_file = config["ref"]["fai"]
-contigs_fai = sorted(pd.read_table(fai_file, names=['name','len','offset','linebases','linewidth'])['name'].values)
+    # check chromosomes/contigs parsed correctly by comparing to fai.
+    fai_file = config["ref"]["fai"]
+    contigs_fai = sorted(pd.read_table(fai_file, names=['name','len','offset','linebases','linewidth'])['name'].values)
+    contigs_parsed = [x.split(',') for x in contig_groups['contigs'].values]
+    contigs_parsed_flat = sorted(list(itertools.chain.from_iterable(contigs_parsed)))
 
-contigs_parsed = [x.split(',') for x in contig_groups['contigs'].values]
-contigs_parsed_flat = sorted(list(itertools.chain.from_iterable(contigs_parsed)))
+    assert contigs_fai == contigs_parsed_flat, "Chromosomes in grouped contigs file do not match fai."
 
-assert contigs_fai == contigs_parsed_flat, "Chromosomes in grouped contigs file do not match fai."
+    include: 'rules/variants.smk'
 
 # Need this directive because both PE and SE versions of these rules produce the trimmed R1 output files.
 ruleorder: trim_galore_PE > trim_galore_SE
+
+# below is to process quick ref genome information:
+quick_ref_id = config['quick_ref']['species_name']
+quick_vers = config['quick_ref']['ref_genome_version']
+
+print("\n")
+if quick_ref_id:
+    if config['call_variants']:
+        raise Exception("Quick references not supported when variant calling is requested.")
+
+    print("Using quick_ref instead of manually indicated index files.")
+    
+    # erase manually specified files to prevent accidentally mixing files from different versions
+    config['ref'] = {}
+
+    ref_base_dir = "/varidata/research/projects/bbc/versioned_references"
+    
+    if quick_vers:
+        ref_base_dir = f'{ref_base_dir}/{quick_vers}'
+    else:
+        print(f'Version number not specified. Will use the latest version of the BBC-curated reference files.')
+        ref_base_dir = os.readlink(f"{ref_base_dir}/latest")
+
+    ref_base_dir = f'{ref_base_dir}/data/{quick_ref_id}'
+    print(f'Using the index files in {ref_base_dir}.\n')
+
+    config['ref']['index'] = f'{ref_base_dir}/indexes/star'
+    config['ref']['salmon_index'] = f'{ref_base_dir}/indexes/salmon/{quick_ref_id}'
+    config['ref']['annotation'] = f'{ref_base_dir}/annotation/{quick_ref_id}.gtf'
+
+else:
+    print("Using the index files manually specified in the config file.\n")
+
 
 rule all:
     input:
@@ -60,5 +95,3 @@ include:
     'rules/qc.smk'
 include:
     'rules/visualisation.smk'
-include:
-    'rules/variants.smk'

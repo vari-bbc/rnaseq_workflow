@@ -1,3 +1,7 @@
+quick_ref:
+# Only fill this if you are NOT doing SNP calling. "ref_genome_verison" is the dir of the date and version of the reference. Check what is available at /varidata/research/projects/bbc/versioned_references. If you are not sure, you can use the latest one.  "species_name" is the dir name of the reference genome, check /varidata/research/projects/bbc/versioned_references/latest/data/ to see species are there. The most commonly used species are mmm10_gencode and hg38_gencode. ref_genome_version is optional whereas species_name is MANDATORY; if you leave quick_ref section blank, the workflow will use references from "ref" section below. 
+  ref_genome_version:       # The earliest recommended version is 2021-08-10_11.12.27_v6. Note that the Salmon index might not exist for earlier versions.
+  species_name:  hg38_gencode
 ref:
   index:          /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/star
   salmon_index:   /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/salmon/hg38_gencode
