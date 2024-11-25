@@ -50,7 +50,7 @@ rule all:
     input:
         "results/multiqc/multiqc_report.html",
         expand("results/SummarizedExperiment/{pref}.rds", pref=['SummarizedExperiment', 'sce']),
-        expand("results/avg_bigwigs/{group}.unstr.bw", group=pd.unique(samples['group'])),
+        expand("results/avg_bigwigs/{group}.unstr.bw", group=pd.unique(samples['group'])) if (config["run_vis_bigwig"]) else [],
         "results/variant_calling/final/07a_variant_annot/all.merged.filt.PASS.snpeff.vcf.gz" if (config["call_variants"]) else [],
         "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.html" if (config["call_variants"]) else [],
 

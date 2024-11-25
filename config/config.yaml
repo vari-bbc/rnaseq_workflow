@@ -19,6 +19,8 @@ PE_or_SE: PE
 call_variants: False
 grouped_contigs: config/grouped_contigs.tsv 
 
+run_vis_bigwig : True
+
 ####################################################################
 # FOR MOST STANDARD USE CASES, THE BELOW DO NOT NEED TO BE CHANGED.#
 ####################################################################
