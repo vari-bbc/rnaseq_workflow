@@ -8,6 +8,7 @@ benchmarks/
 config/samplesheet/*
 !config/samplesheet/make_units_template*
 !config/samplesheet/units.tsv
+!config/samplesheet/comparisons.tsv
 *.DS_Store
 *._.DS_Store
 iSEE/.*
