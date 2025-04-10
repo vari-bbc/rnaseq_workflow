@@ -90,6 +90,7 @@ library(msigdbr)
 library(stringr)
 library(DESeq2)
 library(tibble)
+library(aPEAR)
 library(dplyr)
 library(GO.db)
 library(readr)
@@ -228,7 +229,10 @@ stopifnot(all(correct_ranking))
 # Get genesets and run GSEA
 
 ```{r get_genesets_and_run_gsea}
-gsea_res <- lapply(setNames(nm=c("Reactome","BP", "BP-simplified", "KEGG","H","C3","C6","C7")), function(ont){
+
+pathwayNames = c("Reactome","BP", "BP-simplified", "KEGG","H","C3","C6","C7")
+
+gsea_res <- lapply(setNames(nm=pathwayNames), function(ont){
   message("Running GSEA for ", ont)
   lapply(genes_and_score, function(y){
     set.seed(gsea_seed) # make reproducible
@@ -260,7 +264,6 @@ gsea_res <- lapply(setNames(nm=c("Reactome","BP", "BP-simplified", "KEGG","H","C
                                          eps = 0.0 # need to set this or Pvalues will not reach below 1e-10
       )
     }
-
 
     gsea_res_syms <- DOSE::setReadable(gsea_res,
                                        OrgDb = eval(as.symbol(orgdb)),
@@ -295,7 +298,7 @@ dotplots <- lapply(setNames(nm=names(gsea_res)), function(geneset){
     }
     #gseaResult <- filter(gseaResult, p.adjust < p_cutoff)
     if(nrow(gseaResult) > 0){
-      dotplot(gseaResult, split=".sign") + ggtitle(paste0(params$comparison_name," -- ",geneset)) +
+      dotplot(gseaResult, split=".sign") + ggtitle(paste0(params$comparison_name," -- ", geneset)) +
         scale_y_discrete(label=function(x) str_trunc(str_remove(x, "HALLMARK_|\\s-\\sRattus norvegicus.*"), 40)) + facet_grid(.~.sign)
     } else{
       "No significant results"
@@ -315,6 +318,53 @@ for (i in 1:length(dotplots)){
   }
 }
 ```
+```{r aPEAR}
+
+set.seed(gsea_seed)
+
+aPEARobj = lapply(seq_along(gsea_res), FUN = function(x){
+  
+  gseaResObj = gsea_res[[x]][[1]]$entrez
+  resSetName = names(gsea_res)[[x]]
+
+  tryCatch({
+    
+    p <- aPEAR::enrichmentNetwork(gseaResObj@result, drawEllipses = TRUE, fontSize = 2.5) + ggtitle(paste0(params$comparison_name," -- ", resSetName))
+  
+    return(p)
+    
+    }, error = function(cond) {
+      
+      p <- ggplot() + # Draw ggplot2 plot with text only
+          annotate("text",
+          x = 1,
+          y = 1,
+          size = 8,
+          label = paste0("No networks for ", params$comparison_name," -- ", resSetName)) + 
+        theme_void()
+      
+      return(p)
+      
+    })
+  
+})
+
+for (i in 1:length(aPEARobj)){
+  dotplot_list <- aPEARobj[[i]]
+  if (is(dotplot_list, "ggplot")) {
+    # print(wrap_plots(dotplot_list, ncol=1) + plot_annotation(title = names(dotplots)[i]))
+    print(wrap_plots(dotplot_list, ncol=1))
+  } else {
+    isggplot <- sapply(dotplot_list, function(x) is(x, "ggplot"))
+    if(sum(isggplot) > 0){
+      # print(wrap_plots(dotplot_list[isggplot], ncol=1) + plot_annotation(title = names(dotplots)[i]))
+      print(wrap_plots(dotplot_list[isggplot], ncol=1))
+    }
+  }
+}
+
+```
+
 
 # Session Info
 
