@@ -19,13 +19,11 @@ orgdb: org.Mm.eg.db
 fdr_cutoff: 0.1
 genes_of_interest: DUSP1,KLF15,CRISPLD2
 
-# For GSEA
+# For GSEA quick_ref can only handle human, mouse, rat, and fly; all other organisms need to be filled in manually
 # kegg_org should be a three or four letter string corresponding to your reference species. List of KEGG species is found here: https://www.genome.jp/kegg/tables/br08606.html
 kegg_org: mmu
-
 # reactome_org can be "human", "mouse", "rat", "celegans", "yeast", "zebrafish", "fly" 
 reactome_org: mouse
-
 # Full species name. Applicable input strings can be found by installing the msigdbr library in R and using msigdbr::msigdbr_species()
 msigdb_organism: Mus musculus
 
