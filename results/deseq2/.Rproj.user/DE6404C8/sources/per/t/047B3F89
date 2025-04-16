@@ -1,0 +1,27 @@
+{
+    "id": "047B3F89",
+    "path": "/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/deseq2/DESeq2_ko_v_ctrl.Rmd",
+    "project_path": "DESeq2_ko_v_ctrl.Rmd",
+    "type": "r_markdown",
+    "hash": "2163430665",
+    "contents": "",
+    "dirty": false,
+    "created": 1740498931189.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "53,16",
+        "scrollLine": "41",
+        "last_setup_crc32": ""
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1741105165,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1743781016081,
+    "read_only": false,
+    "read_only_alternatives": []
+}

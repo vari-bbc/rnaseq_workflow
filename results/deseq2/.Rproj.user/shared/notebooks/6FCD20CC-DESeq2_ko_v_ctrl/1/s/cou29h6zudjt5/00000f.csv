@@ -1,0 +1,4 @@
+"0","dds <- DESeqDataSet(se, design = ~ group)"
+"2","converting counts to integer mode
+"
+"2","Warning: some variables in design formula are characters, converting to factors"

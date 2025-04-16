@@ -1,0 +1,52 @@
+Module	Section	Sample Name	Source
+Salmon	all_sections	sgUgcg1	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/salmon/sgUgcg1/libParams/flenDist.txt
+Salmon	all_sections	NTC3	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/salmon/NTC3/libParams/flenDist.txt
+Salmon	all_sections	NTC4	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/salmon/NTC4/libParams/flenDist.txt
+Salmon	all_sections	sgUgcg5	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/salmon/sgUgcg5/libParams/flenDist.txt
+Salmon	all_sections	NTC5	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/salmon/NTC5/libParams/flenDist.txt
+Salmon	all_sections	NTC2	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/salmon/NTC2/libParams/flenDist.txt
+Salmon	all_sections	sgUgcg2	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/salmon/sgUgcg2/libParams/flenDist.txt
+STAR	SummaryLog	NTC2	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star/NTC2.Log.final.out
+STAR	SummaryLog	sgUgcg5	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star/sgUgcg5.Log.final.out
+STAR	SummaryLog	sgUgcg1	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star/sgUgcg1.Log.final.out
+STAR	SummaryLog	NTC5	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star/NTC5.Log.final.out
+STAR	SummaryLog	NTC4	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star/NTC4.Log.final.out
+STAR	SummaryLog	sgUgcg2	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star/sgUgcg2.Log.final.out
+STAR	SummaryLog	NTC3	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star/NTC3.Log.final.out
+STAR	SummaryLog	Log.final.out	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star/NTC5._STARpass1/Log.final.out
+STAR	ReadsPerGene	sgUgcg2	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star/sgUgcg2.ReadsPerGene.out.tab
+STAR	ReadsPerGene	NTC4	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star/NTC4.ReadsPerGene.out.tab
+STAR	ReadsPerGene	sgUgcg5	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star/sgUgcg5.ReadsPerGene.out.tab
+STAR	ReadsPerGene	NTC5	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star/NTC5.ReadsPerGene.out.tab
+STAR	ReadsPerGene	NTC3	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star/NTC3.ReadsPerGene.out.tab
+STAR	ReadsPerGene	NTC2	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star/NTC2.ReadsPerGene.out.tab
+STAR	ReadsPerGene	sgUgcg1	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star/sgUgcg1.ReadsPerGene.out.tab
+SortMeRNA	all_sections	aligned	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/sortmerna/sgUgcg2/out/aligned.log
+FastQ Screen	all_sections	sgUgcg1_R2_screen	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastq_screen/sgUgcg1_R2_screen.txt
+FastQ Screen	all_sections	sgUgcg5_R1_screen	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastq_screen/sgUgcg5_R1_screen.txt
+FastQ Screen	all_sections	NTC4_R1_screen	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastq_screen/NTC4_R1_screen.txt
+FastQ Screen	all_sections	NTC3_R2_screen	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastq_screen/NTC3_R2_screen.txt
+FastQ Screen	all_sections	NTC4_R2_screen	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastq_screen/NTC4_R2_screen.txt
+FastQ Screen	all_sections	sgUgcg2_R1_screen	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastq_screen/sgUgcg2_R1_screen.txt
+FastQ Screen	all_sections	NTC2_R1_screen	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastq_screen/NTC2_R1_screen.txt
+FastQ Screen	all_sections	NTC2_R2_screen	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastq_screen/NTC2_R2_screen.txt
+FastQ Screen	all_sections	sgUgcg2_R2_screen	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastq_screen/sgUgcg2_R2_screen.txt
+FastQ Screen	all_sections	NTC5_R1_screen	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastq_screen/NTC5_R1_screen.txt
+FastQ Screen	all_sections	NTC5_R2_screen	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastq_screen/NTC5_R2_screen.txt
+FastQ Screen	all_sections	sgUgcg1_R1_screen	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastq_screen/sgUgcg1_R1_screen.txt
+FastQ Screen	all_sections	sgUgcg5_R2_screen	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastq_screen/sgUgcg5_R2_screen.txt
+FastQ Screen	all_sections	NTC3_R1_screen	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastq_screen/NTC3_R1_screen.txt
+FastQC	all_sections	sgUgcg5_R1	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastqc/sgUgcg5_R1_fastqc.zip
+FastQC	all_sections	sgUgcg1_R1	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastqc/sgUgcg1_R1_fastqc.zip
+FastQC	all_sections	NTC5_R1	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastqc/NTC5_R1_fastqc.zip
+FastQC	all_sections	NTC5_R2	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastqc/NTC5_R2_fastqc.zip
+FastQC	all_sections	NTC3_R2	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastqc/NTC3_R2_fastqc.zip
+FastQC	all_sections	sgUgcg2_R2	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastqc/sgUgcg2_R2_fastqc.zip
+FastQC	all_sections	sgUgcg1_R2	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastqc/sgUgcg1_R2_fastqc.zip
+FastQC	all_sections	NTC4_R1	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastqc/NTC4_R1_fastqc.zip
+FastQC	all_sections	sgUgcg5_R2	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastqc/sgUgcg5_R2_fastqc.zip
+FastQC	all_sections	sgUgcg2_R1	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastqc/sgUgcg2_R1_fastqc.zip
+FastQC	all_sections	NTC3_R1	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastqc/NTC3_R1_fastqc.zip
+FastQC	all_sections	NTC4_R2	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastqc/NTC4_R2_fastqc.zip
+FastQC	all_sections	NTC2_R1	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastqc/NTC2_R1_fastqc.zip
+FastQC	all_sections	NTC2_R2	/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastqc/NTC2_R2_fastqc.zip

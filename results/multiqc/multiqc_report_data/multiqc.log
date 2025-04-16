@@ -1,0 +1,39 @@
+[2025-02-24 12:34:47,660] multiqc                                            [DEBUG  ]  This is MultiQC v1.14
+[2025-02-24 12:34:47,661] multiqc                                            [DEBUG  ]  Found command line config: {'max_table_rows': 999999}
+[2025-02-24 12:34:47,661] multiqc                                            [DEBUG  ]  New config: {'max_table_rows': 999999}
+[2025-02-24 12:34:47,661] multiqc                                            [DEBUG  ]  Command used: /varidata/research/software/BBC/multiqc/MultiQC-1.14//bin/multiqc -f results/star/ results/fastq_screen/ results/fastqc/ results/salmon/ results/sortmerna/ -o results/multiqc --ignore *._STARpass1/* -n multiqc_report.html --cl-config max_table_rows: 999999
+[2025-02-24 12:34:48,377] multiqc                                            [WARNING]  MultiQC Version v1.27 now available!
+[2025-02-24 12:34:48,378] multiqc                                            [DEBUG  ]  Working dir : /varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow
+[2025-02-24 12:34:48,378] multiqc                                            [DEBUG  ]  Template    : default
+[2025-02-24 12:34:48,378] multiqc                                            [DEBUG  ]  Running Python 3.9.21 (main, Dec  5 2024, 00:00:00)  [GCC 11.5.0 20240719 (Red Hat 11.5.0-2)]
+[2025-02-24 12:34:48,379] multiqc                                            [DEBUG  ]  Ignoring files, directories and paths that match: *._STARpass1/*
+[2025-02-24 12:34:48,379] multiqc                                            [DEBUG  ]  Analysing modules: custom_content, ccs, ngsderive, purple, conpair, lima, peddy, somalier, methylQA, mosdepth, phantompeakqualtools, qualimap, preseq, hifiasm, quast, qorts, rna_seqc, rockhopper, rsem, rseqc, busco, bustools, goleft_indexcov, gffcompare, disambiguate, supernova, deeptools, sargasso, verifybamid, mirtrace, happy, mirtop, sambamba, gopeaks, homer, hops, macs2, theta2, snpeff, gatk, htseq, bcftools, featureCounts, fgbio, dragen, dragen_fastqc, dedup, pbmarkdup, damageprofiler, biobambam2, jcvi, mtnucratio, picard, vep, sentieon, prokka, qc3C, nanostat, samblaster, samtools, sexdeterrmine, eigenstratdatabasetools, bamtools, jellyfish, vcftools, longranger, stacks, varscan2, snippy, umitools, bbmap, bismark, biscuit, diamond, hicexplorer, hicup, hicpro, salmon, kallisto, slamdunk, star, hisat2, tophat, bowtie2, bowtie1, cellranger, snpsplit, odgi, pangolin, nextclade, humid, kat, leehom, adapterRemoval, bbduk, clipandmerge, cutadapt, flexbar, kaiju, kraken, malt, motus, trimmomatic, sickle, skewer, sortmerna, biobloomtools, fastq_screen, afterqc, fastp, fastqc, filtlong, prinseqplusplus, pychopper, porechop, pycoqc, minionqc, anglerfish, multivcfanalyzer, clusterflow, checkqc, bcl2fastq, bclconvert, interop, ivar, flash, seqyclean, optitype, whatshap
+[2025-02-24 12:34:48,379] multiqc                                            [DEBUG  ]  Using temporary directory for creating report: /tmp/tmpyjxchhfn
+[2025-02-24 12:34:48,572] multiqc                                            [INFO   ]  Search path : /varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/star
+[2025-02-24 12:34:48,572] multiqc                                            [INFO   ]  Search path : /varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastq_screen
+[2025-02-24 12:34:48,572] multiqc                                            [INFO   ]  Search path : /varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/fastqc
+[2025-02-24 12:34:48,572] multiqc                                            [INFO   ]  Search path : /varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/salmon
+[2025-02-24 12:34:48,572] multiqc                                            [INFO   ]  Search path : /varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/sortmerna
+[2025-02-24 12:36:36,927] multiqc                                            [DEBUG  ]  Summary of files that were skipped by the search: [skipped_file_contents_search_errors: 2393] // [skipped_module_specific_max_filesize: 1133] // [skipped_no_match: 343] // [skipped_ignore_pattern: 126]
+[2025-02-24 12:36:37,490] multiqc.plots.bargraph                             [DEBUG  ]  Using matplotlib version 3.7.1
+[2025-02-24 12:36:37,492] multiqc.plots.linegraph                            [DEBUG  ]  Using matplotlib version 3.7.1
+[2025-02-24 12:36:37,493] multiqc                                            [DEBUG  ]  No samples found: custom_content
+[2025-02-24 12:36:37,581] multiqc.modules.salmon.salmon                      [INFO   ]  Found 7 meta reports
+[2025-02-24 12:36:37,581] multiqc.modules.salmon.salmon                      [INFO   ]  Found 7 fragment length distributions
+[2025-02-24 12:36:37,733] multiqc.modules.star.star                          [DEBUG  ]  Duplicate ReadsPerGene sample name found! Overwriting: sgUgcg2
+[2025-02-24 12:36:37,784] multiqc.modules.star.star                          [DEBUG  ]  Duplicate ReadsPerGene sample name found! Overwriting: NTC4
+[2025-02-24 12:36:37,836] multiqc.modules.star.star                          [DEBUG  ]  Duplicate ReadsPerGene sample name found! Overwriting: sgUgcg5
+[2025-02-24 12:36:37,888] multiqc.modules.star.star                          [DEBUG  ]  Duplicate ReadsPerGene sample name found! Overwriting: NTC5
+[2025-02-24 12:36:37,939] multiqc.modules.star.star                          [DEBUG  ]  Duplicate ReadsPerGene sample name found! Overwriting: NTC3
+[2025-02-24 12:36:37,991] multiqc.modules.star.star                          [DEBUG  ]  Duplicate ReadsPerGene sample name found! Overwriting: NTC2
+[2025-02-24 12:36:38,042] multiqc.modules.star.star                          [DEBUG  ]  Duplicate ReadsPerGene sample name found! Overwriting: sgUgcg1
+[2025-02-24 12:36:38,042] multiqc.modules.star.star                          [INFO   ]  Found 14 reports and 7 gene count files
+[2025-02-24 12:36:38,056] multiqc.modules.sortmerna.sortmerna                [INFO   ]  Found 14 logs
+[2025-02-24 12:36:38,066] multiqc.modules.fastq_screen.fastq_screen          [INFO   ]  Found 14 reports
+[2025-02-24 12:36:38,443] multiqc.modules.fastqc.fastqc                      [INFO   ]  Found 14 reports
+[2025-02-24 12:36:38,642] multiqc                                            [INFO   ]  Compressing plot data
+[2025-02-24 12:36:38,938] multiqc                                            [WARNING]  Deleting    : results/multiqc/multiqc_report_data   (-f was specified)
+[2025-02-24 12:36:38,939] multiqc                                            [INFO   ]  Report      : results/multiqc/multiqc_report.html
+[2025-02-24 12:36:38,939] multiqc                                            [INFO   ]  Data        : results/multiqc/multiqc_report_data
+[2025-02-24 12:36:38,939] multiqc                                            [DEBUG  ]  Moving data file from '/tmp/tmpyjxchhfn/multiqc_data' to 'results/multiqc/multiqc_report_data'
+[2025-02-24 12:36:39,035] multiqc                                            [INFO   ]  MultiQC complete

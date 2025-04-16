@@ -1,0 +1,12 @@
+"0","dev.off()"
+"1","null device "
+"1","
+"
+"1","          1 "
+"1","
+"
+"0","pcaplot = plotPCA( vst(dds), intgroup = ""group"" )"
+"2","using ntop=500 top features by variance
+"
+"0","pcaplot"
+"0",""

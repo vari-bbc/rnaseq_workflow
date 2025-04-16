@@ -1,0 +1,2 @@
+"0","knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE, dev=c('png','pdf'), "
+"0","                      fig.width=4, fig.height=4, fig.path=paste0(outdir, ""/individual_figures/""))"

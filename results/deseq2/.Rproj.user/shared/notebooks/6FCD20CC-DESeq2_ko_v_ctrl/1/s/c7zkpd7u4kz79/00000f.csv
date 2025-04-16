@@ -1,0 +1,16 @@
+"0","dds <- DESeq(dds)"
+"2","estimating size factors
+"
+"2","estimating dispersions
+"
+"2","gene-wise dispersion estimates
+"
+"2","mean-dispersion relationship
+"
+"2","final dispersion estimates
+"
+"2","fitting model and testing
+"
+"0","message(paste0(""Coefficient names are: "", paste(resultsNames(dds), collapse = "" "")))"
+"2","Coefficient names are: Intercept group_ko_vs_ctrl
+"

@@ -1,0 +1,472 @@
+---
+title: "LEMH_20241104_RNA_VBCS-1320"
+author: "Bobby Fillinger"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r libraries}
+
+library(SummarizedExperiment)
+library(clusterProfiler)
+library(EnhancedVolcano)
+library(ComplexHeatmap)
+library(org.Dm.eg.db)
+library(ggplot2)
+library(stringr)
+library(DESeq2)
+library(readxl)
+
+set.seed(42)
+
+```
+
+
+
+```{r Read in the data}
+
+se <- readRDS("../SummarizedExperiment/SummarizedExperiment.rds")
+
+# If you're using the mouse database for GSEA and/or GO, you'll need to remove the digits after the "." from ENSEMBL IDs (digits are the ENSEMBL version):
+# rownames(se) = gsub("\\.[0-9]*$", "", rownames(se))
+
+```
+
+We have the metadata in a separate file; we need to add it to our data structure. 
+
+1) Check that rownames from both analyses line up with the "all" function:
+2) Once all rows are properly sorted the same way in both structures, we combine them. You can do this with cbind, but I'll do it more explicitly, column by column.
+3) Seperate samples by sex (I keep the original just to examine it)
+4) Make the DESeq2 objects with the formula ~Geno+Diet+Batch (I couldn't use "group", so I used "Geno")
+
+```{r Add metadata}
+
+remove_Samples = TRUE
+
+colData(se)$sample
+metadata = read_xlsx("/varidata/research/projects/bbc/research/LEMH_20241104_RNA_VBCS-1310/metadata_dom(1).xlsx")
+
+colData(se) # Check the data
+
+all(rownames(metadata) == colData(se)$Name) # Check if all rownames match
+
+colData(se)$Batch = as.factor(metadata$Date)
+colData(se)$Sex   = as.factor(metadata$Sex)
+colData(se)$Diet  = as.factor(metadata$Diet)
+colData(se)$Geno  = as.factor(metadata$Group)
+colData(se)$Rep   = as.factor(metadata$Replicate)
+
+
+# There are two female samples (HDOMFR1 and HDOMFR5) that are likely to have contamination from male samples (sex-specific male genes showed up in them)
+if (remove_Samples){
+  
+  se = se[,!(se$sample %in% c("HDOMFR1", "HDOMFR5"))]
+
+}
+
+male_se = se[,se$Sex == "Male"]
+fema_se = se[,se$Sex == "Female"]
+
+# Using the group assignmets, not Diet or Genotype because groups is a composite group of both of those things (it already has the interaction) 
+dds   <- DESeqDataSet(se ,     design = ~group+Batch)
+m_dds <- DESeqDataSet(male_se, design = ~group+Batch)
+f_dds <- DESeqDataSet(fema_se, design = ~group+Batch)
+
+# Make sure the DFs have been properly split up
+colData(dds)
+colData(male_se)
+colData(fema_se)
+
+```
+
+Remove reads with low counts to reduce fold change bias as well as removing biologically irrelevant genes
+
+```{r Filter out low-count reads}
+
+remove_low_counts = function(dds, cutoff = 10){
+  
+  keep <- rowSums(counts(dds)) >= cutoff
+  dds <- dds[keep, ]
+  print(paste0( "Keeping ", length(keep), " genes"))
+  return(dds)
+  
+}
+
+dds   = remove_low_counts(dds,   10)
+m_dds = remove_low_counts(m_dds, 10)
+f_dds = remove_low_counts(f_dds, 10)
+
+```
+
+Examining sample variances with PCAs 
+
+```{r PCA plots}
+
+colData(dds)
+
+# Look at all samples together
+plotPCA( vst(dds), intgroup = "group" )
+plotPCA( vst(dds), intgroup = "Sex") # There is a massive source of variation due to sex
+
+# Look at samples by sexes to examine variances from Diet, Geno, and Batch
+plotPCA( vst(m_dds), intgroup = "group") + geom_label(aes(label = colnames(vst(m_dds))))
+plotPCA( vst(m_dds), intgroup = "Batch") + geom_label(aes(label = colnames(vst(m_dds))))
+plotPCA( vst(m_dds), intgroup = "Diet" ) + geom_label(aes(label = colnames(vst(m_dds))))
+plotPCA( vst(m_dds), intgroup = "Geno" ) + geom_label(aes(label = colnames(vst(m_dds))))
+
+plotPCA( vst(f_dds), intgroup = "group") + geom_label(aes(label = colnames(vst(f_dds))))
+plotPCA( vst(f_dds), intgroup = "Batch") + geom_label(aes(label = colnames(vst(f_dds))))
+plotPCA( vst(f_dds), intgroup = "Diet" ) + geom_label(aes(label = colnames(vst(f_dds))))
+plotPCA( vst(f_dds), intgroup = "Geno" ) + geom_label(aes(label = colnames(vst(f_dds))))
+
+```
+
+Perform normalization on our DESeqDataSets with DESeq2
+
+```{r Perform normalization and build DESeq objects}
+
+f_dds = DESeq(f_dds)
+m_dds = DESeq(m_dds)
+
+f_dds$group = as.factor(f_dds$group) # DESeq2 needs the groups as factors
+m_dds$group = as.factor(m_dds$group)
+
+```
+
+Build contrasts for DESeq2
+Because we're doing so many comparisons, it makes more sense to do these analyses in functions so we don't have an incomprehensible wall of text. Because of the volume of comparisons, this function makes sure that we're only making unique comparisons to speed up the analysis. 
+
+It's worth mentioning that the **second** group defined in the contrast is the **numerator** for DESeq2 analyses. As an example, a positive fold change indicates a higher number of reads in the second group defined by the contrast. 
+
+```{r Build contrasts function}
+
+contrasts_func = function(dds_in){
+  
+  # Builds unique combinations of comparisons so we're not analyzing the same thing twice
+  contrasts = expand.grid(a = unique(colData(dds_in)$group), b = unique(colData(dds_in)$group))
+  contrasts = contrasts[!(contrasts$a == contrasts$b),]
+  contrasts = contrasts[!duplicated(t(apply(contrasts[,c("a","b")], 1, sort))), ]
+  return(contrasts)
+  
+}
+
+m_trasts = contrasts_func(m_dds)
+f_trasts = contrasts_func(f_dds)
+
+```
+
+Preparing DE data results using contrasts. The additional columns with sample names are normalized read counts so you can better see group differences.
+
+```{r RNASeq data function}
+
+results_func = function(dds_in, contrast_in){
+  
+  res = results(dds_in, contrast=contrast_in, alpha=0.1)
+  
+  # Shrunked fold-changes for volcano plots to remove influence from genes with low read counts
+  shrunk = lfcShrink(dds_in, contrast=contrast_in, type="ashr", res = res) 
+  
+  # Add entrez gene IDs (NAs will be replaced by ENSEMBL IDs with coalesce)
+  res$entrez = dplyr::coalesce(unname(unlist(
+               AnnotationDbi::mapIds(
+                  org.Dm.eg.db, 
+                  keys=rownames(res), 
+                  column="ENTREZID", 
+                  keytype="ENSEMBL", 
+                  multiVals="first"))), rownames(res))
+  
+  # Add gene symbol names (NAs will be replaced by ENSEMBL IDs with coalesce)
+  res$alias  = dplyr::coalesce(unname(unlist(
+               AnnotationDbi::mapIds(
+                  org.Dm.eg.db, 
+                  keys=rownames(res), 
+                  column="SYMBOL", 
+                  keytype="ENSEMBL", 
+                  multiVals="first"))), rownames(res))
+  
+  # Check if the rownames are the same
+  if (all(rownames(res) == rownames(shrunk))){
+    
+    shrunk$entrez = res$entrez
+    shrunk$alias  = res$alias
+    
+    rownames(shrunk) = dplyr::coalesce(shrunk$alias, rownames(shrunk))
+    
+  } else {
+    
+    print("Rownames aren't aligned between results matrix and shrunken matrix; can't combine! We can't add entrez gene names to the shrunken matrix.")
+    
+  }
+  
+  # Grab sample names of members that are analyzed in the contrast
+  sampleNames = rownames(colData(dds_in)[(colData(dds_in)$group == contrast_in[2]) | (colData(dds_in)$group == contrast_in[3]),])
+  
+  # 
+  count_mat = counts(dds_in, normalized = TRUE)
+  count_mat = count_mat[,which(colnames(count_mat) %in% sampleNames)]
+  
+  if (all(rownames(count_mat) == rownames(res))){
+    
+    # Combine the results matrix and normalized counts
+    res = cbind(res, count_mat)
+    
+  } else {
+    
+    print("Rownames aren't aligned between count matrix and results matrix; can't combine! (Not an error, just no normalized reads on the results matrix)")
+    
+  }
+  
+  return(list(res, shrunk))
+  
+}
+
+```
+
+GSEA analysis function
+
+```{r GSEA function}
+
+GSEA_funk = function(res, database, pval_cutoff = 0.1, minGSSize = 1, maxGSSize = 1000 ){
+  
+  alt_rownames = gsub("\\.[0-9]*$", "", rownames(res))
+  alt_res = res
+  rownames(alt_res) = alt_rownames
+  
+  # We've already built the entrez column, so this step isn't required
+  # res$entrez = unname(unlist(AnnotationDbi::mapIds(database, keys=rownames(alt_res), column="ENTREZID", keytype="ENSEMBL", multiVals="first")))
+
+  res = res[!is.na(res$entrez),]
+  res = res[order(res$log2FoldChange, decreasing = TRUE),]
+  res_list = res$log2FoldChange
+  names(res_list) = res$entrez
+
+  res_GSEA = as.data.frame(gseGO(geneList = res_list,
+                   OrgDb = database,
+                   minGSSize = minGSSize,
+                   maxGSSize = maxGSSize,
+                   pvalueCutoff = pval_cutoff))
+
+  res_GSEA$genes = unname(unlist(lapply( res_GSEA$core_enrichment, FUN = function(x){
+  			if (x != ""){
+  				# print(x)
+  				entrez_ids = as.vector(unname(unlist(strsplit(x, "/"))))
+  				alias_names = unname(unlist(
+  					AnnotationDbi::mapIds(
+  							database, 
+  							keys=entrez_ids, 
+  							column="SYMBOL", 
+  							keytype="ENTREZID", 
+  							multiVals="first")))
+  				z = paste0(alias_names, collapse = "/")
+  			} else {
+  				z = NA
+  			}
+  			return(z)
+    
+  })))
+  		
+  return(res_GSEA)
+
+}
+
+```
+
+Volcano plots function
+
+```{r Volcano plots function}
+
+envolc = function(stats_df, title){
+
+  plot = EnhancedVolcano(stats_df,
+          lab = rownames(stats_df), # This has to be a vector with our labels we want for our genes
+          x = "log2FoldChange", # This is the column name in `stats_df` that contains what we want on the x axis
+          y = "pvalue", # This is the column name in `stats_df` that contains what we want on the y axis
+          selectLab = rownames(stats_df)[which(stats_df$padj < 0.05)],
+          pCutoff = -log(0.05,10),
+          # pCutoffCol = "adj.P.Val",
+          # col = c( 'red3'),
+          title = title,
+          subtitle = ""
+          # subtitle = "",
+          # ylim = c(0, ceiling(-log(min(stats_df$pvalue ),10)))
+        )
+  
+  return(plot)
+
+}
+
+
+```
+
+Next section calls all the functions (except for the heatmaps, which requires something special) and writes out the data to disk.
+
+```{r Analysis loop to obtain data from functions}
+
+f_sig_genes = c()
+m_sig_genes = c()
+
+# This is just a way to quickly choose between the male and female cohorts because I didn't want to write the code twice
+female_bool = FALSE
+
+if (female_bool){
+
+  cur_trasts = f_trasts
+  cur_dds = f_dds
+  
+} else {
+  
+  cur_trasts = m_trasts
+  cur_dds = m_dds
+  
+}
+
+for (rowNum in seq(1:nrow(cur_trasts))){
+  
+  # Call in the built contrasts
+  trast = c("group", as.character(unname(unlist(cur_trasts$a[rowNum]))), as.character(unname(unlist(cur_trasts$b[rowNum]))))
+
+  # Obtain DE analyses results
+  res_list = results_func(cur_dds, trast)
+  res        = res_list[[1]]
+  shrunk_Res = res_list[[2]]
+  
+  write.csv( res[order(res$padj),], file = paste0("DE/", paste0(trast[[2]], " vs. ", trast[[3]], collapse = "_"), "_DE.csv"))
+
+  # Remove NA values in padj column (NAs cause problems)
+  res = res[!is.na(res$padj),]
+  shrunk_Res = shrunk_Res[!is.na(shrunk_Res$padj),]
+  
+  # Gathering all the significant gene names
+  sig_alii = res[res$padj < 0.05,]$alias
+  if (female_bool){
+    f_sig_genes = unique(c(f_sig_genes, sig_alii))
+  } else {
+    m_sig_genes = unique(c(m_sig_genes, sig_alii))
+  }
+  
+  # GO
+  gene_ontology = enrichGO(gene   = rownames(res[res$padj < 0.05,]), # Only significant genes
+                    OrgDb         = org.Dm.eg.db,
+                    keyType       = 'ENSEMBL',
+                    ont           = "ALL",
+                    pAdjustMethod = "BH",
+                    pvalueCutoff  = 0.01,
+                    qvalueCutoff  = 0.05,
+                    readable      = TRUE)
+  write.csv( gene_ontology, file = paste0("GO/", paste0(trast[[2]], " vs. ", trast[[3]], collapse = "_"), "_GO.csv"))
+
+  # GSEA
+  gsea_out = as.data.frame(GSEA_funk(shrunk_Res, org.Dm.eg.db))
+  write.csv( gsea_out, file = paste0("GSEA/", paste0(trast[[2]], " vs. ", trast[[3]], collapse = "_"), "_GSEA.csv"))
+
+  # Volcano Plot
+  volc_plot = envolc(shrunk_Res, paste0(trast[[2]], " vs. ", trast[[3]]))
+  ggsave( paste0("VOLC/", paste0(trast[[2]], " vs. ", trast[[3]], collapse = "_"), "_VOLC.png"))
+
+}
+
+```
+
+Now, with the DE results, we can build the heatmaps.
+
+```{r Heatmaps}
+
+# Vectors of significant genes for both male and female samples
+m_sig_genes 
+f_sig_genes
+
+# Again, choosing which group to analyze
+# female_bool = TRUE # You can uncomment this line and assign independently if you want to test the heatmaps and you already have the sig_genes
+if (female_bool){
+
+  cur_dds = f_dds
+  sig_genes = f_sig_genes
+
+} else {
+
+  cur_dds = m_dds
+  sig_genes = m_sig_genes
+  
+}
+
+# Choose your colors and the data range for the color gradient
+colors = circlize::colorRamp2(c(-5, 0, 5), c("blue", "white", "red"))
+
+normal_dds = assay(vst(cur_dds))
+
+scaled_dds = scale(normal_dds, scale=FALSE, center = TRUE)
+
+# Check for sample correlation if you'd like
+# correlation = cor(scaled_dds)
+# 
+# png(filename = "corrplot_upper.png", height = 500, width = 500)
+#   corrplot::corrplot(correlation, type ="upper")
+# dev.off()
+
+scaled_dds = scaled_dds[which(rownames(scaled_dds) %in% sig_genes), ]
+groupings = unique(colData(cur_dds)$group)
+
+samples = colData(cur_dds) %>% as.data.frame()
+
+if (female_bool){
+  
+  HDOM_R = samples[which(samples$group == "HDOMFR"),]
+  HWT_R  = samples[which(samples$group == "HWTFR" ),]
+  MDOM_R = samples[which(samples$group == "MDOMFR"),]
+  MWT_R  = samples[which(samples$group == "MWTFR" ),]
+  
+} else { 
+
+  HDOM_R = samples[which(samples$group == "HDOMMR"),]
+  HWT_R  = samples[which(samples$group == "HWTMR" ),]
+  MDOM_R = samples[which(samples$group == "MDOMMR"),]
+  MWT_R  = samples[which(samples$group == "MWTMR" ),]
+  
+}
+
+#Cluster genes together; I chose 5 clusters arbitrarily
+clust = cluster::pam(scaled_dds[], k = 5)
+
+# This data structure shows which genes belong to which clusters; this will get saved later. 
+aliated_clust = data.frame(clust$clustering)
+
+if (female_bool){
+  HM0 = Heatmap(scaled_dds[,rownames(HDOM_R)], col = colors, column_title = "HDOMFR", name = " ", show_row_names = FALSE, cluster_columns = FALSE, row_split = clust$clustering)
+  HM1 = Heatmap(scaled_dds[,rownames(HWT_R)],  col = colors, column_title = "HWTFR",  name = " ", show_row_names = FALSE, cluster_columns = FALSE)
+  HM2 = Heatmap(scaled_dds[,rownames(MDOM_R)], col = colors, column_title = "MDOMFR", name = " ", show_row_names = FALSE, cluster_columns = FALSE)
+  HM4 = Heatmap(scaled_dds[,rownames(MWT_R)],  col = colors, column_title = "MWTFR",  name = " ", show_row_names = FALSE, cluster_columns = FALSE)
+} else {
+  HM0 = Heatmap(scaled_dds[,rownames(HDOM_R)], col = colors, column_title = "HDOMMR", name = " ", show_row_names = FALSE, cluster_columns = FALSE, row_split = clust$clustering)
+  HM1 = Heatmap(scaled_dds[,rownames(HWT_R)],  col = colors, column_title = "HWTMR",  name = " ", show_row_names = FALSE, cluster_columns = FALSE)
+  HM2 = Heatmap(scaled_dds[,rownames(MDOM_R)], col = colors, column_title = "MDOMMR", name = " ", show_row_names = FALSE, cluster_columns = FALSE)
+  HM4 = Heatmap(scaled_dds[,rownames(MWT_R)],  col = colors, column_title = "MWTMR",  name = " ", show_row_names = FALSE, cluster_columns = FALSE)
+}
+
+HM0 + HM1 + HM2 + HM4
+
+if (female_bool){
+
+  png( "female_heatmap.png", height = 1000, width = 700 )
+    HM0 + HM1 + HM2 + HM4
+  dev.off()
+
+  write.csv(aliated_clust, file = "female_clusters_ID.csv")
+
+} else {
+
+  png( "male_heatmap.png", height = 1000, width = 700 )
+    HM0 + HM1 + HM2 + HM4
+  dev.off()
+
+  write.csv(aliated_clust, file = "male_clusters_ID.csv")
+  
+}
+
+```
+
+
+
+
+

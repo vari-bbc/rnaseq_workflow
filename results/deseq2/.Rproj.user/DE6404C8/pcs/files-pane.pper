@@ -1,0 +1,9 @@
+{
+    "sortOrder": [
+        {
+            "columnIndex": 2,
+            "ascending": true
+        }
+    ],
+    "path": "/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run4/rnaseq_workflow/results/deseq2"
+}

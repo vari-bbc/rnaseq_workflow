@@ -1,0 +1,6 @@
+"0","all(rownames(assay(vsd)[match(rownames(df),rownames(assay(vsd))),]) == rownames(df))
+"
+"1","[1]"
+"1"," TRUE"
+"1","
+"

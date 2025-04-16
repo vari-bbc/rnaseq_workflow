@@ -1,0 +1,6 @@
+10.1093/bioinformatics/btw354                      # MultiQC
+10.1038/nmeth.4197                                 # salmon
+10.1093/bioinformatics/bts635                      # star
+10.1093/bioinformatics/bts611                      # sortmerna
+10.12688/f1000research.15931.2                     # fastq_screen
+

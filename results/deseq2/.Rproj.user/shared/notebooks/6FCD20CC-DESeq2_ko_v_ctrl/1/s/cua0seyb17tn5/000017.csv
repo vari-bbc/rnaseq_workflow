@@ -1,0 +1,5 @@
+"0",""
+"0","png( ""grouped_PCA_all_samples.png"")"
+"0","  plotPCA( vst(dds), intgroup = ""group"" )"
+"2","using ntop=500 top features by variance
+"

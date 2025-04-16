@@ -1,0 +1,476 @@
+---
+title: "DESeq2"
+author: '`r paste0("BBC, Analyst: ", stringr::str_to_title(stringr::str_replace_all(Sys.getenv("USER"), "\\.", " ")  ))`'
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  html_document:
+    code_folding: hide
+    self_contained: yes
+    toc: true
+    toc_depth: 5
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+    number_sections: true
+params:
+  se_obj: ""
+  comparison_name: ""
+  group_test: ""
+  group_reference: ""
+  fdr_cutoff: ""
+  genes_of_interest: ""
+---
+
+```{r keep_figures, cache=TRUE}
+# this chunk is just to keep the _files directory even when we turn off cacheing
+```
+
+```{r starttime, echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE}
+# save start time for script
+start_tm <- Sys.time()
+start_tm
+```
+
+```{r make_outdir, echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE}
+outdir <- file.path("deseq2_out_files", params$comparison_name)
+
+dir.create(outdir, recursive=TRUE)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE, dev=c('png','pdf'), 
+                      fig.width=4, fig.height=4, fig.path=paste0(outdir, "/individual_figures/"))
+```
+
+# **Analysis**
+
+### **Load packages**
+
+```{r load_pkges}
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(readr)
+library(ggrepel)
+library(ComplexHeatmap)
+library(DESeq2)
+
+# For GO and GSEA: 
+library(clusterProfiler)
+library(org.Mm.eg.db)
+library(fgsea)
+```
+
+### **Set up your DESeq object**
+
+```{r read_se}
+getwd()
+# se <- readRDS(paste0("../../", params$se_obj))
+se = readRDS("/varidata/research/projects/bbc/research/JONR_20250224_RNA_VBCS-1355/run3_combined/rnaseq_workflow/results/SummarizedExperiment/sce.rds")
+# subset se to just samples in this comparison (relevant esp if variance is diff between groups)
+# se <- se[, colData(se)$group %in% c(params$group_test, params$group_reference)]
+
+colData(se)
+# factor the group column to make sure the reference group is the first level
+# se$group <- factor(se$group, levels=c(params$group_reference, params$group_test))
+# se$group <- factor(se$group, levels=c("ctrl", "ko"))
+```
+
+
+Let's take a look to see what assays are stored in the SummarizedExperiment object. Note that DESeq2 assumes the first assay is the raw counts.
+
+```{r check_assays}
+assayNames(se)
+
+stopifnot(assayNames(se)[1] == "counts")
+```
+
+To print more information about this SummarizedExperiment object, you can just type its name.
+
+```{r look_se}
+se
+```
+
+The counts and the meta data need to be stored inside a special DESeq2 object called a 'DESeqDataSet'. Here, we also specify that each gene will be fit with a model design of '~ group'.
+
+```{r make_dds}
+dds <- DESeqDataSet(se, design = ~ group)
+```
+
+```{r}
+
+png( "grouped_PCA_all_samples.png")
+  plotPCA( vst(dds), intgroup = "group" )
+dev.off()
+
+pcaplot = plotPCA( vst(dds), intgroup = "group" )
+
+pcaplot
+
+```
+
+### **Remove genes with low/no expression**
+
+We cannot do meaningful analyses of genes with very low counts. This will speed up the analysis.
+
+```{r filter_low_genes}
+# prefilter genes, keeping only genes with 10 or more total read counts across samples
+keep <- rowSums(counts(dds)) >= 10
+
+message(str_glue("Keeping {sum(keep)} genes."))
+
+dds <- dds[keep, ]
+```
+
+### **Different normalization approaches for different biases**
+
+[Types of biases in RNA-seq](https://vanandelinstitute-my.sharepoint.com/:b:/g/personal/kin_lau_vai_org/EcruvwL-OrBIvCzXZ7HMPlcBo65fu0pucrivMmCwzM98dA?e=yCkfTa)
+
+
+### **Run the DE workflow**
+
+The [DESeq](https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/DESeq) function is a convenience function from DESeq2 that estimates size factors (normalization) and fits negative binomial GLMs.
+
+```{r run_deseq2}
+dds <- DESeq(dds)
+message(paste0("Coefficient names are: ", paste(resultsNames(dds), collapse = " ")))
+```
+
+After the models are fitted, we can test specific pairs of groups for differential expression. For DESeq2, it is recommended to provide the significance cutoff that you wish to use as it affects the multiple testing correction procedure (see [docs](https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/results)).
+
+```{r run_contrast}
+contrast <- c("group", "ko", "ctrl")
+# fdr_cutoff <- params$fdr_cutoff
+fdr_cutoff = 0.05
+res <- results(dds, contrast=contrast, alpha=fdr_cutoff)
+res <- res[order(res$pvalue), ]
+
+# out_counts = vst(dds, ) # I was trying to combine the results df and normalized log2-transformed counts together
+```
+
+### **Summarize DE results**
+
+```{r de_summ}
+df <- as.data.frame(res)
+data.frame(
+  UP=sum(df$padj <= fdr_cutoff & df$log2FoldChange > 0, na.rm = TRUE),
+  DWN=sum(df$padj <= fdr_cutoff & df$log2FoldChange < 0, na.rm = TRUE),
+  Tested=sum(!is.na(df$padj))
+)
+```
+
+
+### **Shrink log fold changes for lowly expressed genes**
+
+This step does not affect the identification of DE genes, but it can be useful to perform this to obtain more reliable estimates of the log fold changes for visualizations or for ranking genes (e.g. GSEA).
+
+```{r lfc_shrink}
+
+lfc_shrink <- lfcShrink(dds, contrast=contrast, type="ashr")
+
+lfc_shrink <- lfc_shrink[order(lfc_shrink$pvalue), ]
+
+```
+
+```{r general GSEA}
+
+set.seed(42)
+
+GSEA_funk = function(res, database, pval_cutoff = 0.1, minGSSize = 1, maxGSSize = 1000 ){
+  
+  alt_rownames = gsub("\\.[0-9]*$", "", rownames(res))
+  alt_res = res
+  rownames(alt_res) = alt_rownames
+  
+  # We've already built the entrez column, so this step isn't required
+  # res$entrez = unname(unlist(AnnotationDbi::mapIds(database, keys=rownames(alt_res), column="ENTREZID", keytype="ENSEMBL", multiVals="first")))
+
+  res = res[!is.na(res$entrez),]
+  res = res[order(res$log2FoldChange, decreasing = TRUE),]
+  res_list = res$log2FoldChange
+  names(res_list) = res$entrez
+  
+  # print(res_list)
+
+  res_GSEA = as.data.frame(gseGO(geneList = res_list,
+                   OrgDb = database,
+                   minGSSize = minGSSize,
+                   maxGSSize = maxGSSize,
+                   pvalueCutoff = pval_cutoff))
+
+  res_GSEA$genes = unname(unlist(lapply( res_GSEA$core_enrichment, FUN = function(x){
+  			if (x != ""){
+  				# print(x)
+  				entrez_ids = as.vector(unname(unlist(strsplit(x, "/"))))
+  				alias_names = unname(unlist(
+  					AnnotationDbi::mapIds(
+  							database, 
+  							keys=entrez_ids, 
+  							column="SYMBOL", 
+  							keytype="ENTREZID", 
+  							multiVals="first")))
+  				z = paste0(alias_names, collapse = "/")
+  			} else {
+  				z = NA
+  			}
+  			return(z)
+  })))
+  
+  # print(res_GSEA)
+  		
+  return(res_GSEA)
+
+}
+
+lfc_shrink$entrez = unname(unlist(AnnotationDbi::mapIds(org.Mm.eg.db, keys=rownames(lfc_shrink), column="ENTREZID", keytype="SYMBOL", multiVals="first")))
+
+gsea_Results = GSEA_funk(lfc_shrink, org.Mm.eg.db)
+
+```
+
+```{r Specific GSEA}
+
+lfc_shrink = lfc_shrink[!is.na(lfc_shrink$entrez),]
+lfc_shrink = lfc_shrink[order(lfc_shrink$log2FoldChange, decreasing = TRUE),]
+res_list = lfc_shrink$log2FoldChange
+names(res_list) = lfc_shrink$entrez
+
+# Fer da unique GSEA requests
+
+# GSEA_struct = read.gmt("m3.all.v2024.1.Mm.symbols.gmt")
+# gsea_filename = "M3_GSEA.csv"
+# GSEA_struct = read.gmt("mh.all.v2024.1.Mm.symbols.gmt")
+# gsea_filename = "MH_GSEA.csv"
+# GSEA_struct = read.gmt("m2.all.v2024.1.Mm.symbols.gmt")
+# gsea_filename = "M2_GSEA.csv"
+# GSEA_struct = read.gmt("m5.all.v2024.1.Mm.symbols.gmt")
+# gsea_filename = "M5_GSEA.csv"
+
+GSEA_struct$entrez = unname(unlist(AnnotationDbi::mapIds(org.Mm.eg.db, keys=GSEA_struct$gene, column="ENTREZID", keytype="SYMBOL", multiVals="first")))
+
+build_list = list()
+
+for(things in unique(GSEA_struct$term)){
+  
+  build_list[[things]] = GSEA_struct$entrez[which(GSEA_struct$term == things)]
+  
+}
+
+# build_list
+
+fgseaRes = fgsea(pathways = build_list, stats = res_list, minSize  = 1, maxSize  = 1000)
+
+thing = fgseaRes %>% rowwise() %>% 
+    mutate(leadingEdge = paste(leadingEdge, collapse=',')) %>%
+    ungroup()
+
+thing$genes = unname(unlist(lapply( thing$leadingEdge, FUN = function(x){
+			if (x != ""){
+				# print(x)
+				entrez_ids = as.vector(unname(unlist(strsplit(x, ","))))
+				alias_names = unname(unlist(
+					AnnotationDbi::mapIds(
+							org.Mm.eg.db,
+							keys=entrez_ids,
+							column="SYMBOL",
+							keytype="ENTREZID",
+							multiVals="first")))
+				z = paste0(alias_names, collapse = ",")
+			} else {
+				z = NA
+			}
+			return(z)
+})))
+
+thing = thing[order(thing$padj),]
+
+# unique(thing$padj)
+
+write.csv(thing[,(!c(1:9) == 8)], file = gsea_filename, col.names = TRUE, row.names = FALSE)
+
+
+```
+
+```{r}
+
+res = res[!is.na(res$padj),]
+
+ gene_ontology = enrichGO(gene   = rownames(res[res$padj < 0.05,])[!is.na(rownames(res[res$padj < 0.05,]))], # Only significant genes
+                    OrgDb         = org.Mm.eg.db,
+                    keyType       = 'SYMBOL',
+                    ont           = "ALL",
+                    pAdjustMethod = "BH",
+                    pvalueCutoff  = 0.01,
+                    qvalueCutoff  = 0.05,
+                    readable      = TRUE)
+
+write.csv(as.data.frame(gene_ontology), file = "sigGene_overRep.csv")
+
+```
+
+```{r ma_plots, fig.width=5, fig.height=5}
+DESeq2::plotMA(res, main="Default LFC")
+
+```
+
+```{r ma_plots_shrunken, fig.width=5, fig.height=5}
+DESeq2::plotMA(lfc_shrink, main="Shrunken LFC")
+
+```
+
+### **Output DE results**
+
+Here, we merge the different gene name columns to the DE results and output to a tab-delimited file, which can be opened in Excel for manual perusal.
+
+```{r out_de_res_prep}
+df <- cbind(as.data.frame(rowData(dds)[rownames(lfc_shrink), 1:4]),
+            as.data.frame(lfc_shrink)) %>%
+  tibble::rownames_to_column("ens_gene")
+```
+
+```{r out_de_res}
+write_tsv(df, file.path(outdir, "de_res.tsv"))
+write_rds(df, file.path(outdir, "de_res.rds"))
+```
+
+### **Look for specific genes**
+
+If we're interested in specific genes (such as genes we'd expect, a priori, to be different),
+we can check if they are differentially expressed.
+
+The following genes are shown, based on genes specified in the `genes_of_interest` parameter in the config file.
+
+```{r specific_genes}
+if (!(params$genes_of_interest %in% c("", "False", "FALSE"))) {
+  genes_of_interest <- params$genes_of_interest %>% strsplit(",") %>% unlist() %>% gsub("\\s+", "", .)
+  df %>% dplyr::filter(Symbol %in% genes_of_interest) %>% print()
+}
+```
+
+### **Output tables with raw counts**
+
+Some folks also find it useful to have tables of the raw counts or the normalized counts. The raw counts can be extracted from the DESeq2 object using either `assay()` or `counts()`.
+
+```{r out_counts_prep}
+df <- cbind(as.data.frame(rowData(dds)[, 1:4]),
+            assay(dds, "counts")) %>%
+  tibble::rownames_to_column("ens_gene")
+```
+
+```{r out_counts}
+write_tsv(df, file.path(outdir, "counts.tsv"))
+```
+
+### **Output tables with log2 normalized counts**
+
+For the log2 normalized counts, we commonly use the variance stabilized transformation ([VST](https://rdrr.io/bioc/DESeq2/man/varianceStabilizingTransformation.html)). These values can be used for heatmaps, clustering or other downstream applications.
+
+```{r out_vst_prep}
+vsd <- vst(dds, blind=FALSE)
+
+vst_df <- as.data.frame(cbind(rowData(vsd)[, 1:4], assay(vsd))) %>%
+  tibble::rownames_to_column("ens_gene")
+```
+
+```{r out_vst}
+write_rds(vsd, file.path(outdir, "vsd.rds"))
+write_tsv(vst_df, file.path(outdir, "vst.tsv"))
+
+```
+
+## **Some common plots for DEG analysis**
+
+
+### **Volcano plot**
+
+```{r make_volc_func}
+make_volcano <- function(df, pval_nm, pval_cutoff=0.1){
+  # remove genes with NA for pvalue
+  df <- df[which(!is.na(df[[pval_nm]])), ]
+
+  # add gene names
+  df <- cbind(df, rowData(dds)[rownames(df), 1:4])
+
+  top_genes <- df %>%
+    dplyr::arrange(desc(abs(df$log2FoldChange))) %>%
+    dplyr::filter(row_number() <= 10) %>%
+    rownames()
+
+  df$Sig <- ifelse(df$padj <= pval_cutoff, "Sig", "NS")
+
+  df[[pval_nm]] <- -log10(df[[pval_nm]])
+
+
+  ggplot(df, aes_string(x="log2FoldChange", y=pval_nm)) +
+    geom_point(aes(color=Sig), size=0.6) +
+    scale_color_manual(values=c("black", "salmon")) +
+    theme_bw() + ylab(str_glue("-log10(", pval_nm,")")) +
+    geom_text_repel(data=df[top_genes, ],
+                    aes(label=Uniq_syms), max.overlaps=Inf, min.segment.length = 0)
+}
+```
+
+```{r volcano, fig.width=4, fig.height=4}
+make_volcano(as.data.frame(lfc_shrink),
+             pval_nm="padj", pval_cutoff=fdr_cutoff)
+```
+
+### **Heatmap**
+
+```{r heatmap, fig.width=6, fig.height=6}
+top_genes <- rownames(res)[1:20]
+
+top_se <- se[top_genes, ]
+mat <- assay(top_se, "vst")
+mat <- t(scale(t(mat), scale=FALSE, center = TRUE))
+
+# column annot
+ht_col_annot <- as.data.frame(colData(top_se)[, "group", drop=FALSE])
+
+group_lvls <- unique(ht_col_annot$group)
+ht_col_colors <- list(group=setNames(c("#440154FF","#2A788EFF"),
+                                         nm=group_lvls))
+
+Heatmap(mat,
+        name = "Mean-centered",
+        cluster_columns = FALSE,
+        row_labels=rowData(top_se)$Uniq_syms,
+        show_column_names = FALSE,
+        top_annotation=HeatmapAnnotation(df=ht_col_annot,
+                                         col=ht_col_colors),
+        column_title = "Top DE genes",
+        row_title = paste0(nrow(mat), " genes")
+)
+
+
+```
+
+### **P value distribution**
+
+Ideally, we will see an anti-conservative (if there are many DE genes) or uniform pattern (not many DE genes). See [here](http://varianceexplained.org/statistics/interpreting-pvalue-histogram/) for more details about how to interpret these.
+
+```{r pval, fig.width=4, fig.height=4}
+
+ggplot(data = as.data.frame(lfc_shrink) %>%
+         dplyr::filter(!is.na(pvalue)),
+       aes(x = pvalue)) +
+  geom_histogram(color = "black", fill = "gray55",
+                 breaks = seq(0, 1, 0.05)) + theme_bw() + theme(plot.title=element_text(size=10))
+
+```
+
+# SessionInfo
+
+```{r sessioninfo}
+sessionInfo()
+```
+
+# Time
+
+```{r endtime}
+# output time taken to run script
+end_tm <- Sys.time()
+end_tm
+end_tm - start_tm
+
+```

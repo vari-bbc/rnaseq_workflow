@@ -1,0 +1,3 @@
+"","ONTOLOGY","ID","Description","GeneRatio","BgRatio","RichFactor","FoldEnrichment","zScore","pvalue","p.adjust","qvalue","geneID","Count"
+"GO:0043235","CC","GO:0043235","receptor complex","7/63","418/28618",0.0167464114832536,7.60712387028177,6.39171320442633,3.68961098765036e-05,0.00542372815184603,0.00384496302923564,"Itgb1/Ighm/Trat1/Ldlr/Insr/Htra2/Cd8b1",7
+"GO:0098802","CC","GO:0098802","plasma membrane signaling receptor complex","5/63","198/28618",0.0252525252525253,11.4710598043931,6.94468325680381,7.64937837237165e-05,0.00562229310369316,0.00398572873086733,"Itgb1/Ighm/Trat1/Insr/Htra2",5

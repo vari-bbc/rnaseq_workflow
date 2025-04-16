@@ -1,0 +1,8 @@
+"0","assayNames(se)"
+"1","[1]"
+"1"," ""counts"""
+"1"," ""tpms""  "
+"1"," ""vst""   "
+"1","
+"
+"0","stopifnot(assayNames(se)[1] == ""counts"")"

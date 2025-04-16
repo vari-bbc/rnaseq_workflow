@@ -1,0 +1,4 @@
+"0","outdir <- file.path(""deseq2_out_files"", params$comparison_name)"
+"0",""
+"0","dir.create(outdir, recursive=TRUE)"
+"2","Warning: 'deseq2_out_files' already exists"

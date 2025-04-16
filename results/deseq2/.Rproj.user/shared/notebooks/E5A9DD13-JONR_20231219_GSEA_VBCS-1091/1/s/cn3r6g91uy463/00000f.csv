@@ -1,0 +1,5 @@
+"0","pathways_df = read.csv(""/varidata/research/projects/bbc/bobby/JONR_20231219_GSEA_VBCS-1091/VBCS-1091_GSEA_Modules.csv"")
+"
+"2","Warning: cannot open file '/varidata/research/projects/bbc/bobby/JONR_20231219_GSEA_VBCS-1091/VBCS-1091_GSEA_Modules.csv': No such file or directory"
+"2","Error in file(file, ""rt"") : cannot open the connection
+"

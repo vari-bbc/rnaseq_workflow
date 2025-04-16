@@ -1,0 +1,24 @@
+{
+    "id": "45789F5A",
+    "path": "/varidata/research/projects/bbc/research/JONR_20240927_RNA_VBCS-1297/rnaseq_workflow/results/SummarizedExperiment/VBCS-1297_DEA.Rmd",
+    "project_path": null,
+    "type": "r_markdown",
+    "hash": "1144672943",
+    "contents": "",
+    "dirty": false,
+    "created": 1740515935966.0,
+    "source_on_save": false,
+    "relative_order": 3,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1730920768,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1730920768,
+    "read_only": false,
+    "read_only_alternatives": []
+}

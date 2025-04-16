@@ -1,0 +1,1247 @@
+---
+title: "MOOD_20240119_RNA_VBCS-1106"
+author: "Bobby Fillinger"
+date: '`r Sys.Date()`'
+output: html_document
+---
+
+
+```{r Load packages}
+
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(ggfortify)
+library(ggpubr)
+library(gridExtra)
+library(readr)
+library(ggrepel)
+library(ComplexHeatmap)
+library(DESeq2)
+library(org.Mm.eg.db)
+library(forcats)
+library(clusterProfiler)
+library(RUVSeq)
+library(limma)
+library(edgeR)
+library(cowplot)
+library(msigdbr)
+
+```
+
+```{r}
+
+se = readRDS("SummarizedExperiment.rds")
+
+se # Overlook of the data
+
+se_all = se # Same thing, but we're gonna remove data from this one
+
+se_all$batch = as.factor(c("PAC30","PAC32","PAC32","PAC33", "PAC33", "PAC30", "PAC32","PAC33", "PAC30", "PAC32","PAC32","PAC33","PAC33","PAC33","PAC30","PAC30"))
+
+se_all$sex = as.factor(c("F", "M", "M", "M", "M", "M", "F", "M", "M", "F", "M", "F", "F", "F", "F", "M"))
+se_all$geno = as.factor(c("mut", "mut", "mut", "mut", "mut", "mut", "mut", "mut", "mut", "mut", "wt", "wt",  "wt", "wt", "wt", "wt"))
+
+male_samples = rownames(colData(se_all)[ which( colData(se_all)$sex == "M"  ),])
+female_samples = rownames(colData(se_all)[ which( colData(se_all)$sex == "F"  ),])
+male_samples
+female_samples
+
+se_male = se_all[,which(colnames(se_all) %in% male_samples)]
+se_female = se_all[,which(colnames(se_all) %in% female_samples)]
+
+colData(se_female)
+colData(se_male)
+
+
+```
+
+```{r}
+
+dds_all <- DESeqDataSet(se_all, design = ~ group + batch + sex)
+
+png( "by_sex_all_samples_PCA.png")
+  plotPCA( vst(dds_all), intgroup = "sex" )
+dev.off()
+
+pcaplot = plotPCA( vst(dds_all), intgroup = "sex" )
+
+pcaplot
+
+png( "by_batch_all_samples_PCA.png")
+  plotPCA( vst(dds_all), intgroup = "batch" )
+dev.off()
+
+pcaplot_batch = plotPCA( vst(dds_all), intgroup = "batch" )
+
+pcaplot_batch
+
+png( "by_genotype_all_samples_PCA.png")
+  plotPCA( vst(dds_all), intgroup = "group" )
+dev.off()
+
+```
+
+```{r PCA Breakout}
+
+plotPCA.DESeqTransform = function(dds, intgroup="condition", intgroup2 = NA, intgroup3 = NA, ntop=500, returnData=FALSE, pcsToUse=1:2, legendOnly = FALSE)
+{
+  
+  # calculate the variance for each gene
+  rv <- rowVars(assay(dds))
+  
+  # select the ntop genes by variance
+  select <- order(rv, decreasing=TRUE)[seq_len(min(ntop, length(rv)))]
+  
+  # perform a PCA on the data in assay(x) for the selected genes
+  pca <- prcomp(t(assay(dds)[select,]))
+  
+  # the contribution to the total variance for each component
+  percentVar <- pca$sdev^2 / sum( pca$sdev^2 )
+  
+  if (!all(intgroup %in% names(colData(dds)))) {
+      stop("the argument 'intgroup' should specify columns of colData(dds)")
+    }
+  
+  intgroup.df <- as.data.frame(colData(dds)[, intgroup, drop=FALSE])
+  intgroup2.df <- as.data.frame(colData(dds)[, intgroup2, drop=FALSE])
+  intgroup3.df <- as.data.frame(colData(dds)[, intgroup3, drop=FALSE])
+  
+  # add the intgroup factors together to create a new grouping factor
+  group1 <- if (length(intgroup) > 1) {
+    factor(apply( intgroup1.df, 1, paste, collapse=":"))
+  } else {
+    colData(dds)[[intgroup]]
+  }
+  
+  group2 <- if (length(intgroup2) > 1) {
+    factor(apply( intgroup2.df, 1, paste, collapse=":"))
+  } else {
+    colData(dds)[[intgroup2]]
+  }
+  
+  group3 <- if (length(intgroup3) > 1) {
+    factor(apply( intgroup3.df, 1, paste, collapse=":"))
+  } else {
+    colData(dds)[[intgroup3]]
+  }
+
+  # assembly the data for the plot
+  pcs <- paste0("PC", pcsToUse)
+  d <- data.frame(V1=pca$x[,pcsToUse[1]],
+                  V2=pca$x[,pcsToUse[2]],
+                  group1=group1, 
+                  intgroup.df, 
+                  group2=group2, 
+                  intgroup2.df, 
+                  group3=group3, 
+                  intgroup3.df,
+                  name=colnames(dds))
+  colnames(d)[1:2] <- pcs
+  
+  if (returnData) {
+    attr(d, "percentVar") <- percentVar[pcsToUse]
+    return(d)
+  }
+  
+  if (!legendOnly) {
+   ggplot(data=d, aes_string(x=pcs[1], y=pcs[2], color=intgroup, shape = intgroup2, size = intgroup3 )) +
+      geom_point( ) +
+      xlab(paste0(pcs[1],": ",round(percentVar[pcsToUse[1]] * 100),"% variance")) +
+      ylab(paste0(pcs[2],": ",round(percentVar[pcsToUse[2]] * 100),"% variance")) +
+      # xlab("") +
+      # ylab("") +
+      coord_fixed() +
+      theme(
+        # axis.text.x = element_text(angle = 90)
+        axis.title.x = element_text(size = 6),
+        axis.title.y = element_text(size = 6),
+        legend.position = "none",
+        aspect.ratio=1
+      )
+  } else { 
+    
+    # This requires the cowplot package
+    get_legend(ggplot(data=d, aes_string(x=pcs[1], y=pcs[2], color=intgroup, shape = intgroup2, size = intgroup3 )) +
+      geom_point() +
+      coord_fixed() +
+      theme(aspect.ratio=1))
+    
+    }
+  }
+
+grouping  = "group"
+grouping2 = "batch"
+grouping3 = "sex"
+
+piece_de_resistance = vst(dds_all)
+
+legend = plotPCA.DESeqTransform(piece_de_resistance, intgroup=grouping, intgroup2=grouping2, intgroup3=grouping3, ntop=500, returnData=FALSE, pcsToUse=c(1,2), legendOnly = TRUE)
+plot12 = plotPCA.DESeqTransform(piece_de_resistance, intgroup=grouping, intgroup2=grouping2, intgroup3=grouping3, ntop=500, returnData=FALSE, pcsToUse=c(1,2))
+plot13 = plotPCA.DESeqTransform(piece_de_resistance, intgroup=grouping, intgroup2=grouping2, intgroup3=grouping3, ntop=500, returnData=FALSE, pcsToUse=c(1,3))
+plot14 = plotPCA.DESeqTransform(piece_de_resistance, intgroup=grouping, intgroup2=grouping2, intgroup3=grouping3, ntop=500, returnData=FALSE, pcsToUse=c(1,4))
+plot23 = plotPCA.DESeqTransform(piece_de_resistance, intgroup=grouping, intgroup2=grouping2, intgroup3=grouping3, ntop=500, returnData=FALSE, pcsToUse=c(2,3))
+plot24 = plotPCA.DESeqTransform(piece_de_resistance, intgroup=grouping, intgroup2=grouping2, intgroup3=grouping3, ntop=500, returnData=FALSE, pcsToUse=c(2,4))
+plot34 = plotPCA.DESeqTransform(piece_de_resistance, intgroup=grouping, intgroup2=grouping2, intgroup3=grouping3, ntop=500, returnData=FALSE, pcsToUse=c(3,4))
+empty_gg = ggplot() + theme( panel.background = element_rect(fill = "#ffffff", colour = "#ffffff", size = 2, linetype = "solid") )
+
+plot = as_ggplot(arrangeGrob(grobs = list(plot12, empty_gg, legend, plot13, plot23, empty_gg, plot14,  plot24, plot34), ncol = 3, nrow = 3))
+
+ggsave( paste0("gridded_pca_by_", grouping, ".png"), height = 7, width = 7)
+
+
+```
+
+```{r Filter out low-count genes}
+
+keep <- rowSums(counts(dds_all)) >= 10
+
+message(str_glue("Keeping {sum(keep)} genes."))
+
+dds_all <- dds_all[keep, ]
+
+dds_DES <- DESeq(dds_all)
+
+```
+
+```{r DESeq results}
+
+rm(res_wt_he, res_wt_ho, res_he_ho)
+
+comparison_list = list( c("group", "wt", "he" ), c("group", "wt", "ho" ), c("group", "he", "ho") )
+
+res_wt_he <- results(dds_DES, contrast=c("group", "wt", "he" ), alpha=0.05)
+res_wt_ho <- results(dds_DES, contrast=c("group", "wt", "ho" ), alpha=0.05)
+res_he_ho <- results(dds_DES, contrast=c("group", "he", "ho" ), alpha=0.05)
+
+```
+
+```{r Change Row Names}
+
+alias_names <- function(res, database = org.Mm.eg.db){
+  
+  alt_rownames = gsub("\\.[0-9]*$", "", rownames(res))
+  rownames(res) = alt_rownames
+  
+  y = AnnotationDbi::mapIds(database, keys=rownames(res), column="SYMBOL", keytype="ENSEMBL", multiVals="first")
+  gene_syms_y = unname(unlist(y))
+  alt_res = as.data.frame(res) %>% mutate(alias = coalesce( c(gene_syms_y), rownames(res)))
+
+  return(alt_res)
+  
+}
+
+entrez_names <- function(res, database = org.Mm.eg.db) {
+  
+  alt_rownames = gsub("\\.[0-9]*$", "", rownames(res))
+  rownames(res) = alt_rownames
+  
+  y = AnnotationDbi::mapIds(database, keys=rownames(res), column="ENTREZID", keytype="ENSEMBL", multiVals="first")
+  gene_syms_y = unname(unlist(y))
+  alt_res = as.data.frame(res) %>% mutate(entrez = coalesce( c(gene_syms_y), rep(NA,nrow(res))))
+
+  return(alt_res)
+  
+  
+}
+
+sum_results <- function(res, comparison, fdr_cutoff = 0.05){
+  
+  res_summation = data.frame(
+    
+    COMPARISON=comparison_name,
+    UP =sum(res$padj <= fdr_cutoff & res$log2FoldChange > 0, na.rm = TRUE),
+    DWN=sum(res$padj <= fdr_cutoff & res$log2FoldChange < 0, na.rm = TRUE),
+    Tested=sum(!is.na(res$padj))
+    
+  )
+  
+  return(res_summation)
+  
+}
+
+res_wt_he = alias_names(res_wt_he)
+res_wt_he = entrez_names(res_wt_he)
+# res_wt_he = res_wt_he[order(res_wt_he$padj),]
+res_wt_he = res_wt_he[,c(7,8,1,2,3,4,5,6)]
+print(res_wt_he)
+
+print(head(vst(dds_all)))
+
+res_wt_ho = alias_names(res_wt_ho)
+res_wt_ho = entrez_names(res_wt_ho)
+# res_wt_ho = res_wt_ho[order(res_wt_ho$padj),]
+res_wt_ho = res_wt_ho[,c(7,8,1,2,3,4,5,6)]
+print(res_wt_ho)
+
+res_he_ho = alias_names(res_he_ho)
+res_he_ho = entrez_names(res_he_ho)
+# res_he_ho = res_he_ho[order(res_he_ho$padj),]
+res_he_ho = res_he_ho[,c(7,8,1,2,3,4,5,6)]
+print(res_he_ho)
+
+write.table(as.data.frame(res_wt_he), file = paste0("WT_v_HE_GBS_DESeq_DEGs.csv"), row.names = FALSE, col.names = TRUE, sep = ",")
+write.table(as.data.frame(res_wt_ho), file = paste0("WT_v_HO_GBS_DESeq_DEGs.csv"), row.names = FALSE, col.names = TRUE, sep = ",")
+write.table(as.data.frame(res_he_ho), file = paste0("HE_v_HO_GBS_DESeq_DEGs.csv"), row.names = FALSE, col.names = TRUE, sep = ",")
+
+```
+
+```{r GSEA analysis}
+
+# Make gene list for GSEA analysis
+mouse_c2 = msigdbr(species = "Mus musculus", category = "C2") %>% dplyr::select(gs_name, entrez_gene)
+mouse_c5 = msigdbr(species = "Mus musculus", category = "C5") %>% dplyr::select(gs_name, entrez_gene)
+
+wt_he_gsea_in = res_wt_he[!is.na(res_wt_he$entrez), ]
+wt_he_gsea_in = wt_he_gsea_in[wt_he_gsea_in$padj <= 0.05,]
+wt_he_gsea_in = wt_he_gsea_in[!is.na(wt_he_gsea_in$padj),]
+wt_he_gsea_in = wt_he_gsea_in[order(wt_he_gsea_in$padj, decreasing = FALSE),]
+wt_he_gsea_in
+# wt_he_gsea_out_c2 = GSEA(wt_he_gsea_in$entrez, TERM2GENE = mouse_c2) # No gene could be mapped for these, so it triggers an error
+# wt_he_gsea_out_c5 = GSEA(wt_he_gsea_in$entrez, TERM2GENE = mouse_c5)
+
+wt_ho_gsea_in = res_wt_ho[!is.na(res_wt_ho$entrez),]
+wt_ho_gsea_in = wt_ho_gsea_in[wt_ho_gsea_in$padj <= 0.05,]
+wt_ho_gsea_in = wt_ho_gsea_in[!is.na(wt_ho_gsea_in$padj),]
+wt_ho_gsea_in = wt_ho_gsea_in[order(wt_ho_gsea_in$padj, decreasing = FALSE),]
+wt_ho_gsea_in
+# wt_ho_gsea_out_c2 = GSEA(wt_ho_gsea_in$entrez, TERM2GENE = mouse_c2) # No gene could be mapped for these, so it triggers an error
+# wt_ho_gsea_out_c5 = GSEA(wt_ho_gsea_in$entrez, TERM2GENE = mouse_c5)
+
+he_ho_gsea_in = res_he_ho[!is.na(res_he_ho$entrez),]
+he_ho_gsea_in = he_ho_gsea_in[he_ho_gsea_in$padj <= 0.05,]
+he_ho_gsea_in = he_ho_gsea_in[!is.na(he_ho_gsea_in),]
+he_ho_gsea_in = he_ho_gsea_in[order(he_ho_gsea_in$padj, decreasing = FALSE),]
+he_ho_gsea_in
+# he_ho_gsea_out_c2 = GSEA(he_ho_gsea_in$entrez, TERM2GENE = mouse_c2) # No gene could be mapped for these, so it triggers an error
+# wt_ho_gsea_out_c5 = GSEA(wt_ho_gsea_in$entrez, TERM2GENE = mouse_c5)
+
+```
+
+```{r GO analysis}
+
+wt_he_go_in = rownames(res_wt_he[res_wt_he$padj < 0.05,])
+wt_he_go_in = wt_he_go_in[wt_he_go_in != "NA"]
+wt_he_go_in
+
+wt_he_go_out = enrichGO(gene  = wt_he_go_in,
+                OrgDb         = org.Mm.eg.db,
+                ont           = "ALL",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+wt_he_go_out
+
+wt_ho_go_in = rownames(res_wt_ho[res_wt_ho$padj < 0.05,])
+wt_ho_go_in = wt_ho_go_in[wt_ho_go_in != "NA"]
+wt_ho_go_in
+wt_ho_go_out = enrichGO(gene  = wt_ho_go_in,
+                OrgDb         = org.Mm.eg.db,
+                ont           = "ALL",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+wt_ho_go_out
+
+he_ho_go_in = rownames(res_he_ho[res_he_ho$padj < 0.05,])
+he_ho_go_in = he_ho_go_in[he_ho_go_in != "NA"]
+he_ho_go_in
+he_ho_go_out = enrichGO(gene  = he_ho_go_in,
+                OrgDb         = org.Mm.eg.db,
+                ont           = "ALL",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+he_ho_go_out
+
+```
+I separated samples out by sex and HE and HO are grouped together as mutants: "mut" v "wt"
+```{r Analysis in separate groups: male v female}
+
+dds_male = DESeqDataSet(se_male, design = ~geno + batch)
+dds_female = DESeqDataSet(se_female, design = ~geno + batch)
+
+dds_male = DESeq(dds_male)
+dds_female = DESeq(dds_female)
+
+```
+```{r }
+
+make_volcano_plot <- function(dds, x = "geno", y = "wt", z = "mut", comparison_name = "WT vs. MUT", pval_cutoff = 0.05){
+  
+  comparison = c(x,y,z)
+  
+  shrunk <- lfcShrink(dds, contrast=comparison, type="ashr")
+   
+  volcanable = as.data.frame(shrunk[ !is.na(rownames(shrunk)), ])
+   # colnames(volcanable) = volcanable$alias
+  
+  volcanable <- volcanable[which(!is.na(volcanable[["padj"]])), ]
+   # add gene names
+  volcanable <- cbind(volcanable, rowData(dds)[rownames(volcanable), 1:4])
+   
+   # Pull the top 10 genes from the
+  sorted_volcanable = volcanable[ order(abs(volcanable$log2FoldChange), decreasing = TRUE),]
+  top_genes = c(as.vector(sorted_volcanable$alias[1:10]), rep("", nrow(volcanable)))
+  sorted_volcanable$ttalias = top_genes
+
+  volcanable = sorted_volcanable
+   
+  volcanable$Sig <- ifelse(volcanable$padj <= pval_cutoff, "Sig", "NS")
+  
+  volcanable$neg_logged_padj = -log10(volcanable[["padj"]])
+
+  # volcanable = volcanable[!is.na(volcanable$alias),]
+  # volcanable = volcanable[!duplicated(volcanable$alias),]
+  #  
+  # rownames(volcanable) = volcanable$alias
+
+  x = ggplot(data = volcanable, aes(x=`log2FoldChange`, y=volcanable$neg_logged_padj)) +
+     geom_point(aes(color=Sig), size=0.6) +
+     guides(color=guide_legend(title="Significance")) + 
+     scale_color_manual(values=c("black", "salmon")) +
+     theme_bw() + ylab(str_glue("-log10(", "p-adjust",")")) +
+     xlab( "Fold Change (log2)") +
+     ggtitle( comparison_name ) +
+     geom_text_repel(data=volcanable[rownames(volcanable),c(1:10) ],
+                     aes(label=volcanable$ttalias), max.overlaps=Inf, min.segment.length = 0)
+
+  return(list(x, volcanable))
+ 
+}
+
+```
+
+```{r}
+
+#For reporting: 
+res_m_wt_mut <- results(dds_male, contrast=c("geno", "wt", "mut" ), alpha = 0.05)
+
+rownames(res_m_wt_mut) = gsub("\\.[0-9]*$", "", rownames(res_m_wt_mut))
+
+res_m_wt_mut_cut = res_m_wt_mut[!is.na(res_m_wt_mut$padj),]
+res_m_wt_mut_cut = res_m_wt_mut_cut[order(res_m_wt_mut_cut$padj, decreasing = FALSE),]
+
+shartened_m = res_m_wt_mut_cut[res_m_wt_mut_cut$padj <= 0.05,]
+
+male_wt_mut_GO = enrichGO(gene  = rownames(shartened_m),
+                OrgDb         = org.Mm.eg.db,
+                keyType       = "ENSEMBL",
+                ont           = "all",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+colData(dds_male)
+
+volcano_plot_m = make_volcano_plot(dds_male, x = "geno", y = "wt", z = "mut")
+
+volcano_plot_m[[1]]
+
+```
+
+```{r}
+
+res_fe_wt_mut <- results(dds_female, contrast=c("geno", "wt", "mut" ),  alpha = 0.05)
+
+```
+
+```{r GO}
+rownames(res_fe_wt_mut) = gsub("\\.[0-9]*$", "", rownames(res_fe_wt_mut))
+
+res_fe_wt_mut_cut = res_fe_wt_mut[!is.na(res_fe_wt_mut$padj),]
+res_fe_wt_mut_cut = res_fe_wt_mut_cut[order(res_fe_wt_mut_cut$padj, decreasing = FALSE),]
+
+shartened_f = res_fe_wt_mut_cut[res_fe_wt_mut_cut$padj <= 0.05,]
+nrow(shartened_f)
+fe_wt_mut_GO = enrichGO(gene  = rownames(shartened_f),
+                OrgDb         = org.Mm.eg.db,
+                keyType       = "ENSEMBL",
+                ont           = "ALL",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+write.csv(fe_wt_mut_GO, "female_wt_v_mutant_ALL_GO.csv" )
+
+fe_wt_mut_GR_GO_BP = groupGO(gene  = rownames(shartened_f),
+                OrgDb         = org.Mm.eg.db,
+                keyType       = "ENSEMBL",
+                ont           = "BP",
+                readable      = TRUE)
+
+print(as.data.frame(fe_wt_mut_GR_GO_BP))
+
+fe_wt_mut_GR_GO_CC = groupGO(gene  = rownames(shartened_f),
+                OrgDb         = org.Mm.eg.db,
+                keyType       = "ENSEMBL",
+                ont           = "CC",
+                readable      = TRUE)
+
+print(as.data.frame(fe_wt_mut_GR_GO_CC))
+
+fe_wt_mut_GR_GO_MF = groupGO(gene  = rownames(shartened_f),
+                OrgDb         = org.Mm.eg.db,
+                keyType       = "ENSEMBL",
+                ont           = "MF",
+                readable      = TRUE)
+
+print(as.data.frame(fe_wt_mut_GR_GO_MF))
+
+volcano_plot_fe = make_volcano_plot(dds_female, x = "geno", y = "wt", z = "mut")
+
+volcano_plot_fe[[1]]
+ggsave("female_wt_vs_mut_volcano.png")
+
+sig_genes = volcano_plot_fe[[2]][order(volcano_plot_fe[[2]]$padj, decreasing = FALSE),]
+
+dds_female_sort = assay(dds_female)[rownames(sig_genes),]
+
+# head(sig_genes)
+# head(dds_female_sort)
+# colData(dds_female)
+
+```
+
+
+```{r Assign GO pathways up or down regulation in mutant}
+
+Mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+reference_GO_df = read.csv("DESeq2_female_wt_v_mut_ALL_GO.csv")
+
+reference_GO_df
+
+fe_wt_mut_GO = as.data.frame(fe_wt_mut_GO)
+fe_wt_mut_GO$Condition = rep("WT vs. MUT", nrow(fe_wt_mut_GO))
+fe_wt_mut_GO = fe_wt_mut_GO[ order(fe_wt_mut_GO$p.adjust, decreasing = FALSE),]
+
+#Filter GO terms from revigo
+fe_wt_mut_GO = fe_wt_mut_GO[reference_GO_df$TermID,]
+
+#Check the number was reduced to 178. It was! 
+nrow(fe_wt_mut_GO)
+
+fe_wt_mut_GO = fe_wt_mut_GO[order(fe_wt_mut_GO$p.adjust, decreasing = FALSE),]
+fe_wt_mut_GO_top20 = fe_wt_mut_GO[c(1:20),]
+
+fe_wt_mut_GO_top20
+
+# First thing is to get which group each mut or WT
+report_df = read.csv("DEseq_report.csv")
+
+colnames(report_df) = c(colnames(report_df)[1:8], paste0(colnames(report_df)[9:11], "_mut"), paste0(colnames(report_df)[12:15], "_wt"))
+
+colData(dds_female)
+
+fe_wt_mut_GO = fe_wt_mut_GO_top20
+
+empty_vec = c()
+
+for (j in 1:nrow(fe_wt_mut_GO)){
+  
+  lists = unname(unlist(strsplit(fe_wt_mut_GO[j,9], "/")))
+
+  temp_df = report_df[report_df$alias %in% lists,]
+  
+  pathway_consensus = c()
+  up_or_down = c()
+  
+  for (i in 1:nrow(temp_df)){
+    
+    mutants = mean(as.numeric(as.character(temp_df[i,9:11])))
+    wild_type = mean(as.numeric(as.character(temp_df[i,12:15])))
+    
+    pathway_consensus = c(pathway_consensus, ifelse((mutants > wild_type),"Up in Mutant", "Down in Mutant") )
+    # up_or_down = c(up_or_down, (mutants > wild_type))
+    
+  }
+  
+  up_or_down_total = Mode(pathway_consensus)
+  empty_vec = c(empty_vec, up_or_down_total)
+  print(c(up_or_down, pathway_consensus))
+  
+}
+empty_vec
+nrow(fe_wt_mut_GO)
+fe_wt_mut_GO$up_or_down = empty_vec
+
+```
+```{r}
+true_gene_ratio = unname(unlist(sapply(fe_wt_mut_GO$GeneRatio, function(x) eval(parse(text=x)))))
+fe_wt_mut_GO$GeneRatio2 = true_gene_ratio
+nrow(fe_wt_mut_GO)
+
+ggplot(data = fe_wt_mut_GO, aes(x = Condition, y = fe_wt_mut_GO$Description, 
+                        color = `p.adjust`, size = GeneRatio2)) + 
+  geom_point() +
+  scale_color_gradient(low = "red", high = "blue") +
+  
+  guides(size=guide_legend(title="Gene Ratio"), color=guide_legend(title="Adj. P-value")) + 
+  scale_size("GeneRatio2", range = c(0,10)) +
+  theme(legend.position = "None") +
+  theme_bw() + 
+  ylab("") + 
+  xlab("") + 
+  ggtitle("GO enrichment analysis") 
+
+# ggsave("fe_wt_mut_GO_DOT.png", limitsize = FALSE, height = 50, width = 10)
+  ggsave("fe_wt_mut_GO_DOT.png", limitsize = FALSE)
+```
+
+```{r Combine the DESeq analysis with combined mutants}
+
+deseq_male_cohort = as.data.frame(assay(vst(dds_male)))
+deseq_female_cohort = as.data.frame(assay(vst(dds_female)))
+
+res_m_wt_mut = res_m_wt_mut[order(rownames(res_m_wt_mut)),]
+res_fe_wt_mut = res_fe_wt_mut[order(rownames(res_fe_wt_mut)),]
+
+deseq_male_cohort = deseq_male_cohort[order(rownames(deseq_male_cohort)),]
+deseq_female_cohort = deseq_female_cohort[order(rownames(deseq_female_cohort)),]
+
+# colnames(res_m_wt_mut) = c(paste0("m_WT_MUT_",colnames(res_m_wt_mut)))
+# colnames(res_fe_wt_mut) = c(paste0("f_WT_MUT_",colnames(res_fe_wt_mut)))
+
+simple_names = gsub("\\.[0-9]*$", "", rownames(res_m_wt_mut))
+
+alias = unname(unlist(AnnotationDbi::mapIds(org.Mm.eg.db, keys=simple_names, column="SYMBOL", keytype="ENSEMBL", multiVals="first")))
+
+res_fe_wt_mut$alias = alias
+
+res_fe_wt_mut = res_fe_wt_mut[,c(7,1,2,3,4,5,6)]
+
+not_norm_deseq_f = assay(dds_female)
+not_norm_deseq_f = not_norm_deseq_f[order(rownames(not_norm_deseq_f)),]  
+
+length(rownames(deseq_female_cohort))
+length(rownames(not_norm_deseq_f))
+length(rownames(res_fe_wt_mut))
+
+# big_deseq_df = cbind(res_m_wt_mut, res_fe_wt_mut, deseq_male_cohort, deseq_female_cohort)
+big_deseq_df = cbind( res_fe_wt_mut, deseq_female_cohort, not_norm_deseq_f)
+big_deseq_df = big_deseq_df[order(big_deseq_df$padj, decreasing = FALSE),]
+
+write.csv(big_deseq_df, "DEseq_report.csv", row.names = TRUE)
+
+```
+
+```{r GSEA}
+
+# For GSEA: 
+shrunk_male = lfcShrink(dds_male, contrast = c("geno", "wt", "mut"), type = "ashr")
+shrunk_female = lfcShrink(dds_female, contrast = c("geno", "wt", "mut"), type = "ashr")
+
+```
+
+```{r Do not separate by sex and run the analysis}
+
+dds_all = DESeqDataSet(se_all, design = ~geno + batch + sex)
+dds_all = DESeq(( dds_all))
+res = results(dds_all, contrast = c("geno", "wt", "mut"), alpha = 0.05)
+res = res[!is.na(res$padj),]
+res = res[order(res$padj, decreasing = FALSE), ]
+res_sig = res[res$padj <= 0.05,]
+nrow(res_sig)
+
+rownames(res_sig) = gsub("\\.[0-9]*$", "", rownames(res_sig))
+res_sig
+
+all_wt_mut_GO = enrichGO(gene  = rownames(res_sig),
+                OrgDb         = org.Mm.eg.db,
+                keyType       = "ENSEMBL",
+                ont           = "ALL",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+write.csv(all_wt_mut_GO, "wt_mut_all_GO.csv")
+
+rownames(res) = gsub("\\.[0-9]*$", "", rownames(res))
+
+y = unname(unlist(AnnotationDbi::mapIds(org.Mm.eg.db, keys=rownames(res), column="SYMBOL", keytype="ENSEMBL", multiVals="first")))
+res = as.data.frame(res)
+
+res$alias = y
+
+res = res[,c(7,1,2,3,4,5,6)]
+res
+write.csv(res, "all_wt_mut_DESeq_sig_genes.csv")
+```
+
+```{r Male limma prep} 
+
+# voom(assay(DESeqDataSet(se_all, design = ~group+batch+sex)))
+limma_input = voom(assay(se_male))
+
+design_matrix = model.matrix(~0+se_male$geno)
+
+design_matrix
+
+colnames(design_matrix) <- c("mut", "wt")
+
+corfit = duplicateCorrelation(assay(se_male), design_matrix, block = se_male$batch )
+
+dele_norm_for_limma = voom(assay(se_male), design = design_matrix )
+
+# blocks may need to be reset to batch instead of sample
+fit = lmFit(dele_norm_for_limma, design = design_matrix, block = se_male$batch, correlation=corfit$consensus )
+
+```
+```{r Male wt v mut}
+
+wt_mut_trasts = makeContrasts( WT_v_HE = wt-mut, levels=colnames(design_matrix))
+
+# This is the female contrast = wt_he_trasts
+wt_mut_contrasts = contrasts.fit(fit, wt_mut_trasts)
+
+wt_mut_super_BAYES = eBayes(wt_mut_contrasts)
+
+wt_mut_fc = topTable(wt_mut_super_BAYES, sort = "none", number = Inf)
+
+wt_mut_fc =  wt_mut_fc[order(rownames(wt_mut_fc)),]
+
+wt_mut_fc
+
+```
+
+```{r Male wt v he}
+
+# wt_he_trasts = makeContrasts( WT_v_HE = wt-he, levels=colnames(design_matrix))
+# 
+# # This is the female contrast = wt_he_trasts
+# wt_he_contrasts = contrasts.fit(fit, wt_he_trasts)
+# 
+# wt_he_super_BAYES = eBayes(wt_he_contrasts)
+# 
+# wt_he_fc = topTable(wt_he_super_BAYES, sort = "none", number = Inf)
+# 
+# wt_he_fc =  wt_he_fc[order(rownames(wt_he_fc)),]
+# 
+# wt_he_fc
+
+```
+
+```{r Male wt v ho}
+
+# wt_ho_trasts = makeContrasts( WT_v_HO = wt-ho, levels=colnames(design_matrix))
+# 
+# # This is the female contrast = wt_he_trasts
+# wt_ho_contrasts = contrasts.fit(fit, wt_ho_trasts)
+# 
+# wt_ho_super_BAYES = eBayes(wt_ho_contrasts)
+# 
+# wt_ho_fc = topTable(wt_ho_super_BAYES, sort = "none", number = Inf)
+# 
+# wt_ho_fc =  wt_ho_fc[order(rownames(wt_ho_fc)),]
+# 
+# wt_ho_fc
+
+```
+
+```{r Male he v ho}
+
+# he_ho_trasts = makeContrasts( HE_v_HO = he-ho, levels=colnames(design_matrix))
+# 
+# # This is the female contrast = wt_he_trasts
+# he_ho_contrasts = contrasts.fit(fit, he_ho_trasts)
+# 
+# he_ho_super_BAYES = eBayes(he_ho_contrasts)
+# 
+# he_ho_fc = topTable(he_ho_super_BAYES, sort = "none", number = Inf)
+# 
+# he_ho_fc =  he_ho_fc[order(rownames(he_ho_fc)),]
+# 
+# he_ho_fc
+
+```
+
+```{r Female limma prep} 
+
+
+# voom(assay(DESeqDataSet(se_all, design = ~group+batch+sex)))
+limma_input = voom(assay(se_female))
+
+design_matrix = model.matrix(~0+se_female$geno)
+
+design_matrix
+
+colnames(design_matrix) <- c("mut", "wt")
+
+corfit = duplicateCorrelation(assay(se_female), design_matrix, block = se_female$batch )
+
+dele_norm_for_limma = voom(assay(se_female), design = design_matrix )
+
+# blocks may need to be reset to batch instead of sample
+fit = lmFit(dele_norm_for_limma, design = design_matrix, block = se_female$batch, correlation=corfit$consensus )
+
+```
+```{r Female wt v mut}
+
+f_wt_mut_trasts = makeContrasts( WT_v_MUT = wt-mut, levels=colnames(design_matrix))
+
+# This is the female contrast = wt_he_trasts
+f_wt_mut_contrasts = contrasts.fit(fit, f_wt_mut_trasts)
+
+f_wt_mut_super_BAYES = eBayes(f_wt_mut_contrasts)
+
+f_wt_mut_fc = topTable(f_wt_mut_super_BAYES, sort = "none", number = Inf)
+
+f_wt_mut_fc =  f_wt_mut_fc[order(rownames(f_wt_mut_fc)),]
+
+f_wt_mut_fc
+
+
+```
+
+```{r Female wt v he}
+
+# f_wt_he_trasts = makeContrasts( WT_v_HE = wt-he, levels=colnames(design_matrix))
+# 
+# # This is the female contrast = wt_he_trasts
+# f_wt_he_contrasts = contrasts.fit(fit, f_wt_he_trasts)
+# 
+# f_wt_he_super_BAYES = eBayes(f_wt_he_contrasts)
+# 
+# f_wt_he_fc = topTable(f_wt_he_super_BAYES, sort = "none", number = Inf)
+# 
+# f_wt_he_fc =  f_wt_he_fc[order(rownames(f_wt_he_fc)),]
+# 
+# f_wt_he_fc
+
+
+```
+
+```{r Female wt v ho}
+
+# f_wt_ho_trasts = makeContrasts( WT_v_HO = wt-ho, levels=colnames(design_matrix))
+# 
+# # This is the female contrast = wt_he_trasts
+# f_wt_ho_contrasts = contrasts.fit(fit, f_wt_ho_trasts)
+# 
+# f_wt_ho_super_BAYES = eBayes(f_wt_ho_contrasts)
+# 
+# f_wt_ho_fc = topTable(f_wt_ho_super_BAYES, sort = "none", number = Inf)
+# 
+# f_wt_ho_fc =  f_wt_ho_fc[order(rownames(f_wt_ho_fc)),]
+# 
+# f_wt_ho_fc
+
+```
+
+```{r Female he v ho}
+
+# f_he_ho_trasts = makeContrasts( HE_v_HO = he-ho, levels=colnames(design_matrix))
+# 
+# # This is the female contrast = wt_he_trasts
+# f_he_ho_contrasts = contrasts.fit(fit, f_he_ho_trasts)
+# 
+# f_he_ho_super_BAYES = eBayes(f_he_ho_contrasts)
+# 
+# f_he_ho_fc = topTable(f_he_ho_super_BAYES, sort = "none", number = Inf)
+# 
+# f_he_ho_fc =  f_he_ho_fc[order(rownames(f_he_ho_fc)),]
+# 
+# f_he_ho_fc
+
+```
+```{r Concatenate all the data frames}
+
+wt_mut_fc_ranked = wt_mut_fc
+
+f_wt_mut_fc_ranked = f_wt_mut_fc
+
+rownames(wt_mut_fc_ranked) = gsub("\\.[0-9]*$", "", rownames(wt_mut_fc_ranked))
+
+rownames(f_wt_mut_fc_ranked) = gsub("\\.[0-9]*$", "", rownames(f_wt_mut_fc_ranked))
+
+wt_mut_fc_ranked$alias = unname(unlist(AnnotationDbi::mapIds(org.Mm.eg.db, keys=rownames(wt_mut_fc_ranked), column="SYMBOL", keytype="ENSEMBL", multiVals="first")))
+
+f_wt_mut_fc_ranked$alias = unname(unlist(AnnotationDbi::mapIds(org.Mm.eg.db, keys=rownames(f_wt_mut_fc_ranked), column="SYMBOL", keytype="ENSEMBL", multiVals="first")))
+
+wt_mut_fc_ranked = wt_mut_fc_ranked[,c(7,1,2,3,4,5,6)]
+
+f_wt_mut_fc_ranked = f_wt_mut_fc_ranked[,c(7,1,2,3,4,5,6)]
+
+wt_mut_fc_ranked = wt_mut_fc_ranked[ order(wt_mut_fc_ranked$adj.P.Val), ]
+
+f_wt_mut_fc_ranked = f_wt_mut_fc_ranked[ order(f_wt_mut_fc_ranked$adj.P.Val), ]
+
+
+wt_mut_fc_ranked = wt_mut_fc_ranked[ !is.na(wt_mut_fc_ranked$adj.P.Val), ]
+
+f_wt_mut_fc_ranked = f_wt_mut_fc_ranked[ !is.na(f_wt_mut_fc_ranked$adj.P.Val), ]
+
+write.csv(wt_mut_fc_ranked, "limma_eBayes_male_wt_mut.csv")
+
+write.csv(f_wt_mut_fc_ranked, "limma_eBayes_female_wt_mut.csv")
+
+```
+```{r GO on limma/eBayes}
+
+wt_mut_fc_sig = wt_mut_fc_ranked[ wt_mut_fc_ranked$adj.P.Val <= 0.05, ]
+
+f_wt_mut_fc_sig = f_wt_mut_fc_ranked[ f_wt_mut_fc_ranked$adj.P.Val <= 0.05, ]
+
+rownames(wt_mut_fc_sig)
+rownames(f_wt_mut_fc_sig)
+
+wt_mut_fc_GO = enrichGO(gene  = rownames(wt_mut_fc_sig),
+                OrgDb         = org.Mm.eg.db,
+                keyType       = "ENSEMBL",
+                ont           = "all",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+
+
+f_wt_mut_fc_GO = enrichGO(gene  = rownames(f_wt_mut_fc_sig),
+                OrgDb         = org.Mm.eg.db,
+                keyType       = "ENSEMBL",
+                ont           = "all",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+
+
+write.csv(wt_mut_fc_GO, "LE_male_wt_mut_fc_GO.csv")
+
+write.csv(f_wt_mut_fc_GO, "LE_female_wt_mut_fc_GO.csv")
+
+
+```
+```{r Concatenate all the data frames}
+
+wt_he_fc_ranked = wt_he_fc
+wt_ho_fc_ranked = wt_ho_fc
+he_ho_fc_ranked = he_ho_fc
+f_wt_he_fc_ranked = f_wt_he_fc
+f_wt_ho_fc_ranked = f_wt_ho_fc
+f_he_ho_fc_ranked = f_he_ho_fc
+
+rownames(wt_he_fc_ranked) = gsub("\\.[0-9]*$", "", rownames(wt_he_fc_ranked))
+rownames(wt_ho_fc_ranked) = gsub("\\.[0-9]*$", "", rownames(wt_ho_fc_ranked))
+rownames(he_ho_fc_ranked) = gsub("\\.[0-9]*$", "", rownames(he_ho_fc_ranked))
+rownames(f_wt_he_fc_ranked) = gsub("\\.[0-9]*$", "", rownames(f_wt_he_fc_ranked))
+rownames(f_wt_ho_fc_ranked) = gsub("\\.[0-9]*$", "", rownames(f_wt_ho_fc_ranked))
+rownames(f_he_ho_fc_ranked) = gsub("\\.[0-9]*$", "", rownames(f_he_ho_fc_ranked))
+
+wt_he_fc_ranked$alias = unname(unlist(AnnotationDbi::mapIds(org.Mm.eg.db, keys=rownames(wt_he_fc_ranked), column="SYMBOL", keytype="ENSEMBL", multiVals="first")))
+wt_ho_fc_ranked$alias = unname(unlist(AnnotationDbi::mapIds(org.Mm.eg.db, keys=rownames(wt_ho_fc_ranked), column="SYMBOL", keytype="ENSEMBL", multiVals="first")))
+he_ho_fc_ranked$alias = unname(unlist(AnnotationDbi::mapIds(org.Mm.eg.db, keys=rownames(he_ho_fc_ranked), column="SYMBOL", keytype="ENSEMBL", multiVals="first")))
+f_wt_he_fc_ranked$alias = unname(unlist(AnnotationDbi::mapIds(org.Mm.eg.db, keys=rownames(f_wt_he_fc_ranked), column="SYMBOL", keytype="ENSEMBL", multiVals="first")))
+f_wt_ho_fc_ranked$alias = unname(unlist(AnnotationDbi::mapIds(org.Mm.eg.db, keys=rownames(f_wt_ho_fc_ranked), column="SYMBOL", keytype="ENSEMBL", multiVals="first")))
+f_he_ho_fc_ranked$alias = unname(unlist(AnnotationDbi::mapIds(org.Mm.eg.db, keys=rownames(f_he_ho_fc_ranked), column="SYMBOL", keytype="ENSEMBL", multiVals="first")))
+
+wt_he_fc_ranked = wt_he_fc_ranked[,c(7,1,2,3,4,5,6)]
+wt_ho_fc_ranked = wt_ho_fc_ranked[,c(7,1,2,3,4,5,6)]
+he_ho_fc_ranked = he_ho_fc_ranked[,c(7,1,2,3,4,5,6)]
+f_wt_he_fc_ranked = f_wt_he_fc_ranked[,c(7,1,2,3,4,5,6)]
+f_wt_ho_fc_ranked = f_wt_ho_fc_ranked[,c(7,1,2,3,4,5,6)]
+f_he_ho_fc_ranked = f_he_ho_fc_ranked[,c(7,1,2,3,4,5,6)]
+
+wt_he_fc_ranked = wt_he_fc_ranked[ order(wt_he_fc_ranked$adj.P.Val), ]
+wt_ho_fc_ranked = wt_ho_fc_ranked[ order(wt_ho_fc_ranked$adj.P.Val), ]
+he_ho_fc_ranked = he_ho_fc_ranked[ order(he_ho_fc_ranked$adj.P.Val), ]
+f_wt_he_fc_ranked = f_wt_he_fc_ranked[ order(f_wt_he_fc_ranked$adj.P.Val), ]
+f_wt_ho_fc_ranked = f_wt_ho_fc_ranked[ order(f_wt_ho_fc_ranked$adj.P.Val), ]
+f_he_ho_fc_ranked = f_he_ho_fc_ranked[ order(f_he_ho_fc_ranked$adj.P.Val), ]
+
+wt_he_fc_ranked = wt_he_fc_ranked[ !is.na(wt_he_fc_ranked$adj.P.Val), ]
+wt_ho_fc_ranked = wt_ho_fc_ranked[ !is.na(wt_ho_fc_ranked$adj.P.Val), ]
+he_ho_fc_ranked = he_ho_fc_ranked[ !is.na(he_ho_fc_ranked$adj.P.Val), ]
+f_wt_he_fc_ranked = f_wt_he_fc_ranked[ !is.na(f_wt_he_fc_ranked$adj.P.Val), ]
+f_wt_ho_fc_ranked = f_wt_ho_fc_ranked[ !is.na(f_wt_ho_fc_ranked$adj.P.Val), ]
+f_he_ho_fc_ranked = f_he_ho_fc_ranked[ !is.na(f_he_ho_fc_ranked$adj.P.Val), ]
+
+write.csv(wt_he_fc_ranked, "limma_eBayes_male_wt_he.csv")
+write.csv(wt_ho_fc_ranked, "limma_eBayes_male_wt_ho.csv")
+write.csv(he_ho_fc_ranked, "limma_eBayes_male_he_ho.csv")
+write.csv(f_wt_he_fc_ranked, "limma_eBayes_female_wt_he.csv")
+write.csv(f_wt_ho_fc_ranked, "limma_eBayes_female_wt_ho.csv")
+write.csv(f_he_ho_fc_ranked, "limma_eBayes_female_he_ho.csv")
+
+```
+
+```{r GO on limma/eBayes}
+
+wt_he_fc_sig = wt_he_fc_ranked[ wt_he_fc_ranked$adj.P.Val <= 0.05, ]
+wt_ho_fc_sig = wt_ho_fc_ranked[ wt_ho_fc_ranked$adj.P.Val <= 0.05, ]
+he_ho_fc_sig = he_ho_fc_ranked[ he_ho_fc_ranked$adj.P.Val <= 0.05, ]
+f_wt_he_fc_sig = f_wt_he_fc_ranked[ f_wt_he_fc_ranked$adj.P.Val <= 0.05, ]
+f_wt_ho_fc_sig = f_wt_ho_fc_ranked[ f_wt_ho_fc_ranked$adj.P.Val <= 0.05, ]
+f_he_ho_fc_sig = f_he_ho_fc_ranked[ f_he_ho_fc_ranked$adj.P.Val <= 0.05, ]
+
+wt_he_fc_GO = enrichGO(gene  = rownames(wt_he_fc_sig),
+                OrgDb         = org.Mm.eg.db,
+                keyType       = "ENSEMBL",
+                ont           = "all",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+wt_ho_fc_GO = enrichGO(gene  = rownames(wt_ho_fc_sig),
+                OrgDb         = org.Mm.eg.db,
+                keyType       = "ENSEMBL",
+                ont           = "all",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+he_ho_fc_GO = enrichGO(gene  = rownames(he_ho_fc_sig),
+                OrgDb         = org.Mm.eg.db,
+                keyType       = "ENSEMBL",
+                ont           = "all",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+f_wt_he_fc_GO = enrichGO(gene  = rownames(f_wt_he_fc_sig),
+                OrgDb         = org.Mm.eg.db,
+                keyType       = "ENSEMBL",
+                ont           = "all",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+f_wt_ho_fc_GO = enrichGO(gene  = rownames(f_wt_ho_fc_sig),
+                OrgDb         = org.Mm.eg.db,
+                keyType       = "ENSEMBL",
+                ont           = "all",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+f_he_ho_fc_GO = enrichGO(gene  = rownames(f_he_ho_fc_sig),
+                OrgDb         = org.Mm.eg.db,
+                keyType       = "ENSEMBL",
+                ont           = "all",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05,
+                readable      = TRUE)
+
+write.csv(wt_he_fc_GO, "LE_male_wt_he_fc_GO.csv")
+write.csv(wt_ho_fc_GO, "LE_male_wt_ho_fc_GO.csv")
+write.csv(he_ho_fc_GO, "LE_male_he_ho_fc_GO.csv")
+
+write.csv(f_wt_he_fc_GO, "LE_female_wt_he_fc_GO.csv")
+write.csv(f_wt_ho_fc_GO, "LE_female_wt_ho_fc_GO.csv")
+write.csv(f_he_ho_fc_GO, "LE_female_he_ho_fc_GO.csv")
+
+```
+
+```{r}
+colnames(wt_he_fc) = c(paste0("m_WT_HE_",colnames(wt_he_fc)))
+
+simple_names = gsub("\\.[0-9]*$", "", rownames(wt_he_fc))
+
+wt_he_fc$alias = unname(unlist(AnnotationDbi::mapIds(org.Mm.eg.db, keys=simple_names, column="SYMBOL", keytype="ENSEMBL", multiVals="first")))
+
+wt_he_fc$ensembl = rownames(wt_he_fc)
+
+# wt_he_fc = wt_he_fc[,c(8,7,1,2,3,4,5,6)]
+
+colnames(wt_ho_fc) = c(paste0("m_WT_HO_",colnames(wt_ho_fc)))
+
+colnames(he_ho_fc) = c(paste0("m_HE_HO_",colnames(he_ho_fc)))
+
+colnames(f_wt_he_fc) = c(paste0("f_WT_HE_",colnames(f_wt_he_fc)))
+
+colnames(f_wt_ho_fc) = c(paste0("f_WT_HO_",colnames(f_wt_ho_fc)))
+colnames(f_he_ho_fc) = c(paste0("f_HE_HO_",colnames(f_he_ho_fc)))
+
+big_df = cbind(wt_he_fc, wt_ho_fc, he_ho_fc, f_wt_he_fc, f_wt_ho_fc, f_he_ho_fc )
+
+big_df
+
+attributes(voom(assay(se_female)))
+
+voom_norm_read_counts = as.data.frame(voom(assay(se_male))$E)
+
+voom_norm_read_counts = voom_norm_read_counts[order(rownames(voom_norm_read_counts)),]
+
+voom_norm_read_counts
+
+female_voom_norm_read_counts = as.data.frame(voom(assay(se_male))$E)
+
+female_voom_norm_read_counts = female_voom_norm_read_counts[order(rownames(female_voom_norm_read_counts)),]
+
+female_voom_norm_read_counts
+
+big_df = cbind(big_df, voom_norm_read_counts, female_voom_norm_read_counts)
+
+write.csv(big_df, "limma_eBayes_report.csv", row.names = FALSE)
+
+```
+
+```{r Correlation of log fold changes between male and female}
+
+ 
+wt_he_fc = wt_he_fc[ order(rownames(wt_he_fc)),] 
+f_wt_he_fc = f_wt_he_fc[ order(rownames(f_wt_he_fc)),]
+
+wt_ho_fc = wt_ho_fc[ order(rownames(wt_ho_fc)),]
+f_wt_ho_fc = f_wt_ho_fc[ order(rownames(f_wt_ho_fc)),]
+
+he_ho_fc = he_ho_fc[ order(rownames(he_ho_fc)),]
+f_he_ho_fc = f_he_ho_fc[ order(rownames(f_he_ho_fc)),]
+
+wt_he_fc
+f_wt_he_fc
+
+wt_he_cor = cor.test(wt_he_fc$logFC, f_wt_he_fc$logFC)
+
+wt_ho_fc
+f_wt_ho_fc
+
+wt_ho_cor = cor.test(wt_ho_fc$logFC, f_wt_ho_fc$logFC)
+
+he_ho_fc
+f_he_ho_fc
+
+he_ho_cor = cor.test(he_ho_fc$logFC, f_he_ho_fc$logFC)
+
+wt_he_cor
+wt_ho_cor
+he_ho_cor
+
+df_wt_he = data.frame( male = wt_he_fc$logFC, female = f_wt_he_fc$logFC )
+df_wt_ho = data.frame( male = wt_ho_fc$logFC, female = f_wt_ho_fc$logFC )
+df_he_ho = data.frame( male = he_ho_fc$logFC, female = f_he_ho_fc$logFC )
+
+ggplot( data = df_wt_he, aes( x = `male`, y = `female`)) + geom_point()
+ggsave("wt_he_corr_plot.png")
+ggplot( data = df_wt_ho, aes( x = `male`, y = `female`)) + geom_point()
+ggsave("wt_ho_corr_plot.png")
+ggplot( data = df_he_ho, aes( x = `male`, y = `female`)) + geom_point()
+ggsave("he_ho_corr_plot.png")
+
+```
+
+```{r Check raw values}
+
+male_set = se_male
+female_set = se_female
+
+wt_he_fc = wt_he_fc[ order(wt_he_fc$logFC),] 
+f_wt_he_fc = f_wt_he_fc[ order(f_wt_he_fc$logFC),]
+
+wt_ho_fc = wt_ho_fc[ order(wt_ho_fc$logFC),]
+f_wt_ho_fc = f_wt_ho_fc[ order(f_wt_ho_fc$logFC),]
+
+he_ho_fc = he_ho_fc[ order(he_ho_fc$logFC),]
+f_he_ho_fc = f_he_ho_fc[ order(f_he_ho_fc$logFC),]
+
+
+
+male_wt_he = assay(male_wt_he)
+fema_wt_he = assay(fema_wt_he)
+
+male_wt_ho = assay(male_wt_ho)
+fema_wt_ho = assay(fema_wt_ho)
+
+male_he_ho = assay(male_he_ho)
+fema_he_ho = assay(fema_he_ho)
+
+
+
+gene_set = rownames(wt_he_fc[wt_he_fc$logFC > 2, ])[1:20]
+
+male_wt_he = male_set[gene_set, ]
+fema_wt_he = female_set[gene_set,]
+
+gene_set_2 = rownames(wt_ho_fc[wt_ho_fc$logFC > 2, ])[1:20]
+
+male_wt_ho = male_set[gene_set_2, ]
+fema_wt_ho = female_set[gene_set_2, ]
+
+gene_set_3 = rownames(he_ho_fc[he_ho_fc$logFC > 2, ])[1:20]
+
+male_he_ho = male_set[gene_set_3, ]
+fema_he_ho = female_set[gene_set_3, ]
+
+```
+
+```{r}
+
+combine = function(df){ 
+  
+  new_df = data.frame(matrix(nrow = 0, ncol = 4))
+  
+  colnames(new_df) = c("sample", "gene_name", "raw_count", "average")
+  
+  for (i in c(1:ncol(df))){
+
+    new_df = rbind(new_df, data.frame("sample" = rep(colnames(df)[i],nrow(df)), "gene_name" = rep(rownames(df)), "raw_count" = df[,i], "average" = apply(df, MARGIN = 1, FUN = mean)  ))
+    
+  }
+  
+  return(new_df)
+  
+}
+
+male_wt_he_alt = combine(assay(male_wt_he))
+fema_wt_he_alt = combine(assay(fema_wt_he))
+
+male_wt_he_alt
+male_wt_ho_alt = combine(assay(male_wt_ho))
+fema_wt_ho_alt = combine(assay(fema_wt_ho))
+
+male_he_ho_alt = combine(assay(male_he_ho))
+fema_he_ho_alt = combine(assay(fema_he_ho))
+
+male_wt_he_alt$sex = rep("M", nrow(male_wt_he_alt))
+male_wt_ho_alt$sex = rep("M", nrow(male_wt_ho_alt))
+male_he_ho_alt$sex = rep("M", nrow(male_he_ho_alt))
+
+fema_wt_he_alt$sex = rep("F", nrow(fema_wt_he_alt))
+fema_wt_ho_alt$sex = rep("F", nrow(fema_wt_ho_alt))
+fema_he_ho_alt$sex = rep("F", nrow(fema_he_ho_alt))
+
+wt_he_alt = rbind(fema_wt_he_alt, male_wt_he_alt)
+wt_ho_alt = rbind(fema_wt_ho_alt, male_wt_ho_alt)
+he_ho_alt = rbind(fema_he_ho_alt, male_he_ho_alt)
+
+ggplot( data = wt_he_alt, aes(x = wt_he_alt[wt_he_alt$sex == "F",]$average, y = wt_he_alt[wt_he_alt$sex == "M",]$average) ) + geom_point()
+
+# 
+# ggplot(data = wt_he_alt, aes(y = log(`raw_count`,2), x = `gene_name`, group = `sex`)) + 
+#   geom_col(aes(fill = `sex`), position = position_dodge()) + 
+#   ggtitle("Wt v He") +
+#   theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1))
+# ggsave("wt_he_counts_check_plot.png")
+# 
+# ggplot(data = wt_ho_alt, aes(y = log(`raw_count`,2), x = `gene_name`, group = `sex`)) + 
+#   geom_col(aes(fill = `sex`), position = position_dodge())+ 
+#   ggtitle("Wt v Ho") +
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+# ggsave("wt_ho_counts_check_plot.png")
+# 
+# ggplot(data = he_ho_alt, aes(y = log(`raw_count`,2), x = `gene_name`, group = `sex`)) + 
+#   geom_col(aes(fill = `sex`), position = position_dodge())+
+#   ggtitle("He v Ho") +
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+# ggsave("he_ho_counts_check_plot.png")
+
+```

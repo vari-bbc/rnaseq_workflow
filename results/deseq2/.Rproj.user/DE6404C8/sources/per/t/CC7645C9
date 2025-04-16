@@ -1,0 +1,24 @@
+{
+    "id": "CC7645C9",
+    "path": "/varidata/research/projects/bbc/research/MOOD_20240119_RNA_VBCS-1106/rnaseq_workflow/results/SummarizedExperiment/MOOD_20240119_RNA_VBCS-1106_Reanalysis.Rmd",
+    "project_path": null,
+    "type": "r_markdown",
+    "hash": "516425388",
+    "contents": "",
+    "dirty": false,
+    "created": 1740515128672.0,
+    "source_on_save": false,
+    "relative_order": 4,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1710950892,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1710950892,
+    "read_only": false,
+    "read_only_alternatives": []
+}

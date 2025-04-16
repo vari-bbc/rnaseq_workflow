@@ -1,0 +1,7 @@
+"0","# prefilter genes, keeping only genes with 10 or more total read counts across samples"
+"0","keep <- rowSums(counts(dds)) >= 10"
+"0",""
+"0","message(str_glue(""Keeping {sum(keep)} genes.""))"
+"2","Keeping 20969 genes.
+"
+"0","dds <- dds[keep, ]"

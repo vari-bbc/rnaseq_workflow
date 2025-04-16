@@ -1,0 +1,137 @@
+"0","library(dplyr)"
+"2","
+Attaching package: ‘dplyr’
+
+"
+"2","The following object is masked from ‘package:Biobase’:
+
+    combine
+
+"
+"2","The following objects are masked from ‘package:GenomicRanges’:
+
+    intersect, setdiff, union
+
+"
+"2","The following object is masked from ‘package:GenomeInfoDb’:
+
+    intersect
+
+"
+"2","The following objects are masked from ‘package:IRanges’:
+
+    collapse, desc, intersect, setdiff, slice, union
+
+"
+"2","The following objects are masked from ‘package:S4Vectors’:
+
+    first, intersect, rename, setdiff, setequal, union
+
+"
+"2","The following objects are masked from ‘package:BiocGenerics’:
+
+    combine, intersect, setdiff, union
+
+"
+"2","The following object is masked from ‘package:matrixStats’:
+
+    count
+
+"
+"2","The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+"
+"2","The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+"
+"2","Warning message:
+"
+"2","Character set is not UTF-8; please change your locale 
+"
+"0","library(stringr)"
+"0","library(ggplot2)"
+"0","library(readr)"
+"0","library(ggrepel)"
+"0","library(ComplexHeatmap)"
+"2","Loading required package: grid
+"
+"2","========================================
+ComplexHeatmap version 2.20.0
+Bioconductor page: http://bioconductor.org/packages/ComplexHeatmap/
+Github page: https://github.com/jokergoo/ComplexHeatmap
+Documentation: http://jokergoo.github.io/ComplexHeatmap-reference
+
+If you use it in published research, please cite either one:
+- Gu, Z. Complex Heatmap Visualization. iMeta 2022.
+- Gu, Z. Complex heatmaps reveal patterns and correlations in multidimensional 
+    genomic data. Bioinformatics 2016.
+
+
+The new InteractiveComplexHeatmap package can directly export static 
+complex heatmaps into an interactive Shiny app with zero effort. Have a try!
+
+This message can be suppressed by:
+  suppressPackageStartupMessages(library(ComplexHeatmap))
+========================================
+
+"
+"0","library(DESeq2)"
+"0",""
+"0","# For GO and GSEA: "
+"0","library(clusterProfiler)"
+"2","
+"
+"2","Registered S3 method overwritten by 'data.table':
+  method           from
+  print.data.table     
+"
+"2","clusterProfiler v4.12.6 Learn more at https://yulab-smu.top/contribution-knowledge-mining/
+
+Please cite:
+
+S Xu, E Hu, Y Cai, Z Xie, X Luo, L Zhan, W Tang, Q Wang, B Liu, R Wang, W Xie, T Wu, L Xie, G Yu. Using
+clusterProfiler to characterize multiomics data. Nature Protocols. 2024, doi:10.1038/s41596-024-01020-z
+"
+"2","
+Attaching package: ‘clusterProfiler’
+
+"
+"2","The following object is masked from ‘package:IRanges’:
+
+    slice
+
+"
+"2","The following object is masked from ‘package:S4Vectors’:
+
+    rename
+
+"
+"2","The following object is masked from ‘package:stats’:
+
+    filter
+
+"
+"0","library(org.Mm.eg.db)"
+"2","Loading required package: AnnotationDbi
+"
+"2","
+Attaching package: ‘AnnotationDbi’
+
+"
+"2","The following object is masked from ‘package:clusterProfiler’:
+
+    select
+
+"
+"2","The following object is masked from ‘package:dplyr’:
+
+    select
+
+"
+"2","
+"
+"0","library(fgsea)"

@@ -1,0 +1,6 @@
+"0","df <- as.data.frame(res)"
+"0","data.frame("
+"0","  UP=sum(df$padj <= fdr_cutoff & df$log2FoldChange > 0, na.rm = TRUE),"
+"0","  DWN=sum(df$padj <= fdr_cutoff & df$log2FoldChange < 0, na.rm = TRUE),"
+"0","  Tested=sum(!is.na(df$padj))"
+"0",")"
