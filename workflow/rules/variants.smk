@@ -386,9 +386,11 @@ rule snprelate:
         wd = lambda wildcards, output: os.path.dirname(output.html),
         in_vcf = lambda wildcards, input: os.path.basename(input.vcf),
         outdir = lambda wildcards, output: os.path.basename(output.outdir),
-        renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock)
+        renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock),
+        snakemake_dir = snakemake_dir
     envmodules:
-        config['modules']['R']
+        config['modules']['R'],
+        config['modules']['pandoc']
     threads: 1
     resources:
         mem_gb = 60,
@@ -400,5 +402,5 @@ rule snprelate:
 
         cd {params.wd}
 
-        Rscript --vanilla -e "rmarkdown::render('snprelate.Rmd', params = list(in_vcf = '{params.in_vcf}', outdir = '{params.outdir}', renv_rproj_dir = 'params.renv_rproj_dir'))"
+        Rscript --vanilla -e "rmarkdown::render('snprelate.Rmd', params = list(in_vcf = '{params.in_vcf}', outdir = '{params.outdir}', renv_rproj_dir = '{params.snakemake_dir}/{params.renv_rproj_dir}'))"
         """
