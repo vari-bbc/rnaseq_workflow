@@ -387,7 +387,7 @@ rule snprelate:
         in_vcf = lambda wildcards, input: os.path.basename(input.vcf),
         outdir = lambda wildcards, output: os.path.basename(output.outdir),
         renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock),
-        snakemake_dir = snakemake_dir
+        snakemake_dir = os.getcwd() + "/"
     envmodules:
         config['modules']['R'],
         config['modules']['pandoc']
