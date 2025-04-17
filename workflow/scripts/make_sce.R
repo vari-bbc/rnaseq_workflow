@@ -22,6 +22,7 @@ library(stringr)
 library(readr)
 library(tibble)
 library(edgeR)
+library(rtracklayer)
 # load the org.db for your organism
 if(!require(orgdb, character.only=TRUE)){
     BiocManager::install(orgdb)
@@ -108,6 +109,16 @@ gene_names_df$entrez <- AnnotationDbi::mapIds(eval(as.name(orgdb)), ens_no_versi
 gene_names_df$Gene_name <- AnnotationDbi::mapIds(eval(as.name(orgdb)), ens_no_version, 
                                                  keytype="ENSEMBL", column="GENENAME", 
                                                  multiVals="first")
+
+## add alias column to gene_names_df
+gtf_df <- rtracklayer::import(gtf_file) |> 
+  as.data.frame() |>
+  dplyr::select(gene_id, gene_name) |>
+  dplyr::distinct() |>
+  column_to_rownames("gene_id")
+
+stopifnot(all(rownames(gtf_df) %in% rownames((gene_names_df))))
+gene_names_df$alias <- gtf_df$gene_name[match(rownames(gene_names_df), rownames(gtf_df))]
 
 # Sample meta
 

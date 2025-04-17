@@ -25,7 +25,12 @@ rule rename_fastqs:
     envmodules:
     shell:
         """
-        ln -sr {input} {output} 
+        # If the fastqs are not compressed, gzipped them with new name.
+        if ( file -L {input} | grep -q 'gzip compressed' ) ; then
+            ln -sr {input} {output} 
+        else
+            gzip -c {input} > {output}
+        fi
         """
 
 def trim_galore_input(wildcards):

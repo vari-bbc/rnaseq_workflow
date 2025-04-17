@@ -1,3 +1,7 @@
+quick_ref:
+# Only fill this if you are NOT doing SNP calling. "ref_genome_verison" is the dir of the date and version of the reference. Check what is available at /varidata/research/projects/bbc/versioned_references. If you are not sure, you can use the latest one.  "species_name" is the dir name of the reference genome, check /varidata/research/projects/bbc/versioned_references/latest/data/ to see species are there. The most commonly used species are mmm10_gencode and hg38_gencode. ref_genome_version is optional whereas species_name is MANDATORY; if you leave quick_ref section blank, the workflow will use references from "ref" section below. 
+  ref_genome_version:       # The earliest recommended version is 2021-08-10_11.12.27_v6. Note that the Salmon index might not exist for earlier versions.
+  species_name:  hg38_gencode
 ref:
   index:          /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/star
   salmon_index:   /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/salmon/hg38_gencode
@@ -12,12 +16,16 @@ ref:
 
 # OrgDB R package for covnerting gene names. Common choices are 'org.Mm.eg.db' for mouse and 'org.Hs.eg.db' for human.
 orgdb: org.Hs.eg.db
+fdr_cutoff: 0.1
+genes_of_interest: DUSP1,KLF15,CRISPLD2
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
 
 call_variants: True
 grouped_contigs: config/grouped_contigs.tsv 
+
+run_vis_bigwig : True
 
 # R project config
 Rproj_dirname: "VBCS-000_Rproj"
@@ -29,13 +37,13 @@ renv_symlink_from_cache: False
 ## if using renv cache, this is the path to where the cache is/will be stored.
 renv_root_path: /varidata/research/projects/bbc/tools/renv_root
 
-
 ####################################################################
 # FOR MOST STANDARD USE CASES, THE BELOW DO NOT NEED TO BE CHANGED.#
 ####################################################################
 
 # path to sample sheet relative to the base project directory (containing config/, workflow/ etc)
 units: config/samplesheet/units.tsv
+comparisons: config/samplesheet/comparisons.tsv
 
 sortmerna:
     rfam5_8s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.6-Linux/rRNA_databases/rfam-5.8s-database-id98.fasta

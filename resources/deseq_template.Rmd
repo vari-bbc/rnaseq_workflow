@@ -1,6 +1,6 @@
 ---
-title: "deseq2"
-author: "BBC"
+title: "DESeq2"
+author: '`r paste0("BBC, Analyst: ", stringr::str_to_title(stringr::str_replace_all(Sys.getenv("USER"), "\\.", " ")  ))`'
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output:
   html_document:
@@ -12,6 +12,13 @@ output:
       collapsed: true
       smooth_scroll: false
     number_sections: true
+params:
+  se_obj: ""
+  comparison_name: ""
+  group_test: ""
+  group_reference: ""
+  fdr_cutoff: ""
+  genes_of_interest: ""
 ---
 
 ```{r keep_figures, cache=TRUE}
@@ -25,16 +32,17 @@ start_tm
 ```
 
 ```{r make_outdir, echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE}
-outdir <- "./deseq2_out_files/"
+outdir <- file.path("deseq2_out_files", params$comparison_name)
 
 dir.create(outdir, recursive=TRUE)
 ```
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE, dev=c('png','pdf'), fig.width=4, fig.height=4, fig.path=paste0(outdir, "individual_figures/"))
-
+knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE, dev=c('png','pdf'), 
+                      fig.width=4, fig.height=4, fig.path=paste0(outdir, "/individual_figures/"))
 ```
 
+# **Analysis**
 
 ### **Load packages**
 
@@ -51,7 +59,13 @@ library(DESeq2)
 ### **Set up your DESeq object**
 
 ```{r read_se}
-se <- readRDS("../results/SummarizedExperiment/SummarizedExperiment.rds")
+se <- readRDS(paste0("../../", params$se_obj))
+
+# subset se to just samples in this comparison (relevant esp if variance is diff between groups)
+se <- se[, colData(se)$group %in% c(params$group_test, params$group_reference)]
+
+# factor the group column to make sure the reference group is the first level
+se$group <- factor(se$group, levels=c(params$group_reference, params$group_test))
 ```
 
 
@@ -105,8 +119,8 @@ message(paste0("Coefficient names are: ", paste(resultsNames(dds), collapse = " 
 After the models are fitted, we can test specific pairs of groups for differential expression. For DESeq2, it is recommended to provide the significance cutoff that you wish to use as it affects the multiple testing correction procedure (see [docs](https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/results)).
 
 ```{r run_contrast}
-contrast <- c("group", "trt", "untrt")
-fdr_cutoff <- 0.1
+contrast <- c("group", params$group_test, params$group_reference)
+fdr_cutoff <- params$fdr_cutoff
 
 res <- results(dds, contrast=contrast, alpha=fdr_cutoff)
 res <- res[order(res$pvalue), ]
@@ -157,16 +171,21 @@ df <- cbind(as.data.frame(rowData(dds)[rownames(lfc_shrink), 1:4]),
 
 ```{r out_de_res}
 write_tsv(df, file.path(outdir, "de_res.tsv"))
+write_rds(df, file.path(outdir, "de_res.rds"))
 ```
 
 ### **Look for specific genes**
 
-We know certain genes should be differentially expressed based on the [paper](https://pubmed.ncbi.nlm.nih.gov/24926665/) that this dataset came from. We can check that these genes were significantly DE in our analysis.
+If we're interested in specific genes (such as genes we'd expect, a priori, to be different),
+we can check if they are differentially expressed.
 
-Likewise, this would be a good time to check for knocked down, knocked out etc genes if such prior knowledge is available, though that is not always the case.
+The following genes are shown, based on genes specified in the `genes_of_interest` parameter in the config file.
 
 ```{r specific_genes}
-df %>% dplyr::filter(Symbol %in% c("DUSP1", "KLF15", "CRISPLD2"))
+if (!(params$genes_of_interest %in% c("", "False", "FALSE"))) {
+  genes_of_interest <- params$genes_of_interest %>% strsplit(",") %>% unlist() %>% gsub("\\s+", "", .)
+  df %>% dplyr::filter(Symbol %in% genes_of_interest) %>% print()
+}
 ```
 
 ### **Output tables with raw counts**
@@ -195,6 +214,7 @@ vst_df <- as.data.frame(cbind(rowData(vsd)[, 1:4], assay(vsd))) %>%
 ```
 
 ```{r out_vst}
+write_rds(vsd, file.path(outdir, "vsd.rds"))
 write_tsv(vst_df, file.path(outdir, "vst.tsv"))
 
 ```
