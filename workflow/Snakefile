@@ -116,8 +116,10 @@ include:
     'rules/qc.smk'
 include:
     'rules/visualisation.smk'
-include:
-    'rules/variants.smk'
+
+if (config["call_variants"]):
+    include:
+        'rules/variants.smk'
 include:
     'rules/make_Rprojects.smk'
 include:
