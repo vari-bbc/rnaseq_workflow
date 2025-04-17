@@ -49,6 +49,13 @@ assert contigs_fai == contigs_parsed_flat, "Chromosomes in grouped contigs file 
 
 snakemake_dir = os.getcwd() + "/"
 
+# make a tmp directory for analyses
+tmp_dir = os.path.join(snakemake_dir, "tmp")
+if not os.path.exists(tmp_dir):
+    os.mkdir(tmp_dir)
+
+
+
 # Need this directive because both PE and SE versions of these rules produce the trimmed R1 output files.
 ruleorder: trim_galore_PE > trim_galore_SE
 
