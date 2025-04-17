@@ -1,7 +1,7 @@
 quick_ref:
 # Only fill this if you are NOT doing SNP calling. "ref_genome_verison" is the dir of the date and version of the reference. Check what is available at /varidata/research/projects/bbc/versioned_references. If you are not sure, you can use the latest one.  "species_name" is the dir name of the reference genome, check /varidata/research/projects/bbc/versioned_references/latest/data/ to see species are there. The most commonly used species are mm10_gencode and hg38_gencode. ref_genome_version is optional whereas species_name is MANDATORY; if you leave quick_ref section blank, the workflow will use references from "ref" section below. 
   ref_genome_version: latest # The earliest recommended version is 2021-08-10_11.12.27_v6. Note that the Salmon index might not exist for earlier versions.
-  species_name:  mm10_gencode
+  species_name:  
 ref:
   index:          /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/star
   salmon_index:   /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/salmon/hg38_gencode
@@ -15,17 +15,17 @@ ref:
   fai:  /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.fa.fai
 
 # OrgDB R package for covnerting gene names. Common choices are 'org.Mm.eg.db' for mouse and 'org.Hs.eg.db' for human.
-orgdb: org.Mm.eg.db
+orgdb: org.Hs.eg.db
 fdr_cutoff: 0.1
 genes_of_interest: DUSP1,KLF15,CRISPLD2
 
 # For GSEA quick_ref can only handle human, mouse, rat, and fly; all other organisms need to be filled in manually
 # kegg_org should be a three or four letter string corresponding to your reference species. List of KEGG species is found here: https://www.genome.jp/kegg/tables/br08606.html
-kegg_org: mmu
+kegg_org: hsa
 # reactome_org can be "human", "mouse", "rat", "celegans", "yeast", "zebrafish", "fly" 
-reactome_org: mouse
+reactome_org: human
 # Full species name. Applicable input strings can be found by installing the msigdbr library in R and using msigdbr::msigdbr_species()
-msigdb_organism: Mus musculus
+msigdb_organism: Homo sapiens
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
