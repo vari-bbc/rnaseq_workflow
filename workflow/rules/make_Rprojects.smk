@@ -15,10 +15,12 @@ rule make_Rproject:
         Rproj_dir = lambda wildcards,output: os.path.dirname(output.rproj),
         Renv_root = config['renv_root_path'],
         # tell renv not to use cache (actually install packages in project instead of symlinking) if requested in config file.
-        set_use_renv_cache = lambda wildcards, output: "" if config['renv_use_cache'] else "printf \"RENV_CONFIG_CACHE_ENABLED=FALSE\\n\" >> {renviron}".format(renviron=output.renviron),
+        set_use_renv_cache = lambda wildcards, output: "RENV_CONFIG_CACHE_ENABLED={choice}".format(choice="TRUE" if config['renv_use_cache'] else "FALSE"),
         # tell renv not to copy from user library if requested in config file.
-        set_use_user_lib = lambda wildcards, output: "" if config['renv_use_user_lib'] else "printf \"RENV_CONFIG_INSTALL_SHORTCUTS=FALSE\\n\" >> {renviron}".format(renviron=output.renviron),
-        set_symlink_from_cache = lambda wildcards, output: "" if config['renv_symlink_from_cache'] else "printf \"RENV_CONFIG_CACHE_SYMLINKS=FALSE\\n\" >> {renviron}".format(renviron=output.renviron),
+        set_use_user_lib = lambda wildcards, output: "RENV_CONFIG_INSTALL_SHORTCUTS={choice}".format(choice="TRUE" if config['renv_use_user_lib'] else "FALSE"),
+        set_symlink_from_cache = lambda wildcards, output: "RENV_CONFIG_CACHE_SYMLINKS={choice}".format(choice="TRUE" if config['renv_symlink_from_cache'] else "FALSE"),
+        set_use_pak = lambda wildcards, output: "RENV_CONFIG_PAK_ENABLED={choice}".format(choice="TRUE" if config['renv_use_pak'] else "FALSE"),
+        install_pak = lambda wildcards, output: "library(pak)" if config['renv_use_pak'] else "",
         snakemake_dir=snakemake_dir,
     threads: 1
     envmodules:
@@ -31,14 +33,16 @@ rule make_Rproject:
         Rscript --vanilla workflow/scripts/make_Rproject.R {params.Rproj_dir}
         
         # Make R script with package dependencies
-        cat {input.R_pkges} | perl -lne "print qq:library(\$_):" > {output.renv_dependencies}
+        echo '{params.install_pak}' > {output.renv_dependencies}
+        cat {input.R_pkges} | perl -lne "print qq:library(\$_):" >> {output.renv_dependencies}
         
         # set RENV_PATHS_CACHE in .Renviron
-        printf "RENV_PATHS_ROOT='{params.Renv_root}'\\n" > {output.renviron}
+        echo "RENV_PATHS_ROOT='{params.Renv_root}'" > {output.renviron}
 
-        {params.set_use_renv_cache}
-        {params.set_use_user_lib}
-        {params.set_symlink_from_cache}
+        echo '{params.set_use_renv_cache}' >> {output.renviron}
+        echo '{params.set_use_user_lib}' >> {output.renviron}
+        echo '{params.set_symlink_from_cache}' >> {output.renviron}
+        echo '{params.set_use_pak}' >> {output.renviron}
 
         cd {params.Rproj_dir}
         

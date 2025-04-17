@@ -34,6 +34,8 @@ renv_use_cache: True
 ## copy packages from user library if available?
 renv_use_user_lib: True
 renv_symlink_from_cache: False
+# Use Pak to install packages
+renv_use_pak: False # I couldn't get pak to install to the renv cache which resulted in rebuilding the library each time; see https://github.com/r-lib/pak/issues/284
 ## if using renv cache, this is the path to where the cache is/will be stored.
 renv_root_path: /varidata/research/projects/bbc/tools/renv_root
 
