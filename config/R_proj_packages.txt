@@ -19,4 +19,5 @@ rjson
 scater
 SNPRelate
 tidyverse
+txdbmaker
 tximport

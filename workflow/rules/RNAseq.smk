@@ -247,7 +247,7 @@ rule SummarizedExperiment:
     params:
         gtf=config['ref']['annotation'],
         orgdb=config['orgdb'],
-        renv_rproj_dir = lambda wildcards, input: os.dirname(input.renv_lock)
+        renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock)
     threads: 1
     envmodules:
         config['modules']['R']
