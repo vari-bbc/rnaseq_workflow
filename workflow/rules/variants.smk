@@ -372,7 +372,8 @@ rule variant_annot:
 
 rule snprelate:
     input:
-        vcf="results/variant_calling/final/06_filter_vcf/all.merged.filt.PASS.SNP.vcf.gz"
+        vcf="results/variant_calling/final/06_filter_vcf/all.merged.filt.PASS.SNP.vcf.gz",
+        renv_lock="results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname'])
     output:
         symlink_rmd = "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.Rmd",
         symlink_vcf = "results/variant_calling/final/07b_snp_pca_and_dendro/all.merged.filt.PASS.SNP.vcf.gz",
@@ -384,9 +385,12 @@ rule snprelate:
         rmd='workflow/scripts/snprelate.Rmd',
         wd = lambda wildcards, output: os.path.dirname(output.html),
         in_vcf = lambda wildcards, input: os.path.basename(input.vcf),
-        outdir = lambda wildcards, output: os.path.basename(output.outdir)
+        outdir = lambda wildcards, output: os.path.basename(output.outdir),
+        renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock),
+        snakemake_dir = os.getcwd() + "/"
     envmodules:
-        config['modules']['R']
+        config['modules']['R'],
+        config['modules']['pandoc']
     threads: 1
     resources:
         mem_gb = 60,
@@ -398,5 +402,5 @@ rule snprelate:
 
         cd {params.wd}
 
-        Rscript --vanilla -e "rmarkdown::render('snprelate.Rmd', params = list(in_vcf = '{params.in_vcf}', outdir = '{params.outdir}'))"
+        Rscript --vanilla -e "rmarkdown::render('snprelate.Rmd', params = list(in_vcf = '{params.in_vcf}', outdir = '{params.outdir}', renv_rproj_dir = '{params.snakemake_dir}/{params.renv_rproj_dir}'))"
         """

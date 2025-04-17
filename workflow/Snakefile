@@ -28,6 +28,10 @@ valid_groups = samples.groupby(['group'])['group'].count() > 1
 if not (valid_groups.all()):
     raise Exception('Each group in the samplesheet must have at least two samples.')
 
+
+Rproj_packages_vals = pd.read_table("config/R_proj_packages.txt", header=None)[0].values
+Rproj_packages = "c('" + "','".join(Rproj_packages_vals) + "')"
+
 # comparisons: list of comparisons (contrasts) to be tested
 comparisons = pd.read_table(config["comparisons"]) #, dtype={"comparison_name" : str, "group_test" : str, "group_reference" : str})
 if not (comparisons['group_test'].isin(samples['group']).all() and comparisons['group_reference'].isin(samples['group']).all()):
@@ -50,6 +54,15 @@ if (config['call_variants']):
     assert contigs_fai == contigs_parsed_flat, "Chromosomes in grouped contigs file do not match fai."
 
     include: 'rules/variants.smk'
+
+snakemake_dir = os.getcwd() + "/"
+
+# make a tmp directory for analyses
+tmp_dir = os.path.join(snakemake_dir, "tmp")
+if not os.path.exists(tmp_dir):
+    os.mkdir(tmp_dir)
+
+
 
 # Need this directive because both PE and SE versions of these rules produce the trimmed R1 output files.
 ruleorder: trim_galore_PE > trim_galore_SE
@@ -95,6 +108,7 @@ rule all:
         expand("results/deseq2/DESeq2_{comparison_name}.html", comparison_name=pd.unique(comparisons["comparison_name"])),
         "results/variant_calling/final/07a_variant_annot/all.merged.filt.PASS.snpeff.vcf.gz" if (config["call_variants"]) else [],
         "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.html" if (config["call_variants"]) else [],
+        "results/{Rproj}/{Rproj}.Rproj".format(Rproj=config['Rproj_dirname'])    
 
 include:
     'rules/RNAseq.smk'
@@ -102,5 +116,11 @@ include:
     'rules/qc.smk'
 include:
     'rules/visualisation.smk'
+
+if (config["call_variants"]):
+    include:
+        'rules/variants.smk'
+include:
+    'rules/make_Rprojects.smk'
 include:
     'rules/deseq2.smk'
