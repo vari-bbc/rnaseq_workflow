@@ -13,3 +13,5 @@ for (pkg in c("usethis","renv")){
 
 usethis::create_project(path = R_proj_name, open = TRUE, rstudio = TRUE)
 
+sessionInfo()
+

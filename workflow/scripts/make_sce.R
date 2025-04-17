@@ -157,3 +157,4 @@ sizefactors <- 1/dds$sizeFactor
 tibble::tibble(sample=names(sizefactors), sizefactor=sizefactors) %>%
   write_tsv(., out_sizeFactors) # "SizeFactors will now contain a factor for every sample which can be used to divide the 4th colun of a bedGraph/bigwig by. Both the aforementioned tools (bamCoverage and genomecov) have options though to directly scale the output by a factor (--scaleFactor or --scale respectively). !! Note though that these options will multiply rather than divide the 4th column with the factor, therefore you would need to provide the reciprocal as mentioned in the code chunk above." https://www.biostars.org/p/413626/#414440
 
+sessionInfo()

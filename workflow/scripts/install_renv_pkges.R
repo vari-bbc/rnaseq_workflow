@@ -23,3 +23,4 @@ for (pkg in pkges){
 
 renv::snapshot()
 
+sessionInfo()
