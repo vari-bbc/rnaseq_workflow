@@ -47,6 +47,8 @@ contigs_parsed_flat = sorted(list(itertools.chain.from_iterable(contigs_parsed))
 
 assert contigs_fai == contigs_parsed_flat, "Chromosomes in grouped contigs file do not match fai."
 
+snakemake_dir = os.getcwd() + "/"
+
 # Need this directive because both PE and SE versions of these rules produce the trimmed R1 output files.
 ruleorder: trim_galore_PE > trim_galore_SE
 
@@ -57,7 +59,7 @@ rule all:
         expand("results/avg_bigwigs/{group}.unstr.bw", group=pd.unique(samples['group'])),
         "results/variant_calling/final/07a_variant_annot/all.merged.filt.PASS.snpeff.vcf.gz" if (config["call_variants"]) else [],
         "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.html" if (config["call_variants"]) else [],
-        "{Rproj}/{Rproj}.Rproj".format(Rproj=config['Rproj_dirname'])    
+        "results/{Rproj}/{Rproj}.Rproj".format(Rproj=config['Rproj_dirname'])    
 
 include:
     'rules/RNAseq.smk'

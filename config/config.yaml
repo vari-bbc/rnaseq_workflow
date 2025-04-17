@@ -20,11 +20,12 @@ call_variants: False
 grouped_contigs: config/grouped_contigs.tsv 
 
 # R project config
-Rproj_dirname: VBCS-000_Rproj
+Rproj_dirname: "VBCS-000_Rproj"
 ## use renv cache or install/copy all packages in project.
 renv_use_cache: True
 ## copy packages from user library if available?
 renv_use_user_lib: True
+renv_symlink_from_cache: False
 ## if using renv cache, this is the path to where the cache is/will be stored.
 renv_root_path: /varidata/research/projects/bbc/tools/renv_root
 
