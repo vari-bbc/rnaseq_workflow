@@ -38,23 +38,6 @@ if not (comparisons['group_test'].isin(samples['group']).all() and comparisons['
     raise Exception('A group in the comparisons file is not in the samplesheet.')
     
 
-if (config['call_variants']):
-    # read grouped contigs
-    contigs_file = config["grouped_contigs"]
-    contig_groups = pd.read_table(contigs_file)
-    contig_groups['contigs'] = contig_groups['contigs'].replace('', np.nan) # unplaced_contigs can be empty for certain references.
-    contig_groups.dropna(subset=['contigs'], inplace=True)
-
-    # check chromosomes/contigs parsed correctly by comparing to fai.
-    fai_file = config["ref"]["fai"]
-    contigs_fai = sorted(pd.read_table(fai_file, names=['name','len','offset','linebases','linewidth'])['name'].values)
-    contigs_parsed = [x.split(',') for x in contig_groups['contigs'].values]
-    contigs_parsed_flat = sorted(list(itertools.chain.from_iterable(contigs_parsed)))
-
-    assert contigs_fai == contigs_parsed_flat, "Chromosomes in grouped contigs file do not match fai."
-
-    include: 'rules/variants.smk'
-
 snakemake_dir = os.getcwd() + "/"
 
 # make a tmp directory for analyses
@@ -99,6 +82,23 @@ if quick_ref_id:
 else:
     print("Using the index files manually specified in the config file.\n")
 
+
+if (config['call_variants']):
+    # read grouped contigs
+    contigs_file = config["grouped_contigs"]
+    contig_groups = pd.read_table(contigs_file)
+    contig_groups['contigs'] = contig_groups['contigs'].replace('', np.nan) # unplaced_contigs can be empty for certain references.
+    contig_groups.dropna(subset=['contigs'], inplace=True)
+
+    # check chromosomes/contigs parsed correctly by comparing to fai.
+    fai_file = config["ref"]["fai"]
+    contigs_fai = sorted(pd.read_table(fai_file, names=['name','len','offset','linebases','linewidth'])['name'].values)
+    contigs_parsed = [x.split(',') for x in contig_groups['contigs'].values]
+    contigs_parsed_flat = sorted(list(itertools.chain.from_iterable(contigs_parsed)))
+
+    assert contigs_fai == contigs_parsed_flat, "Chromosomes in grouped contigs file do not match fai."
+
+    include: 'rules/variants.smk'
 
 rule all:
     input:
