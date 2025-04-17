@@ -1,12 +1,15 @@
 args <- commandArgs(trailingOnly = TRUE)
 
-
 gtf_file <- args[1]
 orgdb <- args[2]
-out_se <- args[3]
-out_sce <- args[4]
-out_sizeFactors <- args[5]
-out_txi <- args[6]
+renv_rproj_dir <- args[3]
+out_se <- args[4]
+out_sce <- args[5]
+out_sizeFactors <- args[6]
+out_txi <- args[7]
+
+# use the packages in the renv
+renv::load(renv_rproj_dir)
 
 star_dir <- "results/star"
 salmon_dir <- "results/salmon"

@@ -3,6 +3,7 @@ rule make_Rproject:
         R_pkges="config/R_proj_packages.txt"
     output:
         rproj = "results/{Rproj}/{Rproj}.Rproj",
+        R_dir = directory("results/{Rproj}/R"),
         renv_lock = "results/{Rproj}/renv.lock",
         renv_dependencies = "results/{Rproj}/_dependencies.R",
         renviron = "results/{Rproj}/.Renviron",
