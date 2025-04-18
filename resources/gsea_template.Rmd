@@ -21,6 +21,7 @@ params:
   fdr_cutoff: ""
   de_res: ""
   vsd_rds: ""
+  pathway_str: ""
 # params:
 #   orgdb: "org.Mm.eg.db"
 #   kegg_org: "mmu"
@@ -30,7 +31,7 @@ params:
 #   fdr_cutoff: "0.1"
 #   de_res: "../results/deseq2/deseq2_out_files/ko_v_ctrl/de_res.rds"
 #   vsd_rds: "../results/deseq2/deseq2_out_files/ko_v_ctrl/vsd.rds"
-
+#   pathway_str: ""
 ---
 
 ```{r keep_figures, cache=TRUE}
@@ -230,7 +231,9 @@ stopifnot(all(correct_ranking))
 
 ```{r get_genesets_and_run_gsea}
 
-pathwayNames = c("Reactome","BP", "BP-simplified", "KEGG","H","C3","C6","C7")
+pathwayNames = unlist(strsplit(params$pathway_str, ",")[[1]])
+
+print(pathwayNames)
 
 gsea_res <- lapply(setNames(nm=pathwayNames), function(ont){
   message("Running GSEA for ", ont)

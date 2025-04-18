@@ -12,6 +12,7 @@ rule gsea:
         kegg_org = config['kegg_org'],
         reactome_org = config['reactome_org'],
         msigdb_organism = config['msigdb_organism'],
+        pathway_str = config['pathway_str'],
         gsea_template = "resources/gsea_template.Rmd",
         fdr_cutoff = config['fdr_cutoff'],
         comparison = lambda wildcards: wildcards.comparison
@@ -27,5 +28,5 @@ rule gsea:
         """
         cp {params.gsea_template} {output.rmd}
 
-        Rscript --vanilla -e "rmarkdown::render('{output.rmd}', params = list(orgdb = '{params.orgdb}', kegg_org = '{params.kegg_org}', comparison_name = '{params.comparison}', reactome_org = '{params.reactome_org}', msigdb_organism = '{params.msigdb_organism}', fdr_cutoff = '{params.fdr_cutoff}', de_res = '{input.res_rds}', vsd_rds = '{input.vsd_rds}'))"
+        Rscript --vanilla -e "rmarkdown::render('{output.rmd}', params = list(orgdb = '{params.orgdb}', kegg_org = '{params.kegg_org}', comparison_name = '{params.comparison}', reactome_org = '{params.reactome_org}', msigdb_organism = '{params.msigdb_organism}', fdr_cutoff = '{params.fdr_cutoff}', de_res = '{input.res_rds}', vsd_rds = '{input.vsd_rds}', pathway_str = '{params.pathway_str}'))"
         """
