@@ -31,7 +31,7 @@ params:
 #   fdr_cutoff: "0.1"
 #   de_res: "../results/deseq2/deseq2_out_files/ko_v_ctrl/de_res.rds"
 #   vsd_rds: "../results/deseq2/deseq2_out_files/ko_v_ctrl/vsd.rds"
-#   pathway_str: ""
+#   pathway_str: "Reactome,BP,BP-simplified,KEGG,H,C1,C2,C3,C4,C5,C6,C7,C8"
 ---
 
 ```{r keep_figures, cache=TRUE}
@@ -302,7 +302,8 @@ dotplots <- lapply(setNames(nm=names(gsea_res)), function(geneset){
     #gseaResult <- filter(gseaResult, p.adjust < p_cutoff)
     if(nrow(gseaResult) > 0){
       dotplot(gseaResult, split=".sign") + ggtitle(paste0(params$comparison_name," -- ", geneset)) +
-        scale_y_discrete(label=function(x) str_trunc(str_remove(x, "HALLMARK_|\\s-\\sRattus norvegicus.*"), 40)) + facet_grid(.~.sign)
+        scale_y_discrete(label=function(x) str_trunc(str_remove(x, paste0("HALLMARK_|\\s-\\s", params$msigdb_organism,".*")), 40)) + facet_grid(.~.sign)
+      
     } else{
       "No significant results"
     }
