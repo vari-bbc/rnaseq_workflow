@@ -26,10 +26,13 @@ rule rename_fastqs:
     shell:
         """
         # If the fastqs are not compressed, gzipped them with new name.
-        if ( file -L {input} | grep -q 'gzip compressed' ) ; then
+        if ( (file -L "{input}" | grep -q 'gzip compressed') || (file -L "{input}" | grep -q 'Blocked GNU Zip Format') ) ; then
             ln -sr {input} {output} 
-        else
+        elif ( file -L "{input}" | grep -q 'ASCII text' ) ; then
             gzip -c {input} > {output}
+        else
+            echo "Unrecognized input file format."
+            exit 1
         fi
         """
 
