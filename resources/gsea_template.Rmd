@@ -4,6 +4,7 @@ author: '`r paste0("BBC, Analyst: ", stringr::str_to_title(stringr::str_replace_
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output:
   html_document:
+    theme: yeti
     code_folding: hide
     self_contained: yes
     toc: true
