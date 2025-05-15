@@ -1,7 +1,8 @@
 rule gsea:
     input:
         res_rds="results/deseq2/deseq2_out_files/{comparison}/de_res.rds",
-        vsd_rds="results/deseq2/deseq2_out_files/{comparison}/vsd.rds"
+        vsd_rds="results/deseq2/deseq2_out_files/{comparison}/vsd.rds",
+        renv_lock = "results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname'])
     output:
         rmd="results/gsea/gsea_{comparison}.Rmd",
         html="results/gsea/gsea_{comparison}.html"
@@ -15,7 +16,8 @@ rule gsea:
         pathway_str = config['pathway_str'],
         gsea_template = "resources/gsea_template.Rmd",
         fdr_cutoff = config['fdr_cutoff'],
-        comparison = lambda wildcards: wildcards.comparison
+        comparison = lambda wildcards: wildcards.comparison,
+        renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock)
     envmodules:
         config['modules']['R'],
         config['modules']['pandoc']
