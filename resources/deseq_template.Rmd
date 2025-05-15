@@ -1,9 +1,10 @@
 ---
-title: "DESeq2"
+title: "DESeq2 Analysis"
 author: '`r paste0("BBC, Analyst: ", stringr::str_to_title(stringr::str_replace_all(Sys.getenv("USER"), "\\.", " ")  ))`'
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output:
   html_document:
+    theme: yeti
     code_folding: hide
     self_contained: yes
     toc: true
