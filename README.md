@@ -53,4 +53,53 @@ Execute from within your project directory as a SLURM job.
 sbatch bin/run_snake.sh
 ```
 
-
+```mermaid
+---
+title: DAG for the RNAseq BBC Pipeline
+---
+flowchart TB
+	id0[all]
+	id1[multiqc]
+	id2[fastq_screen]
+	id3[concat_fastqs]
+	id4[trim_galore_PE]
+	id5[rename_fastqs]
+	id6[fastqc]
+	id7[STAR]
+	id8[salmon]
+	id9[sortmerna]
+	id10[seqtk]
+	id11[SummarizedExperiment]
+	id12[make_Rproject]
+	id13[deseq2]
+	id14[gsea]
+	id15[make_final_report]
+	id0 --> id0
+	id0 --> id1
+	id0 --> id2
+	id0 --> id3
+	id0 --> id4
+	id0 --> id5
+	id1 --> id0
+	id1 --> id1
+	id1 --> id2
+	id1 --> id3
+	id1 --> id4
+	id2 --> id0
+	id3 --> id0
+	id4 --> id0
+	id6 --> id0
+	id7 --> id0
+	id8 --> id0
+	id9 --> id0
+	id10 --> id0
+	id11 --> id0
+	id11 --> id1
+	id11 --> id2
+	id13 --> id0
+	id13 --> id1
+	id14 --> id0
+	id14 --> id1
+	id15 --> id0
+	id15 --> id1
+```
