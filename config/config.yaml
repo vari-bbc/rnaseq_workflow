@@ -15,7 +15,7 @@ ref:
   fai:  /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/mm10_gencode/sequence/mm10_gencode.fa.fai
 
 # OrgDB R package for covnerting gene names. Common choices are 'org.Mm.eg.db' for mouse and 'org.Hs.eg.db' for human.
-orgdb: org.Mm.eg.db
+orgdb: org.Hs.eg.db
 fdr_cutoff: 0.1
 genes_of_interest: DUSP1,KLF15,CRISPLD2
 

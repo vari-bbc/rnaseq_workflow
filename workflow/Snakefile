@@ -90,11 +90,11 @@ else:
 
 quick_ref_dict = {
         
-    "hg38_gencode"       :["hsa", "human",    "Homo sapiens"],
-    "mm10_gencode"       :["mmu", "mouse",    "Mus musculus"],
-    "rnor6_ensembl"      :["rno", "rat",      "Ratus norvegicus"],
-    "dm6_BDGP6.28.100"   :["dme", "fly",      "Drosophila melanogaster"],
-    "c.elegans-WBcel235" :["cel", "celegans", "Caenorhabditis elegans"]
+    "hg38_gencode"       :["hsa", "human",    "Homo sapiens",            "org.Hs.eg.db"],
+    "mm10_gencode"       :["mmu", "mouse",    "Mus musculus",            "org.Mm.eg.db"],
+    "rnor6_ensembl"      :["rno", "rat",      "Ratus norvegicus",        "org.Rn.eg.db"],
+    "dm6_BDGP6.28.100"   :["dme", "fly",      "Drosophila melanogaster", "org.Dm.eg.db"],
+    "c.elegans-WBcel235" :["cel", "celegans", "Caenorhabditis elegans",  "org.Ce.eg.db"]
 
     }
 
@@ -112,6 +112,8 @@ if quick_ref_id in quick_ref_dict:
     # Full species name. Applicable input strings can be found by installing the msigdbr library in R and using msigdbr::msigdbr_species()
     config['msigdb_organism'] = quick_ref_dict[quick_ref_id][2]
 
+    # The species database for translating gene names and analyses
+    config['orgdb'] = quick_ref_dict[quick_ref_id][3]
 
 
 rule all:
