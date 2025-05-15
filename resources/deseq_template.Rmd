@@ -229,6 +229,9 @@ write_tsv(vst_df, file.path(outdir, "vst.tsv"))
 ```{r pca_func}
 # Make PCA plots
 make_PCA <- function(in_dds, cols, PCx=1, PCy=2, ntop){
+  if (ntop > nrow(in_dds)) {
+    ntop <- nrow(in_dds)
+  }
   mat <- assay(in_dds) 
   col_data <- as.data.frame(colData(in_dds))
   
