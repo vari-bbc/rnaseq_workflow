@@ -176,18 +176,13 @@ write_rds(df, file.path(outdir, "de_res.rds"))
 
 ```{r specific_genes_check}
 # determine whether any genes have been specified in the config file
-if (!(params$genes_of_interest %in% c("", "False", "FALSE", "None"))) {
-  genes_specified <- TRUE
-  genes_of_interest <- params$genes_of_interest %>% strsplit(",") %>% unlist() %>% gsub("\\s+", "", .)
-} else {
-  genes_specified <- FALSE
-  message("No genes of interest specified -- skipping this step.")
-}
+genes_specified <- !(params$genes_of_interest %in% c("", "False", "FALSE", "None"))
 ```
 
 `r  if(genes_specified){"### **Look for specific genes**\nIf we're interested in specific genes (such as genes we'd expect, a priori, to be different),\nwe can check if they are differentially expressed.\n\nThe following genes are shown, based on genes specified in the 'genes_of_interest' parameter in the config file."}` 
 
 ```{r specific_genes, eval=genes_specified, echo=genes_specified, include=genes_specified}
+genes_of_interest <- params$genes_of_interest %>% strsplit(",") %>% unlist() %>% gsub("\\s+", "", .)
 message("Genes of interest: ", paste(genes_of_interest, collapse=", "))
 df %>% dplyr::filter(Symbol %in% genes_of_interest) %>% print()
 ```
