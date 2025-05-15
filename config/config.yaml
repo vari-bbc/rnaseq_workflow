@@ -1,7 +1,7 @@
 quick_ref:
-# Only fill this if you are NOT doing SNP calling. "ref_genome_verison" is the dir of the date and version of the reference. Check what is available at /varidata/research/projects/bbc/versioned_references. If you are not sure, you can use the latest one.  "species_name" is the dir name of the reference genome, check /varidata/research/projects/bbc/versioned_references/latest/data/ to see species are there. The most commonly used species are mm10_gencode and hg38_gencode. ref_genome_version is optional whereas species_name is MANDATORY; if you leave quick_ref section blank, the workflow will use references from "ref" section below. 
-  ref_genome_version: latest # The earliest recommended version is 2021-08-10_11.12.27_v6. Note that the Salmon index might not exist for earlier versions.
-  species_name: mm10_gencode
+# Only fill this if you are NOT doing SNP calling. "ref_genome_verison" is the dir of the date and version of the reference. Check what is available at /varidata/research/projects/bbc/versioned_references. If you are not sure, you can use the latest one.  "species_name" is the dir name of the reference genome, check /varidata/research/projects/bbc/versioned_references/latest/data/ to see species are there. The most commonly used species are mmm10_gencode and hg38_gencode. ref_genome_version is optional whereas species_name is MANDATORY; if you leave quick_ref section blank, the workflow will use references from "ref" section below. 
+  ref_genome_version:       # The earliest recommended version is 2021-08-10_11.12.27_v6. Note that the Salmon index might not exist for earlier versions.
+  species_name: hg38_gencode 
 ref:
   index:          /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/mm10_gencode/indexes/star
   salmon_index:   /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/mm10_gencode/indexes/salmon/mm10_gencode
@@ -38,6 +38,18 @@ grouped_contigs: config/grouped_contigs.tsv
 
 run_vis_bigwig : True
 
+# R project config
+Rproj_dirname: "VBCS-000_Rproj"
+## use renv cache or install/copy all packages in project.
+renv_use_cache: True
+## copy packages from user library if available?
+renv_use_user_lib: True
+renv_symlink_from_cache: False
+# Use Pak to install packages
+renv_use_pak: False # I couldn't get pak to install to the renv cache which resulted in rebuilding the library each time; see https://github.com/r-lib/pak/issues/284
+## if using renv cache, this is the path to where the cache is/will be stored.
+renv_root_path: /varidata/research/projects/bbc/tools/renv_root
+
 ####################################################################
 # FOR MOST STANDARD USE CASES, THE BELOW DO NOT NEED TO BE CHANGED.#
 ####################################################################
@@ -66,7 +78,8 @@ modules:
   multiqc: bbc2/multiqc/multiqc-1.14
   pandoc: bbc2/pandoc/pandoc-3.1.2
   picard: bbc2/picard/picard-2.27.5
-  R: bbc2/R/alt/R-4.3.0-setR_LIBS_USER
+  # The easiest way to get renv to work is to make sure all packages are already installed and up to date in your user library which will then be simply copied to the project library
+  R: bbc2/R/alt/R-4.4.0-setR_LIBS_USER-extra
   salmon: bbc2/salmon/salmon-1.10.0
   samtools: bbc2/samtools/samtools-1.17
   seqtk: bbc2/seqtk/seqtk-1.3-r115-dirty

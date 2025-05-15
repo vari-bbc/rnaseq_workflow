@@ -15,12 +15,15 @@ output:
 params:
     in_vcf: ""
     outdir: ""
+    renv_rproj_dir: ""
 ---
 
 ```{r starttime}
 # save start time for script
 start_ptm <- proc.time()
 start_ptm
+
+renv::load(params$renv_rproj_dir)
 
 outdir <- params$outdir
 dir.create(outdir, recursive=TRUE)

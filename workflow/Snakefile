@@ -28,28 +28,24 @@ valid_groups = samples.groupby(['group'])['group'].count() > 1
 if not (valid_groups.all()):
     raise Exception('Each group in the samplesheet must have at least two samples.')
 
+
+Rproj_packages_vals = pd.read_table("config/R_proj_packages.txt", header=None)[0].values
+Rproj_packages = "c('" + "','".join(Rproj_packages_vals) + "')"
+
 # comparisons: list of comparisons (contrasts) to be tested
 comparisons = pd.read_table(config["comparisons"]) #, dtype={"comparison_name" : str, "group_test" : str, "group_reference" : str})
 if not (comparisons['group_test'].isin(samples['group']).all() and comparisons['group_reference'].isin(samples['group']).all()):
     raise Exception('A group in the comparisons file is not in the samplesheet.')
     
 
-if (config['call_variants']):
-    # read grouped contigs
-    contigs_file = config["grouped_contigs"]
-    contig_groups = pd.read_table(contigs_file)
-    contig_groups['contigs'] = contig_groups['contigs'].replace('', np.nan) # unplaced_contigs can be empty for certain references.
-    contig_groups.dropna(subset=['contigs'], inplace=True)
+snakemake_dir = os.getcwd() + "/"
 
-    # check chromosomes/contigs parsed correctly by comparing to fai.
-    fai_file = config["ref"]["fai"]
-    contigs_fai = sorted(pd.read_table(fai_file, names=['name','len','offset','linebases','linewidth'])['name'].values)
-    contigs_parsed = [x.split(',') for x in contig_groups['contigs'].values]
-    contigs_parsed_flat = sorted(list(itertools.chain.from_iterable(contigs_parsed)))
+# make a tmp directory for analyses
+tmp_dir = os.path.join(snakemake_dir, "tmp")
+if not os.path.exists(tmp_dir):
+    os.mkdir(tmp_dir)
 
-    assert contigs_fai == contigs_parsed_flat, "Chromosomes in grouped contigs file do not match fai."
 
-    include: 'rules/variants.smk'
 
 # Need this directive because both PE and SE versions of these rules produce the trimmed R1 output files.
 ruleorder: trim_galore_PE > trim_galore_SE
@@ -116,6 +112,23 @@ if quick_ref_id in quick_ref_dict:
     config['orgdb'] = quick_ref_dict[quick_ref_id][3]
 
 
+if (config['call_variants']):
+    # read grouped contigs
+    contigs_file = config["grouped_contigs"]
+    contig_groups = pd.read_table(contigs_file)
+    contig_groups['contigs'] = contig_groups['contigs'].replace('', np.nan) # unplaced_contigs can be empty for certain references.
+    contig_groups.dropna(subset=['contigs'], inplace=True)
+
+    # check chromosomes/contigs parsed correctly by comparing to fai.
+    fai_file = config["ref"]["fai"]
+    contigs_fai = sorted(pd.read_table(fai_file, names=['name','len','offset','linebases','linewidth'])['name'].values)
+    contigs_parsed = [x.split(',') for x in contig_groups['contigs'].values]
+    contigs_parsed_flat = sorted(list(itertools.chain.from_iterable(contigs_parsed)))
+
+    assert contigs_fai == contigs_parsed_flat, "Chromosomes in grouped contigs file do not match fai."
+
+    include: 'rules/variants.smk'
+
 rule all:
     input:
         "results/multiqc/multiqc_report.html",
@@ -124,7 +137,9 @@ rule all:
         expand("results/deseq2/DESeq2_{comparison_name}.html", comparison_name=pd.unique(comparisons["comparison_name"])),
         expand("results/gsea/gsea_{comparison_name}.html", comparison_name=pd.unique(comparisons["comparison_name"])),
         "results/variant_calling/final/07a_variant_annot/all.merged.filt.PASS.snpeff.vcf.gz" if (config["call_variants"]) else [],
-        "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.html" if (config["call_variants"]) else []
+        "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.html" if (config["call_variants"]) else [],
+        "results/{Rproj}/{Rproj}.Rproj".format(Rproj=config['Rproj_dirname'])    
+
 
 include:
     'rules/RNAseq.smk'
@@ -132,6 +147,8 @@ include:
     'rules/qc.smk'
 include:
     'rules/visualisation.smk'
+include:
+    'rules/make_Rprojects.smk'
 include:
     'rules/deseq2.smk'
 include:
