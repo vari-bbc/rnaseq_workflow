@@ -5,8 +5,10 @@ ComplexHeatmap
 DESeq2
 edgeR
 enrichplot
+genefilter
 GenomicFeatures
 ggprism
+ggsci
 GO.db
 GSVA
 iSEE

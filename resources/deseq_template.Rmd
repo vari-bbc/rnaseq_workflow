@@ -1,9 +1,10 @@
 ---
-title: "DESeq2"
+title: "DESeq2 Analysis"
 author: '`r paste0("BBC, Analyst: ", stringr::str_to_title(stringr::str_replace_all(Sys.getenv("USER"), "\\.", " ")  ))`'
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 output:
   html_document:
+    theme: yeti
     code_folding: hide
     self_contained: yes
     toc: true
@@ -44,6 +45,8 @@ knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.
 
 # **Analysis**
 
+## **Data Processing**
+
 ### **Load packages**
 
 ```{r load_pkges}
@@ -54,6 +57,7 @@ library(readr)
 library(ggrepel)
 library(ComplexHeatmap)
 library(DESeq2)
+library(patchwork)
 ```
 
 ### **Set up your DESeq object**
@@ -174,18 +178,17 @@ write_tsv(df, file.path(outdir, "de_res.tsv"))
 write_rds(df, file.path(outdir, "de_res.rds"))
 ```
 
-### **Look for specific genes**
+```{r specific_genes_check}
+# determine whether any genes have been specified in the config file
+genes_specified <- !(params$genes_of_interest %in% c("", "False", "FALSE", "None"))
+```
 
-If we're interested in specific genes (such as genes we'd expect, a priori, to be different),
-we can check if they are differentially expressed.
+`r  if(genes_specified){"### **Look for specific genes**\nIf we're interested in specific genes (such as genes we'd expect, a priori, to be different),\nwe can check if they are differentially expressed.\n\nThe following genes are shown, based on genes specified in the 'genes_of_interest' parameter in the config file."}` 
 
-The following genes are shown, based on genes specified in the `genes_of_interest` parameter in the config file.
-
-```{r specific_genes}
-if (!(params$genes_of_interest %in% c("", "False", "FALSE"))) {
-  genes_of_interest <- params$genes_of_interest %>% strsplit(",") %>% unlist() %>% gsub("\\s+", "", .)
-  df %>% dplyr::filter(Symbol %in% genes_of_interest) %>% print()
-}
+```{r specific_genes, eval=genes_specified, echo=genes_specified, include=genes_specified}
+genes_of_interest <- params$genes_of_interest %>% strsplit(",") %>% unlist() %>% gsub("\\s+", "", .)
+message("Genes of interest: ", paste(genes_of_interest, collapse=", "))
+df %>% dplyr::filter(Symbol %in% genes_of_interest) %>% print()
 ```
 
 ### **Output tables with raw counts**
@@ -221,6 +224,57 @@ write_tsv(vst_df, file.path(outdir, "vst.tsv"))
 
 ## **Some common plots for DEG analysis**
 
+### **PCA**
+
+```{r pca_func}
+# Make PCA plots
+make_PCA <- function(in_dds, cols, PCx=1, PCy=2, ntop){
+  mat <- assay(in_dds) 
+  col_data <- as.data.frame(colData(in_dds))
+  
+  # row variances
+  vars <- genefilter::rowVars(mat)
+  vars_rank <- order(vars, decreasing = TRUE)
+  
+  # get most variable genes
+  mat <- mat[vars_rank[1:ntop], ]
+  
+  pcaData <- prcomp(t(mat))
+  
+  prop_var <- data.frame(t(summary(pcaData)$importance))
+  names(prop_var) = c("sd", "prop", "cum")
+  prop_var$num = 1:nrow(prop_var)
+  
+  #pcaData <- plotPCA(in_dds, intgroup=colnames(colData(in_dds)), returnData=TRUE, ...)
+  percentVar <- round(100 * prop_var$prop)
+  
+  
+  df <- cbind(pcaData$x, col_data)
+  
+  out_patchwork <- list()
+  
+  for (i in 1:length(cols)){
+    gg_args <- list(x=str_glue("PC{PCx}"), y=str_glue("PC{PCy}"), color=cols[i], label="sample")
+    gg_args <- lapply(gg_args, function(x) if (!is.null(x)) sym(x))
+    out_patchwork <- c(out_patchwork, list(ggplot(df, aes(!!!gg_args)) +
+                                             geom_point(size=1) +
+                                             scale_color_manual(values = setNames(c("#440154FF","#2A788EFF", ggsci::pal_npg()(length(levels(dds$group))-2)),
+                                                                                  levels(dds$group))) +
+                                             xlab(paste0(str_glue("PC{PCx}: "),percentVar[PCx],"% variance")) +
+                                             ylab(paste0(str_glue("PC{PCy}: "),percentVar[PCy],"% variance")) + 
+                                             theme_bw() + 
+                                             ggrepel::geom_text_repel(max.overlaps=5)))
+  }
+  wrap_plots(out_patchwork)
+}
+```
+
+```{r plot_pca, fig.height=4.5, fig.width=9}
+(make_PCA(vsd, ntop=10000, cols="group") | 
+    (make_PCA(vsd, ntop=10000, cols="group", PCx = 3, PCy = 4))) +
+  plot_layout(guides="collect") + 
+  plot_annotation(title = "PCA - All Samples") 
+```
 
 ### **Volcano plot**
 
@@ -269,7 +323,7 @@ mat <- t(scale(t(mat), scale=FALSE, center = TRUE))
 ht_col_annot <- as.data.frame(colData(top_se)[, "group", drop=FALSE])
 
 group_lvls <- unique(ht_col_annot$group)
-ht_col_colors <- list(group=setNames(c("#440154FF","#2A788EFF"),
+ht_col_colors <- list(group=setNames(c("#440154FF","#2A788EFF", ggsci::pal_npg()(length(group_lvls)-2)),
                                          nm=group_lvls))
 
 Heatmap(mat,
@@ -300,13 +354,13 @@ ggplot(data = as.data.frame(lfc_shrink) %>%
 
 ```
 
-# SessionInfo
+# **SessionInfo**
 
 ```{r sessioninfo}
 sessionInfo()
 ```
 
-# Time
+# **Time**
 
 ```{r endtime}
 # output time taken to run script
