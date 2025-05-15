@@ -44,6 +44,8 @@ knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.
 
 # **Analysis**
 
+## **Data Processing**
+
 ### **Load packages**
 
 ```{r load_pkges}
@@ -351,13 +353,13 @@ ggplot(data = as.data.frame(lfc_shrink) %>%
 
 ```
 
-# SessionInfo
+# **SessionInfo**
 
 ```{r sessioninfo}
 sessionInfo()
 ```
 
-# Time
+# **Time**
 
 ```{r endtime}
 # output time taken to run script
