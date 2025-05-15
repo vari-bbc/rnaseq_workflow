@@ -28,5 +28,5 @@ rule gsea:
         """
         cp {params.gsea_template} {output.rmd}
 
-        Rscript --vanilla -e "rmarkdown::render('{output.rmd}', params = list(orgdb = '{params.orgdb}', kegg_org = '{params.kegg_org}', comparison_name = '{params.comparison}', reactome_org = '{params.reactome_org}', msigdb_organism = '{params.msigdb_organism}', fdr_cutoff = '{params.fdr_cutoff}', de_res = '{input.res_rds}', vsd_rds = '{input.vsd_rds}', pathway_str = '{params.pathway_str}'))"
+        Rscript --vanilla -e "renv::load('{params.renv_rproj_dir}'); rmarkdown::render('{output.rmd}', params = list(orgdb = '{params.orgdb}', kegg_org = '{params.kegg_org}', comparison_name = '{params.comparison}', reactome_org = '{params.reactome_org}', msigdb_organism = '{params.msigdb_organism}', fdr_cutoff = '{params.fdr_cutoff}', de_res = '{input.res_rds}', vsd_rds = '{input.vsd_rds}', pathway_str = '{params.pathway_str}'))"
         """
