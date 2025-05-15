@@ -1,0 +1,50 @@
+name: "BBC_RNAseq_Report"
+output_dir: "BBC_RNAseq_Report"
+navbar:
+  title: "<img id=\"logo\" style=\"width: 120px; vertical-align: middle; padding-top: 5px;\" src=\"images/VAI 2 Line White.png\" />"
+  # get more icons from https://fontawesome.com/
+  left:
+    - text: "Home"
+      href: index.html
+      icon: fa-solid fa-house
+    - text: "MultiQC"
+      href: multiqc.html
+      icon: fa-square-poll-vertical
+    - text: "Results II"
+      icon: fa-square-poll-vertical
+      menu:
+      - text: Report
+        href: results_ii.html
+      - text: PDF figures
+        href: ./results_ii_out/individual_figures
+    - text: Other reports
+      icon: fa-book
+      menu:
+      - text: "DE results"
+        href: ./external_reports/DE_results.html
+      - text: "Pathway analyses"
+        href: ./external_reports/pathways.html
+      - text: "MultiQC"
+        href: ./external_reports/multiqc_report.html
+    - text: Supplemental files
+      icon: fa-paperclip
+      menu:
+      - text: "Full DE results"
+        href: ./extra/de_res.xlsx
+      - text: "Raw counts matrix"
+        href: ./extra/raw_counts.tsv.gz
+      - text: "KEGG GSEA"
+        href: ./extra/KEGG_gsea.xlsx
+
+  right:
+    - href: https://github.com/vari-bbc/rnaseq_workflow
+      icon: fa-github
+      text: Code
+output:
+  html_document:
+    self_contained: true
+    theme: bootstrap
+    css: styles.css
+    highlight: textmate
+    include:
+      after_body: footer.html
