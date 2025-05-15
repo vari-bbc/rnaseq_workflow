@@ -24,3 +24,4 @@ SNPRelate
 tidyverse
 txdbmaker
 tximport
+ievaKer/aPEAR
