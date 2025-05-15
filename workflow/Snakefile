@@ -138,7 +138,8 @@ rule all:
         expand("results/gsea/gsea_{comparison_name}.html", comparison_name=pd.unique(comparisons["comparison_name"])),
         "results/variant_calling/final/07a_variant_annot/all.merged.filt.PASS.snpeff.vcf.gz" if (config["call_variants"]) else [],
         "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.html" if (config["call_variants"]) else [],
-        "results/{Rproj}/{Rproj}.Rproj".format(Rproj=config['Rproj_dirname'])    
+        "results/{Rproj}/{Rproj}.Rproj".format(Rproj=config['Rproj_dirname']),
+        "results/make_final_report/BBC_RNAseq_Report",    
 
 
 include:
