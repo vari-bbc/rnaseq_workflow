@@ -1,0 +1,6 @@
+---
+title: "MultiQC"
+
+---
+
+<iframe width="1200px" height="1000px" src="./external_reports/multiqc_report.html" frameBorder="0"></iframe>
