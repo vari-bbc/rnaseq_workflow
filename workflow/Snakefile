@@ -50,6 +50,8 @@ if not os.path.exists(tmp_dir):
 # Need this directive because both PE and SE versions of these rules produce the trimmed R1 output files.
 ruleorder: trim_galore_PE > trim_galore_SE
 
+
+
 # below is to process quick ref genome information:
 quick_ref_id = config['quick_ref']['species_name']
 quick_vers = config['quick_ref']['ref_genome_version']
@@ -82,6 +84,33 @@ if quick_ref_id:
 else:
     print("Using the index files manually specified in the config file.\n")
 
+quick_ref_dict = {
+        
+    "hg38_gencode"       :["hsa", "human",    "Homo sapiens",            "org.Hs.eg.db"],
+    "mm10_gencode"       :["mmu", "mouse",    "Mus musculus",            "org.Mm.eg.db"],
+    "rnor6_ensembl"      :["rno", "rat",      "Ratus norvegicus",        "org.Rn.eg.db"],
+    "dm6_BDGP6.28.100"   :["dme", "fly",      "Drosophila melanogaster", "org.Dm.eg.db"],
+    "c.elegans-WBcel235" :["cel", "celegans", "Caenorhabditis elegans",  "org.Ce.eg.db"]
+
+    }
+
+if quick_ref_id in quick_ref_dict:
+
+    # quick_ref python dictionary for quick implementation: 
+
+    # For GSEA
+    # kegg_org should be a three or four letter string corresponding to your reference species. List of KEGG species is found here: https://www.genome.jp/kegg/tables/br08606.html
+    config['kegg_org'] = quick_ref_dict[quick_ref_id][0]
+
+    # reactome_org can be "human", "mouse", "rat", "celegans", "yeast", "zebrafish", "fly" 
+    config['reactome_org'] = quick_ref_dict[quick_ref_id][1]
+
+    # Full species name. Applicable input strings can be found by installing the msigdbr library in R and using msigdbr::msigdbr_species()
+    config['msigdb_organism'] = quick_ref_dict[quick_ref_id][2]
+
+    # The species database for translating gene names and analyses
+    config['orgdb'] = quick_ref_dict[quick_ref_id][3]
+
 
 if (config['call_variants']):
     # read grouped contigs
@@ -106,10 +135,12 @@ rule all:
         expand("results/SummarizedExperiment/{pref}.rds", pref=['SummarizedExperiment', 'sce']),
         expand("results/avg_bigwigs/{group}.unstr.bw", group=pd.unique(samples['group'])) if (config["run_vis_bigwig"]) else [],
         expand("results/deseq2/DESeq2_{comparison_name}.html", comparison_name=pd.unique(comparisons["comparison_name"])),
+        expand("results/gsea/gsea_{comparison_name}.html", comparison_name=pd.unique(comparisons["comparison_name"])),
         "results/variant_calling/final/07a_variant_annot/all.merged.filt.PASS.snpeff.vcf.gz" if (config["call_variants"]) else [],
         "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.html" if (config["call_variants"]) else [],
         "results/{Rproj}/{Rproj}.Rproj".format(Rproj=config['Rproj_dirname']),
         "results/make_final_report/BBC_RNAseq_Report",
+
 
 include:
     'rules/RNAseq.smk'
@@ -121,5 +152,7 @@ include:
     'rules/make_Rprojects.smk'
 include:
     'rules/deseq2.smk'
+include:
+    'rules/gsea.smk'
 include:
     'rules/make_report.smk'

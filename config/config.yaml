@@ -8,7 +8,7 @@ ref:
   annotation:     /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/annotation/hg38_gencode.gtf
   # Below used only for variant calling
   dict: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.dict
-  snpeff_db_id: hg38 
+  snpeff_db_id: hg38
   known_snps: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/gatk_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
   known_indels: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/gatk_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
   sequence: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.fa
@@ -18,6 +18,17 @@ ref:
 orgdb: org.Hs.eg.db
 fdr_cutoff: 0.1
 genes_of_interest: #DUSP1,KLF15,CRISPLD2 # create table in report of these genes, keep empty if no initial genes of interest.
+
+# For GSEA quick_ref can only handle human, mouse, rat, and fly; all other organisms need to be filled in manually
+# kegg_org should be a three or four letter string corresponding to your reference species. List of KEGG species is found here: https://www.genome.jp/kegg/tables/br08606.html
+kegg_org: hsa
+# reactome_org can be "human", "mouse", "rat", "celegans", "yeast", "zebrafish", "fly" 
+reactome_org: human
+# Full species name. Applicable input strings can be found by installing the msigdbr library in R and using msigdbr::msigdbr_species()
+msigdb_organism: Homo sapiens
+# Choose which gene sets you would like to test against
+pathway_str: Reactome,BP,BP-simplified,KEGG,H,C1,C2,C3,C4,C5,C6,C7,C8
+
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE

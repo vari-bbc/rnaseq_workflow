@@ -1,0 +1,387 @@
+---
+title: "GSEA"
+author: '`r paste0("BBC, Analyst: ", stringr::str_to_title(stringr::str_replace_all(Sys.getenv("USER"), "\\.", " ")  ))`'
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  html_document:
+    code_folding: hide
+    self_contained: yes
+    toc: true
+    toc_depth: 5
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+    number_sections: true
+params:
+  orgdb: ""
+  kegg_org: ""
+  reactome_org: ""
+  msigdb_organism: ""
+  comparison_name: ""
+  fdr_cutoff: ""
+  de_res: ""
+  vsd_rds: ""
+  pathway_str: ""
+# params:
+#   orgdb: "org.Mm.eg.db"
+#   kegg_org: "mmu"
+#   reactome_org: "mouse"
+#   msigdb_organism: "Mus musculus"
+#   comparison_name: "ko_v_ctrl"
+#   fdr_cutoff: "0.1"
+#   de_res: "../results/deseq2/deseq2_out_files/ko_v_ctrl/de_res.rds"
+#   vsd_rds: "../results/deseq2/deseq2_out_files/ko_v_ctrl/vsd.rds"
+#   pathway_str: "Reactome,BP,BP-simplified,KEGG,H,C1,C2,C3,C4,C5,C6,C7,C8"
+---
+
+```{r keep_figures, cache=TRUE}
+# this chunk is just to keep the _files directory even when we turn off cacheing
+```
+
+```{r starttime, echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE}
+# save start time for script
+start_tm <- Sys.time()
+start_tm
+```
+
+# Make output directory
+
+```{r makeoutdir}
+outdir <- paste0( params$comparison_name, "_out_files/")
+
+dir.create(outdir)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE, dev=c('png', 'pdf'), fig.width=8, fig.height=8, fig.path=paste0(outdir, "individual_figures/"))
+
+options(bitmapType='cairo')
+```
+
+# Set variables
+
+```{r setvars}
+DE_rds_path <- paste0("../deseq2/deseq2_out_files/", params$comparison_name, "/de_res.rds")
+vsd_rds_path <- paste0("../deseq2/deseq2_out_files/", params$comparison_name, "/vsd.rds")
+
+# DE_rds_path <- params$de_res
+# vsd_rds_path <- params$vsd_rds
+
+orgdb <- params$orgdb
+kegg_org <- params$kegg_org
+reactome_org <- params$reactome_org
+msigdb_organism <- params$msigdb_organism
+
+```
+
+# Load packages and source functions
+
+```{r loadlibs, echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE}
+
+library(orgdb, character.only=TRUE) # load the org.db for your organism
+library(clusterProfiler)
+library(ComplexHeatmap)
+library(AnnotationDbi)
+library(enrichplot)
+library(ReactomePA)
+library(patchwork)
+library(openxlsx)
+library(ggplot2)
+library(msigdbr)
+library(stringr)
+library(DESeq2)
+library(tibble)
+library(aPEAR)
+library(dplyr)
+library(GO.db)
+library(readr)
+
+```
+
+# Define functions
+
+```{r define_funcs}
+# Remove genes with 0 logFC and PValue = 1, calculate ranking metric then sort Entrez genes in descending order
+# Adapts code from
+# https://github.com/YuLab-SMU/DOSE/wiki/how-to-prepare-your-own-geneList.
+prep_clusterprofiler_genelist <- function(dge_table, rank_by="log2FoldChange", pval_col="pvalue", lfc_col="log2FoldChange"){
+  geneList <- NULL
+
+  # calculate rank_metric
+  if(identical(rank_by, "log2FoldChange")){
+    if(!pval_col %in% colnames(dge_table)){
+      stop("Specify valid column for PValue.")
+    }
+    if(!lfc_col %in% colnames(dge_table)){
+      stop("Specify valid column for log fold change.")
+    }
+    # filter away genes with exactly 0 logFC and PValue = 1.
+    dge_table <- dge_table[dge_table[[lfc_col]] != 0 &
+                                  dge_table[[pval_col]] != 1, ]
+
+    ## feature 1: numeric vector
+    geneList <-
+      sign(dge_table[[lfc_col]]) * -log10(dge_table[[pval_col]])
+
+  } else{
+    if(!rank_by %in% colnames(dge_table)){
+      message(rank_by)
+      message(colnames(dge_table))
+      stop("Specify valid ranking metric.")
+    }
+    # For genes with duplicated ranking metric value, we keep the first occurrence of the duplicated value only.
+    dge_table <- dge_table[!duplicated(dge_table[[rank_by]]), ]
+
+    ## feature 1: numeric vector
+    geneList <- dge_table[[rank_by]]
+  }
+
+  ## feature 2: named vector
+  names(geneList) <- as.character(dge_table$entrez)
+  ## feature 3: decreasing order
+  geneList <- sort(geneList, decreasing = TRUE)
+
+  return(geneList)
+}
+
+
+# Get the genesets and format for clusterprofiler (dataframe with col1 = geneset name, col2 = entrez gene)
+# organisms is 'Homo sapiens' or 'Mus musculus'
+# if no msigdb subcat, then specify NA
+get_geneset <- function(gene_set, msigdb_subcat=NA, organism){
+  if (gene_set %in% c("H", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8")){
+    #browser()
+    msigdbr_args <- list(species = organism, category = gene_set, subcat=msigdb_subcat)
+    msigdbr_args <-  msigdbr_args[!sapply(msigdbr_args, is.na)] # remove 'subcat' param if it is NA
+
+    msigdbr_gene_set <- do.call(msigdbr::msigdbr, msigdbr_args)
+
+    # convert to clusterprofiler friendly format
+    geneset_out <- msigdbr_gene_set[, c("gs_name", "entrez_gene")] %>%
+      as.data.frame(stringsAsFactors = FALSE)
+
+  } else{
+    stop("Invalid value for gene_set parameter.")
+  }
+
+  return(geneset_out)
+}
+```
+
+# Read in DE results
+
+```{r read_DE}
+# set seed for gsea
+gsea_seed <- 2024 #9081
+
+vsd <- readRDS(vsd_rds_path)
+vsd_mat <- assay(vsd)
+row_meta <- rowData(vsd)
+
+de_objs <- readRDS(DE_rds_path)
+
+# I've only got 1 comparison stored in this list, so we can modify this code.
+# de_res <- lapply(de_objs, function(comp) comp$lfc_shrink)
+# de_res <- lapply(de_res, as.data.frame)
+# sapply(de_res, nrow)
+de_res <- as.data.frame(de_objs)
+# nrow(de_res)
+
+# add entrez ids
+# again, doing this differently bc only 1 comparison stored here.
+# de_res <- lapply(de_res, function(x) {
+#   stopifnot(all(rownames(x) %in% rownames(row_meta)))
+#   x$entrez <- row_meta$entrez[match(rownames(x), rownames(row_meta))]
+#   x
+# })
+# de_res$entrez <- row_meta$entrez[match(rownames(de_res), rownames(row_meta))]
+
+# ... what if I list it (the one thing) so that future lapplys work? :)
+de_res <- list(de_res)
+```
+
+# Get ranked genes
+
+```{r calc_ranks}
+genes_and_score <- lapply(de_res, prep_clusterprofiler_genelist, rank_by="log2FoldChange")
+sapply(genes_and_score, length)
+
+# remove genes with no Entrez ID (isNA)
+genes_and_score <- lapply(genes_and_score, function(x) x[!is.na(names(x))])
+sapply(genes_and_score, length)
+
+# remove genes with duplicated Entrez ID
+genes_and_score <- lapply(genes_and_score, function(x) {
+  ids <- names(x)
+  duplicated_ids <- unique(ids[duplicated(ids)])
+  x[!ids %in% duplicated_ids]
+})
+sapply(genes_and_score, length)
+
+# Confirm genes are ordered in decreasing order
+correct_ranking <- sapply(genes_and_score, function(x) {
+  all(order(x, decreasing = TRUE) == 1:length(x))
+})
+stopifnot(all(correct_ranking))
+
+```
+
+
+# Get genesets and run GSEA
+
+```{r get_genesets_and_run_gsea}
+
+pathwayNames = unlist(strsplit(params$pathway_str, ",")[[1]])
+
+print(pathwayNames)
+
+gsea_res <- lapply(setNames(nm=pathwayNames), function(ont){
+  message("Running GSEA for ", ont)
+  lapply(genes_and_score, function(y){
+    set.seed(gsea_seed) # make reproducible
+    if (ont %in% c("H", paste0("C", as.character(1:8)))){
+      geneset <- get_geneset(gene_set=ont, msigdb_subcat=NA, organism=msigdb_organism)
+      gsea_res <- clusterProfiler::GSEA(geneList = y,
+                                        TERM2GENE = geneset,
+                                        eps = 0.0 # need to set this or Pvalues will not reach below 1e-10
+      )
+
+    } else if (ont=="Reactome"){
+      gsea_res <- gsePathway(geneList = y, organism = reactome_org,
+                             eps = 0.0 # need to set this or Pvalues will not reach below 1e-10
+      )
+    } else if (ont=="KEGG") {
+      gsea_res <- gseKEGG(geneList = y, organism = kegg_org,
+                          eps = 0.0 # need to set this or Pvalues will not reach below 1e-10
+      )
+    # } else if (ont == "BP-simplified") {
+    #   gsea_res <- clusterProfiler::gseGO(geneList = y,
+    #                                      ont="BP",
+    #                                      OrgDb = eval(as.symbol(orgdb)),
+    #                                      eps = 0.0 # need to set this or Pvalues will not reach below 1e-10
+    #   )
+    } else{
+      gsea_res <- clusterProfiler::gseGO(geneList = y,
+                                         ont=gsub(ont, pattern = "-.*", replacement = ""),
+                                         OrgDb = eval(as.symbol(orgdb)),
+                                         eps = 0.0 # need to set this or Pvalues will not reach below 1e-10
+      )
+    }
+
+    gsea_res_syms <- DOSE::setReadable(gsea_res,
+                                       OrgDb = eval(as.symbol(orgdb)),
+                                       keyType = "ENTREZID")
+
+    list(entrez=gsea_res, symbols=gsea_res_syms)
+
+  })
+})
+
+# output to file
+write_rds(gsea_res, paste0(outdir, "gsea_res.rds"))
+
+invisible(lapply(names(gsea_res), function(geneset){
+  write.xlsx(
+    lapply(gsea_res[[geneset]],
+           function(res_list) as_tibble(res_list$symbols)),
+    file = paste0(outdir, "/", geneset, "_gsea.xlsx"),
+    overwrite = TRUE)
+}))
+```
+
+# Summary Plots
+
+```{r plots, fig.width=7, fig.height=5}
+dotplots <- lapply(setNames(nm=names(gsea_res)), function(geneset){
+  # lapply(setNames(nm=names(gsea_res[[geneset]])), function(contrast){
+    if (geneset == "BP-simplified") {
+      gseaResult <- clusterProfiler::simplify(gsea_res[[geneset]][[1]]$symbols)
+    } else {
+      gseaResult <- gsea_res[[geneset]][[1]]$symbols
+    }
+    #gseaResult <- filter(gseaResult, p.adjust < p_cutoff)
+    if(nrow(gseaResult) > 0){
+      dotplot(gseaResult, split=".sign") + ggtitle(paste0(params$comparison_name," -- ", geneset)) +
+        scale_y_discrete(label=function(x) str_trunc(str_remove(x, paste0("HALLMARK_|\\s-\\s", params$msigdb_organism,".*")), 40)) + facet_grid(.~.sign)
+      
+    } else{
+      "No significant results"
+    }
+  # })
+})
+
+for (i in 1:length(dotplots)){
+  dotplot_list <- dotplots[[i]]
+  if (is(dotplot_list, "ggplot")) {
+    print(wrap_plots(dotplot_list, ncol=1) + plot_annotation(title = names(dotplots)[i]))
+  } else {
+    isggplot <- sapply(dotplot_list, function(x) is(x, "ggplot"))
+    if(sum(isggplot) > 0){
+      print(wrap_plots(dotplot_list[isggplot], ncol=1) + plot_annotation(title = names(dotplots)[i]))
+    }
+  }
+}
+```
+```{r aPEAR}
+
+set.seed(gsea_seed)
+
+aPEARobj = lapply(seq_along(gsea_res), FUN = function(x){
+  
+  gseaResObj = gsea_res[[x]][[1]]$entrez
+  resSetName = names(gsea_res)[[x]]
+
+  tryCatch({
+    
+    p <- aPEAR::enrichmentNetwork(gseaResObj@result, drawEllipses = TRUE, fontSize = 2.5) + ggtitle(paste0(params$comparison_name," -- ", resSetName))
+  
+    return(p)
+    
+    }, error = function(cond) {
+      
+      p <- ggplot() + # Draw ggplot2 plot with text only
+          annotate("text",
+          x = 1,
+          y = 1,
+          size = 8,
+          label = paste0("No networks for ", params$comparison_name," -- ", resSetName)) + 
+        theme_void()
+      
+      return(p)
+      
+    })
+  
+})
+
+for (i in 1:length(aPEARobj)){
+  dotplot_list <- aPEARobj[[i]]
+  if (is(dotplot_list, "ggplot")) {
+    # print(wrap_plots(dotplot_list, ncol=1) + plot_annotation(title = names(dotplots)[i]))
+    print(wrap_plots(dotplot_list, ncol=1))
+  } else {
+    isggplot <- sapply(dotplot_list, function(x) is(x, "ggplot"))
+    if(sum(isggplot) > 0){
+      # print(wrap_plots(dotplot_list[isggplot], ncol=1) + plot_annotation(title = names(dotplots)[i]))
+      print(wrap_plots(dotplot_list[isggplot], ncol=1))
+    }
+  }
+}
+
+```
+
+
+# Session Info
+
+```{r session_info, echo = TRUE, eval=TRUE}
+sessionInfo()
+```
+
+# Time
+
+```{r endtime}
+# output time taken to run script
+end <- Sys.time()
+end
+end - start_tm
+
+```
