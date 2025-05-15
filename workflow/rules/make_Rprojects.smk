@@ -29,7 +29,7 @@ rule make_Rproject:
         mem_gb=64,
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log", 
     shell:
-        """
+        r"""
         Rscript --vanilla workflow/scripts/make_Rproject.R {params.Rproj_dir}
         
         # Make R script with package dependencies

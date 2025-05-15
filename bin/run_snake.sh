@@ -10,7 +10,7 @@
 
 cd $SLURM_SUBMIT_DIR
 
-snakemake_module="bbc2/snakemake/snakemake-8.25.2"
+snakemake_module="bbc2/snakemake/snakemake-9.4.0"
 
 module load $snakemake_module
 
