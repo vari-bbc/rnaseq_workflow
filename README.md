@@ -52,12 +52,22 @@ Execute from within your project directory as a SLURM job.
 ```
 sbatch bin/run_snake.sh
 ```
-
+### DAG of the Pipeline
 ```mermaid
 ---
-title: DAG for the RNAseq BBC Pipeline
+config:
+  look: classic
+  theme: base
+  themeVariables: {
+      'primaryColor': '#005596',
+      'primaryTextColor': '#fff',
+      'primaryBorderColor': '#60abde',
+      'lineColor': '#60abde',
+      'secondaryColor': '#006100',
+      'tertiaryColor': '#fff'
+    }
 ---
-flowchart TB
+flowchart LR
 	id0[all]
 	id1[multiqc]
 	id2[fastq_screen]
@@ -74,14 +84,12 @@ flowchart TB
 	id13[deseq2]
 	id14[gsea]
 	id15[make_final_report]
-	id0 --> id0
 	id0 --> id1
 	id0 --> id2
 	id0 --> id3
 	id0 --> id4
 	id0 --> id5
 	id1 --> id0
-	id1 --> id1
 	id1 --> id2
 	id1 --> id3
 	id1 --> id4
