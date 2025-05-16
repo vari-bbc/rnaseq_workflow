@@ -67,7 +67,7 @@ config:
       'tertiaryColor': '#fff'
     }
 ---
-flowchart LR
+flowchart TB
 	id0[all]
 	id1[multiqc]
 	id2[fastq_screen]
@@ -84,30 +84,32 @@ flowchart LR
 	id13[deseq2]
 	id14[gsea]
 	id15[make_final_report]
-	id0 --> id1
-	id0 --> id2
-	id0 --> id3
-	id0 --> id4
-	id0 --> id5
-	id1 --> id0
-	id1 --> id2
-	id1 --> id3
-	id1 --> id4
-	id2 --> id0
-	id3 --> id0
-	id4 --> id0
-	id6 --> id0
-	id7 --> id0
-	id8 --> id0
-	id9 --> id0
-	id10 --> id0
-	id11 --> id0
-	id11 --> id1
-	id11 --> id2
-	id13 --> id0
-	id13 --> id1
-	id14 --> id0
-	id14 --> id1
-	id15 --> id0
-	id15 --> id1
+    id14 --> id0
+    id11 --> id0
+    id1 --> id0
+    id13 --> id0
+    id15 --> id0
+    id12 --> id0
+    id7 --> id1
+    id2 --> id1
+    id6 --> id1
+    id8 --> id1
+    id9 --> id1
+    id3 --> id2
+    id4 --> id3
+    id5 --> id4
+    id3 --> id6
+    id4 --> id7
+    id4 --> id8
+    id10 --> id9
+    id3 --> id10
+    id7 --> id11
+    id12 --> id11
+    id8 --> id11
+    id12 --> id13
+    id11 --> id13
+    id13 --> id14
+    id12 --> id14
+    id1 --> id15
+    id12 --> id15
 ```
