@@ -10,7 +10,10 @@ navbar:
     - text: "MultiQC"
       href: multiqc.html
       icon: fa-square-poll-vertical
-
+    - text: "DE results"
+      icon: fa-square-poll-vertical
+      menu:
+      <<<DE_RES>>>
   right:
     - href: https://github.com/vari-bbc/rnaseq_workflow
       icon: fa-github

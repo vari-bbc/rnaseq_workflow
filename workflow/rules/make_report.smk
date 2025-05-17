@@ -1,17 +1,26 @@
 rule make_final_report:
     input:
-        website_template = expand("resources/report_template/{fname}", fname=glob_wildcards("resources/report_template/{fname}").fname),
+        website_template = expand("resources/report_template/{fname}", fname=["_site.yml", "footer.html", "index.Rmd", "multiqc.Rmd", "references.bib", "styles.css", "images/VAI_2_Line_White.png"]),
+        de_res = expand("results/deseq2/DESeq2_{comp}.html", comp=pd.unique(comparisons["comparison_name"])),
         renv_lock = "results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname']),
         multiqc = "results/multiqc/multiqc_report.html"
     output:
-        root_dir = directory("results/make_final_report"),
+        site_files = expand("results/make_final_report/{fname}", fname=["_site.yml", "footer.html", "index.Rmd","references.bib", "styles.css", "images/VAI_2_Line_White.png"]),
+        multiqc_rmd = "results/make_final_report/multiqc.Rmd",
+        de_res = expand("results/make_final_report/external_reports/DESeq2_{comp}.html", comp=pd.unique(comparisons["comparison_name"])),
+        de_res_rmd = expand("results/make_final_report/DESeq2_{comp}.Rmd", comp=pd.unique(comparisons["comparison_name"])),
         multiqc = "results/make_final_report/external_reports/multiqc_report.html",
         website = directory("results/make_final_report/BBC_RNAseq_Report")
     benchmark:
         "benchmarks/make_final_report/bench.txt"
     params:
-        website_dir = lambda wildcards, output: os.path.dirname(output.website), 
-        renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock)
+        template_dir = lambda wildcards, input: os.path.commonprefix(input.website_template),
+        template_files = lambda wildcards, input: [ fname.replace("resources/report_template/", "")  for fname in input.website_template],
+        de_res_comps = " ".join(pd.unique(comparisons["comparison_name"])),
+        de_res_yml = "\\n".join([f"- text: {comp}\\n        href: DESeq2_{comp}.html\\n" for comp in pd.unique(comparisons["comparison_name"])]),
+        ext_reports_dir = lambda wildcards, output: os.path.dirname(output.multiqc),
+        renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock),
+        root_dir = lambda wildcards, output: os.path.join(os.getcwd(), os.path.dirname(output.website)),
     envmodules:
         config['modules']['R'],
         config['modules']['pandoc']
@@ -22,9 +31,20 @@ rule make_final_report:
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
-        cp -r {input.website_template} {params.website_dir}
-        cp {input.multiqc} {output.multiqc}
+        cd {params.template_dir}
+        cp --parents -r {params.template_files} {params.root_dir}/
+        cd -
+
+        perl -i -lnpe 's/<<<DE_RES>>>/{params.de_res_yml}/' {params.root_dir}/_site.yml
+
+        ln -sr {input.multiqc} {output.multiqc}
+        ln -sr {input.de_res} {params.ext_reports_dir}
+       
+        for comp in {params.de_res_comps}
+        do
+            cat {output.multiqc_rmd} | perl -lnpe "s:MultiQC:${{comp}}:; s:multiqc_report:DESeq2_${{comp}}:" > "{params.root_dir}/DESeq2_${{comp}}.Rmd"
+        done
         
-        
-        Rscript -e "renv::load('{params.renv_rproj_dir}'); rmarkdown::render_site('{params.website_dir}')" 
+
+        Rscript -e "renv::load('{params.renv_rproj_dir}'); rmarkdown::render_site('{params.root_dir}')" 
         """
