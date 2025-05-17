@@ -16,8 +16,8 @@ rule make_final_report:
     params:
         template_dir = lambda wildcards, input: os.path.commonprefix(input.website_template),
         template_files = lambda wildcards, input: [ fname.replace("resources/report_template/", "")  for fname in input.website_template],
-        de_res_comps = " ".join(pd.unique(comparisons["comparison_name"])),
-        de_res_yml = "\\n".join([f"- text: {comp}\\n        href: DESeq2_{comp}.html\\n" for comp in pd.unique(comparisons["comparison_name"])]),
+        de_res_comps = " ".join(["'" + comp + "'" for comp in pd.unique(comparisons["comparison_name"])]),
+        de_res_yml = "\\n".join([f"      - text: {comp}\\n        href: DESeq2_{comp}.html" for comp in pd.unique(comparisons["comparison_name"])]) + "\\n",
         ext_reports_dir = lambda wildcards, output: os.path.dirname(output.multiqc),
         renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock),
         root_dir = lambda wildcards, output: os.path.join(os.getcwd(), os.path.dirname(output.website)),

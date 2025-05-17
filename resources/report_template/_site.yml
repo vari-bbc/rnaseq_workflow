@@ -13,7 +13,7 @@ navbar:
     - text: "DE results"
       icon: fa-square-poll-vertical
       menu:
-      <<<DE_RES>>>
+<<<DE_RES>>>
   right:
     - href: https://github.com/vari-bbc/rnaseq_workflow
       icon: fa-github
