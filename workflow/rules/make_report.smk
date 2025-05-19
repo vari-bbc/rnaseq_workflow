@@ -46,5 +46,6 @@ rule make_final_report:
         done
         
 
-        Rscript -e "renv::load('{params.renv_rproj_dir}'); rmarkdown::render_site('{params.root_dir}')" 
+        #Rscript -e "renv::load('{params.renv_rproj_dir}'); rmarkdown::render_site('{params.root_dir}')" 
+        Rscript --vanilla -e "rmarkdown::render_site('{params.root_dir}')"
         """
