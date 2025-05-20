@@ -1,20 +1,66 @@
 ---
-title: "VBCS-1034"
+title: "RNA-seq analysis"
 
 bibliography: references.bib
 ---
 
-This is the report for [VBCS-1034](https://varibbc.atlassian.net/servicedesk/customer/portal/1/VBCS-1034).
+This report summarizes the RNA-seq analysis performed using the [rnaseq_workflow](https://github.com/vari-bbc/rnaseq_workflow) developed by the Bioinformatics and Biostatistics Core at Van Andel Institute.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam ultrices est elit, sit amet semper ante tincidunt sed. Cras ut metus feugiat, fermentum risus vitae, dictum lacus. Integer pulvinar viverra bibendum. Duis nisl augue, dignissim nec nulla ut, vulputate tempor augue. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Maecenas sit amet ornare purus. Morbi efficitur quam erat. Sed mauris turpis, vulputate eu enim a, faucibus condimentum quam. 
+The following sections describe the experimental design, summarize the differential expression results and analytical methods, and provide a list of software versions and references used in the analysis.
+
+For detailed results, please explore the individual tabs in the interactive report.
+
+<br>
+
+```{r load_lib, include=F, echo=F}
+library(configr)
+library(tidyverse)
+library(kableExtra)
+library(SummarizedExperiment)
+```
+
+## Experimental design
+
+We will list sample information for the experimental design below:
+
+```{r print_meta, include=T, echo=F, message=F, warning=F}
+se <- readRDS("../../results/SummarizedExperiment/SummarizedExperiment.rds")
+meta <- colData(se) |>
+        as.data.frame() |>
+        tibble::rownames_to_column("sample_name") |>
+        dplyr::select(-RG)
+
+ meta |>
+   kbl(caption = "Sample information", row.names = FALSE) |>
+   kable_classic_2(full_width = F)
+```
 
 <br>
 
-## Methods
+## DE gene summary
 
-Maecenas eget nisl ac ex blandit congue at at nisl. Ut justo eros, iaculis at commodo eu, auctor eget velit. Aenean convallis enim ut risus blandit iaculis. Mauris tempor dolor erat, consequat lacinia ante tincidunt eu. Nullam vitae luctus ante. Vivamus rutrum ipsum sit amet sem sagittis, ac aliquet massa gravida. Quisque et tempor eros. Maecenas lacus nisl, cursus quis lectus sit amet, pretium sagittis ipsum. Sed mi mi, cursus eget egestas non, porttitor vel justo. Cras facilisis orci ac lorem sagittis, quis hendrerit nulla mattis. In iaculis odio vitae lacus interdum ultricies. Duis tincidunt felis nulla, ac lobortis orci tincidunt ac. Ut tellus eros, tempus a nisl ut, fringilla sollicitudin nibh. Donec faucibus dui consequat interdum malesuada. Suspendisse dignissim ligula nec augue blandit pretium. Pellentesque malesuada ligula ut porttitor venenatis. 
+```{r deseq_sum,  include=T, echo=F, message=F, warning=F}
+config_file <- read.config("../../config/config.yaml")
+fdr <- config_file$fdr_cutoff
+comparisons <- list.files("../../results/deseq2/deseq2_out_files/")
+comparisons <- setNames(comparisons, nm = comparisons)
+
+de_sum_all <- do.call(rbind, (lapply(comparisons, function(comparison) {
+  de_res <- read_tsv(paste0("../../results/deseq2/deseq2_out_files/", comparison, "/de_res.tsv"))
+  df_sum <- data.frame( Contrast = comparison,
+              Num_up_genes = de_res |> filter(padj < fdr & log2FoldChange > 0) |> nrow(),
+              Num_down_genes = de_res |> filter(padj < fdr & log2FoldChange < 0) |> nrow())
+  return(df_sum)
+}) ) )
+
+de_sum_all |>
+  kbl(caption = paste0("DE gene summary (FDR cutoff = ", fdr, ")"), row.names = FALSE) |>
+   kable_classic_2(full_width = F)
+
+```
 
 <br>
+
 
 ## Software versions and references
 
