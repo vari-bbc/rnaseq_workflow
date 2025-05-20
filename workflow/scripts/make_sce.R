@@ -79,7 +79,21 @@ tx2gene <- AnnotationDbi::select(txdb, k, "GENEID", "TXNAME")
 files <- list.files(salmon_dir, recursive=TRUE, pattern = "quant.sf", full.names = TRUE)
 names(files) <- basename(str_remove(files, "\\/quant.sf"))
 
-txi.salmon <- tximport(files, type = "salmon", tx2gene = tx2gene)
+# extract the first transcript from one of the salmon result files
+test_gtf_tx <- stringr::str_split_1(readLines(files[1], 2)[2], "\\t")[1]
+message("Using ", test_gtf_tx, " to decide whether to turn on ignoreTxVersion in tximport.")
+
+tximport_ignore_tx_ver <- NULL
+tximport_ignore_tx_ver <- if (test_gtf_tx %in% tx2gene$TXNAME) {
+  tximport_ignore_tx_ver <- FALSE
+} else if (str_remove(test_gtf_tx, "\\.\\d+$") %in% tx2gene$TXNAME) {
+  tximport_ignore_tx_ver <- TRUE
+} else{
+  stop("No match between GTF and Salmon transcript names with or without removing transcript version.")
+}
+message("The 'ignoreTxVersion' parameter in tximport will be set to ", as.character(tximport_ignore_tx_ver))
+
+txi.salmon <- tximport(files, type = "salmon", tx2gene = tx2gene, ignoreTxVersion=tximport_ignore_tx_ver)
 write_rds(txi.salmon, out_txi)
 
 tpms <- txi.salmon$abundance
