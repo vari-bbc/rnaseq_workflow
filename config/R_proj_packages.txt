@@ -25,3 +25,6 @@ tidyverse
 txdbmaker
 tximport
 ievaKer/aPEAR
+configr
+kableExtra
+SummarizedExperiment
