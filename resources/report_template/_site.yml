@@ -19,6 +19,8 @@ navbar:
         - text: "Supplemental files"
         - text: "High-res figures"
           href: ./extras/deseq2_figures/
+        - text: "DE result tables"
+          href: ./extras/deseq2_tables/
   right:
     - href: https://github.com/vari-bbc/rnaseq_workflow
       icon: fa-github
