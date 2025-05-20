@@ -9,7 +9,8 @@ rule deseq2:
         de_res_rds="results/deseq2/deseq2_out_files/{comparison}/de_res.rds",
         counts="results/deseq2/deseq2_out_files/{comparison}/counts.tsv",
         vst="results/deseq2/deseq2_out_files/{comparison}/vst.tsv",
-        vsd_rds="results/deseq2/deseq2_out_files/{comparison}/vsd.rds"
+        vsd_rds="results/deseq2/deseq2_out_files/{comparison}/vsd.rds",
+        fig_dir=directory("results/deseq2/deseq2_out_files/{comparison}/individual_figures"),
     benchmark:
         "benchmarks/deseq2/{comparison}.txt"
     params:
