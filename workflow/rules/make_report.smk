@@ -4,6 +4,9 @@ rule make_final_report:
         de_res = expand("results/deseq2/DESeq2_{comp}.html", comp=pd.unique(comparisons["comparison_name"])),
         de_res_figs = expand("results/deseq2/deseq2_out_files/{comp}/individual_figures", comp=pd.unique(comparisons["comparison_name"])),
         de_res_tables = expand("results/deseq2/deseq2_out_files/{comp}/de_res.tsv", comp=pd.unique(comparisons["comparison_name"])),
+        gsea = expand("results/gsea/gsea_{comp}.html", comp=pd.unique(comparisons["comparison_name"])),
+        gsea_figs = expand("results/gsea/{comp}_out_files/individual_figures", comp=pd.unique(comparisons["comparison_name"])),
+        gsea_tables = expand("results/gsea/{comp}_out_files/{collection}_gsea.xlsx", comp=pd.unique(comparisons["comparison_name"]), collection = config['pathway_str'].split(',')),
         renv_lock = "results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname']),
         multiqc = "results/multiqc/multiqc_report.html"
     output:
@@ -13,6 +16,10 @@ rule make_final_report:
         de_res_rmd = expand("results/make_final_report/DESeq2_{comp}.Rmd", comp=pd.unique(comparisons["comparison_name"])),
         de_res_figs = directory(expand("results/make_final_report/extras/deseq2_figures/{comp}", comp=pd.unique(comparisons["comparison_name"]))),
         de_res_tables = expand("results/make_final_report/extras/deseq2_tables/{comp}_de_res.tsv", comp=pd.unique(comparisons["comparison_name"])),
+        gsea = expand("results/make_final_report/external_reports/gsea_{comp}.html", comp=pd.unique(comparisons["comparison_name"])),
+        gsea_rmd = expand("results/make_final_report/gsea_{comp}.Rmd", comp=pd.unique(comparisons["comparison_name"])),
+        gsea_figs = directory(expand("results/make_final_report/extras/gsea_figures/{comp}", comp=pd.unique(comparisons["comparison_name"]))),
+        gsea_tables = expand("results/make_final_report/extras/gsea_tables/{comp}/{collection}_gsea.xlsx", comp=pd.unique(comparisons["comparison_name"]), collection = config['pathway_str'].split(',')),
         multiqc = "results/make_final_report/external_reports/multiqc_report.html",
         website = directory("results/make_final_report/BBC_RNAseq_Report")
     benchmark:
@@ -22,10 +29,12 @@ rule make_final_report:
         template_files = lambda wildcards, input: [ fname.replace("resources/report_template/", "")  for fname in input.website_template],
         de_res_comps = " ".join(["'" + comp + "'" for comp in pd.unique(comparisons["comparison_name"])]),
         de_res_yml = "\\n".join([f"        - text: {comp}\\n          href: DESeq2_{comp}.html" for comp in pd.unique(comparisons["comparison_name"])]),
+        gsea_yml = "\\n".join([f"        - text: {comp}\\n          href: gsea_{comp}.html" for comp in pd.unique(comparisons["comparison_name"])]),
         ext_reports_dir = lambda wildcards, output: os.path.dirname(output.multiqc),
         renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock),
         root_dir = lambda wildcards, output: os.path.join(os.getcwd(), os.path.dirname(output.website)),
         de_res_outdir = lambda wildcards, input: os.path.dirname(os.path.dirname(input.de_res_figs[0])),
+        gsea_dir = lambda wildcards, input: os.path.dirname(input.gsea[0]),
     envmodules:
         config['modules']['R'],
         config['modules']['pandoc']
@@ -41,9 +50,11 @@ rule make_final_report:
         cd -
 
         perl -i -lnpe 's/<<<DE_RES>>>/{params.de_res_yml}/' {params.root_dir}/_site.yml
+        perl -i -lnpe 's/<<<GSEA_RES>>>/{params.gsea_yml}/' {params.root_dir}/_site.yml
 
         ln -sr {input.multiqc} {output.multiqc}
         ln -sr {input.de_res} {params.ext_reports_dir}
+        ln -sr {input.gsea} {params.ext_reports_dir}
        
         for comp in {params.de_res_comps}
         do
@@ -54,6 +65,14 @@ rule make_final_report:
             ln -sr {params.de_res_outdir}/${{comp}}/de_res.tsv {params.root_dir}/extras/deseq2_tables/${{comp}}_de_res.tsv
 
             cat {output.multiqc_rmd} | perl -lnpe "s:MultiQC:${{comp}}:; s:multiqc_report:DESeq2_${{comp}}:" > "{params.root_dir}/DESeq2_${{comp}}.Rmd"
+            
+            mkdir -p {params.root_dir}/extras/gsea_figures/${{comp}}/
+            ln -sr {params.gsea_dir}/${{comp}}_out_files/individual_figures/* {params.root_dir}/extras/gsea_figures/${{comp}}/
+            
+            mkdir -p {params.root_dir}/extras/gsea_tables/
+            ln -sr {params.gsea_dir}/${{comp}}_out_files/*_gsea.xlsx {params.root_dir}/extras/gsea_tables/${{comp}}/
+            
+            cat {output.multiqc_rmd} | perl -lnpe "s:MultiQC:${{comp}}:; s:multiqc_report:gsea_${{comp}}:" > "{params.root_dir}/gsea_${{comp}}.Rmd"
         done
         
 
