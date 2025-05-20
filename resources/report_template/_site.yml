@@ -13,7 +13,12 @@ navbar:
     - text: "DE results"
       icon: fa-square-poll-vertical
       menu:
+        - text: "HTML reports"
 <<<DE_RES>>>
+        - text: "---------"
+        - text: "Supplemental files"
+        - text: "High-res figures"
+          href: ./extras/deseq2_figures/
   right:
     - href: https://github.com/vari-bbc/rnaseq_workflow
       icon: fa-github

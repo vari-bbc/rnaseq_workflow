@@ -2,6 +2,7 @@ rule make_final_report:
     input:
         website_template = expand("resources/report_template/{fname}", fname=["_site.yml", "footer.html", "index.Rmd", "multiqc.Rmd", "references.bib", "styles.css", "images/VAI_2_Line_White.png"]),
         de_res = expand("results/deseq2/DESeq2_{comp}.html", comp=pd.unique(comparisons["comparison_name"])),
+        de_res_figs = directory(expand("results/deseq2/deseq2_out_files/{comp}/individual_figures", comp=pd.unique(comparisons["comparison_name"]))),
         renv_lock = "results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname']),
         multiqc = "results/multiqc/multiqc_report.html"
     output:
@@ -9,6 +10,7 @@ rule make_final_report:
         multiqc_rmd = "results/make_final_report/multiqc.Rmd",
         de_res = expand("results/make_final_report/external_reports/DESeq2_{comp}.html", comp=pd.unique(comparisons["comparison_name"])),
         de_res_rmd = expand("results/make_final_report/DESeq2_{comp}.Rmd", comp=pd.unique(comparisons["comparison_name"])),
+        de_res_figs = directory(expand("results/make_final_report/extras/deseq2_figures/{comp}", comp=pd.unique(comparisons["comparison_name"]))),
         multiqc = "results/make_final_report/external_reports/multiqc_report.html",
         website = directory("results/make_final_report/BBC_RNAseq_Report")
     benchmark:
@@ -17,10 +19,11 @@ rule make_final_report:
         template_dir = lambda wildcards, input: os.path.commonprefix(input.website_template),
         template_files = lambda wildcards, input: [ fname.replace("resources/report_template/", "")  for fname in input.website_template],
         de_res_comps = " ".join(["'" + comp + "'" for comp in pd.unique(comparisons["comparison_name"])]),
-        de_res_yml = "\\n".join([f"      - text: {comp}\\n        href: DESeq2_{comp}.html" for comp in pd.unique(comparisons["comparison_name"])]) + "\\n",
+        de_res_yml = "\\n".join([f"        - text: {comp}\\n          href: DESeq2_{comp}.html" for comp in pd.unique(comparisons["comparison_name"])]),
         ext_reports_dir = lambda wildcards, output: os.path.dirname(output.multiqc),
         renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock),
         root_dir = lambda wildcards, output: os.path.join(os.getcwd(), os.path.dirname(output.website)),
+        de_res_outdir = lambda wildcards, input: os.path.dirname(os.path.dirname(input.de_res_figs[0])),
     envmodules:
         config['modules']['R'],
         config['modules']['pandoc']
@@ -42,6 +45,8 @@ rule make_final_report:
        
         for comp in {params.de_res_comps}
         do
+            mkdir -p {params.root_dir}/extras/deseq2_figures/${{comp}}/
+            ln -sr {params.de_res_outdir}/${{comp}}/individual_figures/* {params.root_dir}/extras/deseq2_figures/${{comp}}/
             cat {output.multiqc_rmd} | perl -lnpe "s:MultiQC:${{comp}}:; s:multiqc_report:DESeq2_${{comp}}:" > "{params.root_dir}/DESeq2_${{comp}}.Rmd"
         done
         
