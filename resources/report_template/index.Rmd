@@ -30,9 +30,9 @@ meta <- colData(se) |>
         tibble::rownames_to_column("sample_name") |>
         dplyr::select(-RG)
 
- meta |>
-   kbl(caption = "Sample information", row.names = FALSE) |>
-   kable_classic_2(full_width = F)
+meta |>
+    kbl(caption = "Sample information", row.names = FALSE) |>
+    kable_classic_2(full_width = F)
 ```
 
 <br>
