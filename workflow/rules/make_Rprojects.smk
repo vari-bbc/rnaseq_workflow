@@ -29,12 +29,12 @@ rule make_Rproject:
         mem_gb=64,
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log", 
     shell:
-        r"""
+        """
         Rscript --vanilla workflow/scripts/make_Rproject.R {params.Rproj_dir}
         
         # Make R script with package dependencies
         echo '{params.install_pak}' > {output.renv_dependencies}
-        cat {input.R_pkges} | perl -lne "print qq:library(\$_):" >> {output.renv_dependencies}
+        cat {input.R_pkges} | perl -lne 'print qq:library($_):' >> {output.renv_dependencies}
         
         # set RENV_PATHS_CACHE in .Renviron
         echo "RENV_PATHS_ROOT='{params.Renv_root}'" > {output.renviron}

@@ -10,7 +10,28 @@ navbar:
     - text: "MultiQC"
       href: multiqc.html
       icon: fa-square-poll-vertical
-
+    - text: "DE results"
+      icon: fa-square-poll-vertical
+      menu:
+        - text: "HTML reports"
+<<<DE_RES>>>
+        - text: "---------"
+        - text: "Supplemental files"
+        - text: "High-res figures"
+          href: ./extras/deseq2_figures/
+        - text: "DE result tables"
+          href: ./extras/deseq2_tables/
+    - text: "GSEA results"
+      icon: fa-square-poll-vertical
+      menu:
+        - text: "HTML reports"
+<<<GSEA_RES>>>
+        - text: "---------"
+        - text: "Supplemental files"
+        - text: "High-res figures"
+          href: ./extras/gsea_figures/
+        - text: "DE result tables"
+          href: ./extras/gsea_tables/
   right:
     - href: https://github.com/vari-bbc/rnaseq_workflow
       icon: fa-github
