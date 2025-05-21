@@ -61,6 +61,16 @@ de_sum_all |>
 
 <br>
 
+## Method summary
+
+Adaptor sequences and low-quality bases were trimmed from RNA-seq reads using Trim Galore. Trimmed reads were then aligned to refernece genome using STAR  with the "--quantMode GeneCounts" parameter enabled.
+
+Raw count data were input into DESeq2, where normalization was performed and dispersion estimates were then computed, and a generalized linear model was fit to test for differential expression. P-values were adjusted for multiple testing using the Benjamini–Hochberg method to control the false discovery rate (FDR). Genes with an adjusted p-value below 0.1 (default setup, you can change it in the config.yaml) were considered significantly differentially expressed. For more details about DESeq2 algorithms, please see [DESeq2 vignette](https://www.bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html).
+
+
+Gene set enrichment and pathway enrichment analyses and visualizations are performed using the R Bioconductor package clusterProfiler. For more details about ClusterProfiler, please see [clusterProfiler vignette](https://yulab-smu.top/biomedical-knowledge-mining-book/)
+
+<br>
 
 ## Software versions and references
 
