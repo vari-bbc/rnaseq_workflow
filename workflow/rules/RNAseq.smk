@@ -244,7 +244,7 @@ rule SummarizedExperiment:
     input:
         star = expand("results/star/{samples.sample}.ReadsPerGene.out.tab", samples=samples.itertuples()),
         salmon = expand("results/salmon/{samples.sample}/{file}", samples=samples.itertuples(), file=['lib_format_counts.json', 'quant.sf']),
-        renv_lock = "results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname'])
+        renv_lock = ancient("results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname']))
     output:
         se="results/SummarizedExperiment/SummarizedExperiment.rds",
         sce="results/SummarizedExperiment/sce.rds",

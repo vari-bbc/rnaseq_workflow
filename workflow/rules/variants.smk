@@ -373,7 +373,7 @@ rule variant_annot:
 rule snprelate:
     input:
         vcf="results/variant_calling/final/06_filter_vcf/all.merged.filt.PASS.SNP.vcf.gz",
-        renv_lock="results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname'])
+        renv_lock=ancient("results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname']))
     output:
         symlink_rmd = "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.Rmd",
         symlink_vcf = "results/variant_calling/final/07b_snp_pca_and_dendro/all.merged.filt.PASS.SNP.vcf.gz",

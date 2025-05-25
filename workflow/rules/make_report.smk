@@ -7,7 +7,7 @@ rule make_final_report:
         gsea = expand("results/gsea/gsea_{comp}.html", comp=pd.unique(comparisons["comparison_name"])),
         gsea_figs = expand("results/gsea/{comp}_out_files/individual_figures", comp=pd.unique(comparisons["comparison_name"])),
         gsea_tables = expand("results/gsea/{comp}_out_files/{collection}_gsea.xlsx", comp=pd.unique(comparisons["comparison_name"]), collection = config['pathway_str'].split(',')),
-        renv_lock = "results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname']),
+        renv_lock = ancient("results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname'])),
         multiqc = "results/multiqc/multiqc_report.html"
     output:
         site_files = expand("results/make_final_report/{fname}", fname=["_site.yml", "footer.html", "index.Rmd","references.bib", "styles.css", "images/VAI_2_Line_White.png"]),

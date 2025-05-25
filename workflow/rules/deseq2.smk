@@ -1,7 +1,7 @@
 rule deseq2:
     input:
         se="results/SummarizedExperiment/SummarizedExperiment.rds",
-        renv_lock = "results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname'])
+        renv_lock = ancient("results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname']))
     output:
         rmd="results/deseq2/DESeq2_{comparison}.Rmd",
         html="results/deseq2/DESeq2_{comparison}.html",
