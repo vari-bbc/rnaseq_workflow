@@ -51,7 +51,7 @@ knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.
 
 ## Data Processing
 
-### Load packages
+### Set Up DESeq2 Analysis
 
 ```{r load_pkges}
 suppressPackageStartupMessages({
@@ -66,7 +66,7 @@ suppressPackageStartupMessages({
 })
 ```
 
-### Set up your DESeq object
+<!-- Set up your DESeq object -->
 
 ```{r read_se}
 se <- readRDS(paste0("../../", params$se_obj))
@@ -79,34 +79,48 @@ se$group <- factor(se$group, levels=c(params$group_reference, params$group_test)
 ```
 
 
-Let's take a look to see what assays are stored in the SummarizedExperiment object. Note that DESeq2 assumes the first assay is the raw counts.
+```{r check_all_assays, eval=FALSE}
+# Let's take a look to see what assays are stored in the SummarizedExperiment object. 
+assayNames(se)
+```
+
 
 ```{r check_assays}
-assayNames(se)
-
+# Note that DESeq2 assumes the first assay is the raw counts.
 stopifnot(assayNames(se)[1] == "counts")
 ```
 
-To print more information about this SummarizedExperiment object, you can just type its name.
 
-```{r look_se}
+```{r look_se, eval=FALSE}
+# To print more information about this SummarizedExperiment object, you can just type its name. 
 se
 ```
 
-The counts and the meta data need to be stored inside a special DESeq2 object called a 'DESeqDataSet'. Here, we also specify that each gene will be fit with a model design of '~ group'.
+Set up analysis using counts data from the previous steps of the workflow, and 
+basic meta data given from units.tsv, with group as the variable we're testing.
+**Note that no covariates are included here**; if you have a more complex 
+experimental setup with additional covariates and/or confounders, 
+this model is overly simplistic and won't accurately model your data --
+please modify and/or contact the BBC.
 
-```{r make_dds}
+<!-- The counts and the meta data need to be stored inside a special DESeq2 object called a 'DESeqDataSet'.  -->
+<!-- Here, we also specify that each gene will be fit with a model design of '~ group'. -->
+
+```{r make_dds, message=FALSE}
 dds <- DESeqDataSet(se, design = ~ group)
 ```
 
 ### Remove genes with low/no expression
 
-We cannot do meaningful analyses of genes with very low counts. This will speed up the analysis.
+We cannot do meaningful analyses of genes with very low counts. Keeping only genes
+with 10 or more total read counts across samples will speed up the analysis.
 
 ```{r filter_low_genes}
 # prefilter genes, keeping only genes with 10 or more total read counts across samples
-keep <- rowSums(counts(dds)) >= 10
+total_genes <- nrow(dds)
+message(str_glue("Total number of genes: {total_genes}"))
 
+keep <- rowSums(counts(dds)) >= 10
 message(str_glue("Keeping {sum(keep)} genes."))
 
 dds <- dds[keep, ]
@@ -120,13 +134,21 @@ dds <- dds[keep, ]
 ### Run the DE workflow
 
 The [DESeq](https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/DESeq) function is a convenience function from DESeq2 that estimates size factors (normalization) and fits negative binomial GLMs.
+This includes the following steps:  
+
+- estimating size factors  
+- estimating dispersions  
+- gene-wise dispersion estimates  
+- mean-dispersion relationship  
+- final dispersion estimates  
+- fitting model and testing  
 
 ```{r run_deseq2}
-dds <- DESeq(dds)
+dds <- DESeq(dds, quiet = TRUE)
 message(paste0("Coefficient names are: ", paste(resultsNames(dds), collapse = " ")))
 ```
 
-After the models are fitted, we can test specific pairs of groups for differential expression. For DESeq2, it is recommended to provide the significance cutoff that you wish to use as it affects the multiple testing correction procedure (see [docs](https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/results)).
+After the models are fitted, we can test specific pairs of groups for differential expression. For DESeq2, it is recommended to provide the significance cutoff that you wish to use as it affects the multiple testing correction procedure (see [docs](https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/results)). Here, we'll use the false discovery rate (FDR) cutoff that was provided in the config file (`r params$fdr_cutoff`).
 
 ```{r run_contrast}
 contrast <- c("group", params$group_test, params$group_reference)
@@ -138,13 +160,17 @@ res <- res[order(res$pvalue), ]
 
 ### Summarize DE results
 
+Below is a summary of the DE results, including the number of upregulated and downregulated genes, and the total number of genes tested.
+
 ```{r de_summ}
 df <- as.data.frame(res)
 data.frame(
   UP=sum(df$padj <= fdr_cutoff & df$log2FoldChange > 0, na.rm = TRUE),
   DWN=sum(df$padj <= fdr_cutoff & df$log2FoldChange < 0, na.rm = TRUE),
   Tested=sum(!is.na(df$padj))
-)
+) %>%
+  knitr::kable() %>%
+  kableExtra::kable_styling(full_width = FALSE)
 ```
 
 
@@ -158,6 +184,10 @@ lfc_shrink <- lfcShrink(dds, contrast=contrast, type="ashr")
 lfc_shrink <- lfc_shrink[order(lfc_shrink$pvalue), ]
 
 ```
+
+Below are MA-plots -- a scatter plot of log2 fold changes (on the y-axis) versus the mean of normalized counts (on the x-axis).
+Here, we show both the default log fold changes (LFC) and the shrunken log fold changes.
+
 
 ```{r ma_plots, fig.width=5, fig.height=5}
 DESeq2::plotMA(res, main="Default LFC")
@@ -173,7 +203,7 @@ DESeq2::plotMA(lfc_shrink, main="Shrunken LFC")
 
 ### Output DE results
 
-Here, we merge the different gene name columns to the DE results and output to a tab-delimited file, which can be opened in Excel for manual perusal.
+Here, we merge the different gene name columns to the DE results and output to a tab-delimited file, which can be opened in Excel for manual perusal. This file is `de_res.tsv`, within the `r outdir` directory.
 
 ```{r out_de_res_prep}
 df <- cbind(as.data.frame(rowData(dds)[rownames(lfc_shrink), 1:4]),
@@ -201,7 +231,7 @@ df %>% dplyr::filter(Symbol %in% genes_of_interest) %>% print()
 
 ### Output tables with raw counts
 
-Some folks also find it useful to have tables of the raw counts or the normalized counts. The raw counts can be extracted from the DESeq2 object using either `assay()` or `counts()`.
+Some folks also find it useful to have tables of the raw counts or the normalized counts. The raw counts can be extracted from the DESeq2 object using either `assay()` or `counts()`. This file is `counts.tsv`, within the `r outdir` directory.
 
 ```{r out_counts_prep}
 df <- cbind(as.data.frame(rowData(dds)[, 1:4]),
@@ -216,6 +246,7 @@ write_tsv(df, file.path(outdir, "counts.tsv"))
 ### Output tables with log2 normalized counts
 
 For the log2 normalized counts, we commonly use the variance stabilized transformation ([VST](https://rdrr.io/bioc/DESeq2/man/varianceStabilizingTransformation.html)). These values can be used for heatmaps, clustering or other downstream applications.
+This file is `vst.tsv`, within the `r outdir` directory.
 
 ```{r out_vst_prep}
 vsd <- vst(dds, blind=FALSE)
@@ -233,6 +264,23 @@ write_tsv(vst_df, file.path(outdir, "vst.tsv"))
 ## Some common plots for DEG analysis
 
 ### PCA
+
+Principal Component Analysis (PCA) is a dimensionality reduction technique that 
+transforms data into a new coordinate system, where the axes (principal components, or PCs)
+are ordered by the amount of variance they capture (shown as percentages in the plots below).
+PC 1 captures the most variance in the data, followed by PC 2, and so on.
+PCA is often used to visualize the variance in data and to identify how samples cluster together based on their expression profiles.
+
+If group has a significant effect on the variance in the data, we will see that samples cluster together by group in the PCA plot.
+If we see samples clustering by some *other* variable (e.g. batch, treatment, age, sex, genotype, etc.), this suggests that this other variable is confounding the results and should be accounted for in the analysis. 
+If this is the case, you may need to include this variable as a covariate in the model design (e.g. `design = ~ batch + group`).
+
+**Note, again, that no covariates are included in this analysis**; if you have a more complex 
+experimental setup with additional covariates and/or confounders, 
+the model used in this report is overly simplistic and won't accurately model your data --
+please modify and/or contact the BBC.
+
+Here, we will plot the first four principal components, colored by group.
 
 ```{r pca_func}
 # Make PCA plots
@@ -289,6 +337,17 @@ make_PCA <- function(in_dds, cols, PCx=1, PCy=2, ntop){
 
 ### Volcano plot
 
+Volcano plots are a common way to visualize the results of differential expression analyses.
+They plot a fold change metric (here, log2FoldChange) on the x-axis and a significance metric on the y-axis (here, the -log10 p-value). 
+Genes that are significantly differentially expressed will appear as points in the upper right or upper left areas of the plot, depending on whether they are upregulated or downregulated, respectively.
+The directionality of the plot is dependent on which group was specified as the
+`group_test` and `group_reference` in the comparisons.tsv -- genes that are 
+higher in your test group (here, "`r params$group_test`") will show up on the right side of the plot (upregulated).
+Genes that are higher in your reference group (here, "`r params$group_reference`") will show up on the left side of the plot (downregulated).
+
+Below is a volcano plot, with labels for the top 10 genes ranked by absolute log fold change.
+
+
 ```{r make_volc_func}
 make_volcano <- function(df, pval_nm, pval_cutoff=0.1){
   # remove genes with NA for pvalue
@@ -322,6 +381,10 @@ make_volcano(as.data.frame(lfc_shrink),
 
 ### Heatmap
 
+Heatmaps are a common way to visualize the expression of genes across samples.
+Here, the top 20 genes (by absolute log2FoldChange) are selected and plotted,
+colored by group.
+
 ```{r heatmap, fig.width=6, fig.height=6}
 top_genes <- rownames(res)[1:20]
 
@@ -352,7 +415,11 @@ Heatmap(mat,
 
 ### P value distribution
 
-Ideally, we will see an anti-conservative (if there are many DE genes) or uniform pattern (not many DE genes). See [here](http://varianceexplained.org/statistics/interpreting-pvalue-histogram/) for more details about how to interpret these.
+The distribution of p-values can give us an idea of the number of differentially expressed genes (DE genes) in our analysis,
+and whether the model used for differential expression is appropriate.
+We expect the p-values to be uniformly distributed if there are not many DE genes, or anti-conservative (more p-values close to 0) if there are many DE genes.
+See [here](http://varianceexplained.org/statistics/interpreting-pvalue-histogram/) for more details about how to interpret these,
+and again, contact the BBC if you have questions about your results.
 
 ```{r pval, fig.width=4, fig.height=4}
 
@@ -365,6 +432,14 @@ ggplot(data = as.data.frame(lfc_shrink) %>%
 ```
 
 # Appendix
+
+*Want to make sense of your differential expression results on a broader level?*
+
+See gsea_`params$comparison_name`.html for a pathway-level analysis using GSEA (Gene Set Enrichment Analysis), 
+a method for determining whether the changes you see between `r params$group_test` and `r params$group_reference` are similar to known pathways/genesets. The report contains a summary of the results, including the top enriched pathways, as well as visualizations of the results. This can help you understand the biological significance of your results and identify potential pathways that are affected by the changes in gene expression.
+
+And, as always, contact the BBC if you have questions about your results! 
+
 
 ## SessionInfo
 
