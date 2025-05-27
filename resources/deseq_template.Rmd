@@ -10,7 +10,7 @@ output:
     toc: true
     toc_depth: 5
     toc_float:
-      collapsed: true
+      collapsed: false
       smooth_scroll: false
     number_sections: true
 params:
@@ -21,6 +21,8 @@ params:
   fdr_cutoff: ""
   genes_of_interest: ""
 ---
+
+# Analysis
 
 ```{r keep_figures, cache=TRUE}
 # this chunk is just to keep the _files directory even when we turn off cacheing
@@ -35,7 +37,11 @@ start_tm
 ```{r make_outdir, echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE}
 outdir <- file.path("deseq2_out_files", params$comparison_name)
 
-dir.create(outdir, recursive=TRUE)
+dir.create(outdir, recursive=TRUE, showWarnings = FALSE)
+if (!dir.exists(outdir)) {
+  stop("Output directory does not exist. Please check the 'comparison_name' parameter in the config file.")
+}
+message("Output directory: ", outdir)
 ```
 
 ```{r setup, include=FALSE}
@@ -43,24 +49,24 @@ knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.
                       fig.width=4, fig.height=4, fig.path=paste0(outdir, "/individual_figures/"))
 ```
 
-# **Analysis**
+## Data Processing
 
-## **Data Processing**
-
-### **Load packages**
+### Load packages
 
 ```{r load_pkges}
-library(dplyr)
-library(stringr)
-library(ggplot2)
-library(readr)
-library(ggrepel)
-library(ComplexHeatmap)
-library(DESeq2)
-library(patchwork)
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(stringr)
+  library(ggplot2)
+  library(readr)
+  library(ggrepel)
+  library(ComplexHeatmap)
+  library(DESeq2)
+  library(patchwork)
+})
 ```
 
-### **Set up your DESeq object**
+### Set up your DESeq object
 
 ```{r read_se}
 se <- readRDS(paste0("../../", params$se_obj))
@@ -93,7 +99,7 @@ The counts and the meta data need to be stored inside a special DESeq2 object ca
 dds <- DESeqDataSet(se, design = ~ group)
 ```
 
-### **Remove genes with low/no expression**
+### Remove genes with low/no expression
 
 We cannot do meaningful analyses of genes with very low counts. This will speed up the analysis.
 
@@ -106,12 +112,12 @@ message(str_glue("Keeping {sum(keep)} genes."))
 dds <- dds[keep, ]
 ```
 
-### **Different normalization approaches for different biases**
+### Different normalization approaches for different biases
 
 [Types of biases in RNA-seq](https://vanandelinstitute-my.sharepoint.com/:b:/g/personal/kin_lau_vai_org/EcruvwL-OrBIvCzXZ7HMPlcBo65fu0pucrivMmCwzM98dA?e=yCkfTa)
 
 
-### **Run the DE workflow**
+### Run the DE workflow
 
 The [DESeq](https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/DESeq) function is a convenience function from DESeq2 that estimates size factors (normalization) and fits negative binomial GLMs.
 
@@ -130,7 +136,7 @@ res <- results(dds, contrast=contrast, alpha=fdr_cutoff)
 res <- res[order(res$pvalue), ]
 ```
 
-### **Summarize DE results**
+### Summarize DE results
 
 ```{r de_summ}
 df <- as.data.frame(res)
@@ -142,7 +148,7 @@ data.frame(
 ```
 
 
-### **Shrink log fold changes for lowly expressed genes**
+### Shrink log fold changes for lowly expressed genes
 
 This step does not affect the identification of DE genes, but it can be useful to perform this to obtain more reliable estimates of the log fold changes for visualizations or for ranking genes (e.g. GSEA).
 
@@ -163,7 +169,9 @@ DESeq2::plotMA(lfc_shrink, main="Shrunken LFC")
 
 ```
 
-### **Output DE results**
+## Output results
+
+### Output DE results
 
 Here, we merge the different gene name columns to the DE results and output to a tab-delimited file, which can be opened in Excel for manual perusal.
 
@@ -183,7 +191,7 @@ write_rds(df, file.path(outdir, "de_res.rds"))
 genes_specified <- !(params$genes_of_interest %in% c("", "False", "FALSE", "None"))
 ```
 
-`r  if(genes_specified){"### **Look for specific genes**\nIf we're interested in specific genes (such as genes we'd expect, a priori, to be different),\nwe can check if they are differentially expressed.\n\nThe following genes are shown, based on genes specified in the 'genes_of_interest' parameter in the config file."}` 
+`r  if(genes_specified){"### Look for specific genes\nIf we're interested in specific genes (such as genes we'd expect, a priori, to be different),\nwe can check if they are differentially expressed.\n\nThe following genes are shown, based on genes specified in the 'genes_of_interest' parameter in the config file."}` 
 
 ```{r specific_genes, eval=genes_specified, echo=genes_specified, include=genes_specified}
 genes_of_interest <- params$genes_of_interest %>% strsplit(",") %>% unlist() %>% gsub("\\s+", "", .)
@@ -191,7 +199,7 @@ message("Genes of interest: ", paste(genes_of_interest, collapse=", "))
 df %>% dplyr::filter(Symbol %in% genes_of_interest) %>% print()
 ```
 
-### **Output tables with raw counts**
+### Output tables with raw counts
 
 Some folks also find it useful to have tables of the raw counts or the normalized counts. The raw counts can be extracted from the DESeq2 object using either `assay()` or `counts()`.
 
@@ -205,7 +213,7 @@ df <- cbind(as.data.frame(rowData(dds)[, 1:4]),
 write_tsv(df, file.path(outdir, "counts.tsv"))
 ```
 
-### **Output tables with log2 normalized counts**
+### Output tables with log2 normalized counts
 
 For the log2 normalized counts, we commonly use the variance stabilized transformation ([VST](https://rdrr.io/bioc/DESeq2/man/varianceStabilizingTransformation.html)). These values can be used for heatmaps, clustering or other downstream applications.
 
@@ -222,9 +230,9 @@ write_tsv(vst_df, file.path(outdir, "vst.tsv"))
 
 ```
 
-## **Some common plots for DEG analysis**
+## Some common plots for DEG analysis
 
-### **PCA**
+### PCA
 
 ```{r pca_func}
 # Make PCA plots
@@ -279,7 +287,7 @@ make_PCA <- function(in_dds, cols, PCx=1, PCy=2, ntop){
   plot_annotation(title = "PCA - All Samples") 
 ```
 
-### **Volcano plot**
+### Volcano plot
 
 ```{r make_volc_func}
 make_volcano <- function(df, pval_nm, pval_cutoff=0.1){
@@ -298,8 +306,7 @@ make_volcano <- function(df, pval_nm, pval_cutoff=0.1){
 
   df[[pval_nm]] <- -log10(df[[pval_nm]])
 
-
-  ggplot(df, aes_string(x="log2FoldChange", y=pval_nm)) +
+  ggplot(df, aes(x=log2FoldChange, y=.data[[pval_nm]])) +
     geom_point(aes(color=Sig), size=0.6) +
     scale_color_manual(values=c("black", "salmon")) +
     theme_bw() + ylab(str_glue("-log10(", pval_nm,")")) +
@@ -313,7 +320,7 @@ make_volcano(as.data.frame(lfc_shrink),
              pval_nm="padj", pval_cutoff=fdr_cutoff)
 ```
 
-### **Heatmap**
+### Heatmap
 
 ```{r heatmap, fig.width=6, fig.height=6}
 top_genes <- rownames(res)[1:20]
@@ -343,7 +350,7 @@ Heatmap(mat,
 
 ```
 
-### **P value distribution**
+### P value distribution
 
 Ideally, we will see an anti-conservative (if there are many DE genes) or uniform pattern (not many DE genes). See [here](http://varianceexplained.org/statistics/interpreting-pvalue-histogram/) for more details about how to interpret these.
 
@@ -357,13 +364,15 @@ ggplot(data = as.data.frame(lfc_shrink) %>%
 
 ```
 
-# **SessionInfo**
+# Appendix
+
+## SessionInfo
 
 ```{r sessioninfo}
 sessionInfo()
 ```
 
-# **Time**
+## Runtime
 
 ```{r endtime}
 # output time taken to run script
