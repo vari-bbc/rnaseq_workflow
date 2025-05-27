@@ -141,6 +141,8 @@ data_for_DE <- read_tsv(samplesheet) %>%
   dplyr::select(-fq1, -fq2) %>%
   unique() # samplesheet can have more than one row for a given sample (e.g. sequenced on more than one lane)
 
+stopifnot(length(data_for_DE$sample) == length(unique(data_for_DE$sample)))
+
 # samplesheet must have at least sample and group
 stopifnot(c("sample", "group") %in% colnames(data_for_DE))
 
