@@ -175,6 +175,7 @@ write_rds(se, out_se)
 sce <- as(se, "SingleCellExperiment")
 sce <- runPCA(sce, ntop=5000, ncomponents = 4, exprs_values="vst")
 
+rowData(sce)$ens_gene <- rownames(sce)
 rownames(sce) <- rowData(sce)$Uniq_syms
 write_rds(sce, out_sce)
 

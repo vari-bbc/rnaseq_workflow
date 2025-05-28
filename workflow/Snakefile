@@ -139,7 +139,7 @@ rule all:
         "results/variant_calling/final/07a_variant_annot/all.merged.filt.PASS.snpeff.vcf.gz" if (config["call_variants"]) else [],
         "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.html" if (config["call_variants"]) else [],
         "results/make_final_report/BBC_RNAseq_Report",
-
+        "results/iSEE/app.R",
 
 include:
     'rules/RNAseq.smk'
@@ -155,3 +155,5 @@ include:
     'rules/gsea.smk'
 include:
     'rules/make_report.smk'
+include:
+    'rules/isee.smk'

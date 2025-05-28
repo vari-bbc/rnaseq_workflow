@@ -50,6 +50,9 @@ renv_use_pak: False # I couldn't get pak to install to the renv cache which resu
 ## if using renv cache, this is the path to where the cache is/will be stored.
 renv_root_path: /varidata/research/projects/bbc/tools/renv_root
 
+# iSEE config
+iSEE_app_name: "VBCS-1448_iSEE"
+
 ####################################################################
 # FOR MOST STANDARD USE CASES, THE BELOW DO NOT NEED TO BE CHANGED.#
 ####################################################################
