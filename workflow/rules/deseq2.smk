@@ -41,3 +41,26 @@ rule deseq2:
                                             fdr_cutoff = {params.fdr_cutoff},
                                             genes_of_interest = '{params.genes_of_interest}'))"
         """
+
+rule add_DE_to_SE:
+    input:
+        sce="results/SummarizedExperiment/sce.rds",
+        res_rds=expand("results/deseq2/deseq2_out_files/{comparison}/de_res.rds", comparison = pd.unique(comparisons["comparison_name"])),
+        renv_lock = ancient("results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname'])),
+    output:
+        sce="results/add_DE_to_SE/sce.rds"
+    benchmark:
+        "benchmarks/add_DE_to_SE/bench.txt"
+    params:
+        renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock),
+        de_res_outfiles_dir = lambda wildcards, input: os.path.dirname(os.path.dirname(input.res_rds[0])),
+        comparisons = pd.unique(comparisons["comparison_name"]),
+    envmodules:
+        config['modules']['R'],
+    threads: 8
+    resources:
+        nodes = 1,
+        mem_gb = 96,
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
+    script:
+        "../scripts/add_DE_to_SCE.R"

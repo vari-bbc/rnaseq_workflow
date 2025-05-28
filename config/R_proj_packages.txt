@@ -28,3 +28,9 @@ ievaKer/aPEAR
 configr
 kableExtra
 SummarizedExperiment
+iSEE
+jose
+packrat
+PKI
+rsconnect
+usethis

@@ -50,6 +50,12 @@ renv_use_pak: False # I couldn't get pak to install to the renv cache which resu
 ## if using renv cache, this is the path to where the cache is/will be stored.
 renv_root_path: /varidata/research/projects/bbc/tools/renv_root
 
+# iSEE config
+iSEE_app_name: "VBCS-1448_iSEE"
+deploy_to_shinyio: False
+shinyio_account_name: "vai-bbc" # valid account names can be found using rsconnect::accounts(); If blank, follow instructions at https://docs.posit.co/shinyapps.io/guide/getting_started/#configure-rsconnect 
+
+
 ####################################################################
 # FOR MOST STANDARD USE CASES, THE BELOW DO NOT NEED TO BE CHANGED.#
 ####################################################################
@@ -79,7 +85,7 @@ modules:
   pandoc: bbc2/pandoc/pandoc-3.1.2
   picard: bbc2/picard/picard-2.27.5
   # The easiest way to get renv to work is to make sure all packages are already installed and up to date in your user library which will then be simply copied to the project library
-  R: bbc2/R/alt/R-4.4.0-setR_LIBS_USER-extra
+  R: bbc2/R/alt/R-4.4.2-extra
   salmon: bbc2/salmon/salmon-1.10.0
   samtools: bbc2/samtools/samtools-1.17
   seqtk: bbc2/seqtk/seqtk-1.3-r115-dirty
