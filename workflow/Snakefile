@@ -140,6 +140,7 @@ rule all:
         "results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.html" if (config["call_variants"]) else [],
         "results/make_final_report/BBC_RNAseq_Report",
         "results/iSEE/app.R",
+        "results/iSEE/deployed" if (config["deploy_to_shinyio"]) else [],
 
 include:
     'rules/RNAseq.smk'

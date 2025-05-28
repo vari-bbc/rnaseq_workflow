@@ -52,6 +52,9 @@ renv_root_path: /varidata/research/projects/bbc/tools/renv_root
 
 # iSEE config
 iSEE_app_name: "VBCS-1448_iSEE"
+deploy_to_shinyio: True
+shinyio_account_name: "kinlau" # valid account names can be found using rsconnect::accounts(); If blank, follow instructions at https://docs.posit.co/shinyapps.io/guide/getting_started/#configure-rsconnect 
+
 
 ####################################################################
 # FOR MOST STANDARD USE CASES, THE BELOW DO NOT NEED TO BE CHANGED.#
