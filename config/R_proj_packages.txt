@@ -19,6 +19,7 @@ patchwork
 PCAtools
 ReactomePA
 rjson
+rmarkdown
 scater
 SNPRelate
 tidyverse
