@@ -31,7 +31,7 @@ params:
 ```{r starttime, echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE}
 # save start time for script
 start_tm <- Sys.time()
-start_tm
+# start_tm
 ```
 
 ```{r make_outdir, echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE}
@@ -41,8 +41,11 @@ dir.create(outdir, recursive=TRUE, showWarnings = FALSE)
 if (!dir.exists(outdir)) {
   stop("Output directory does not exist. Please check the 'comparison_name' parameter in the config file.")
 }
-message("Output directory: ", outdir)
+# message("Output directory: ", outdir)
 ```
+
+
+This analysis was started on `r format(start_tm, "%B %d, %Y at %H:%M")`, and the results will be saved in the *`r outdir`* directory.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE, dev=c('png','pdf'), 
@@ -118,13 +121,15 @@ with 10 or more total read counts across samples will speed up the analysis.
 ```{r filter_low_genes}
 # prefilter genes, keeping only genes with 10 or more total read counts across samples
 total_genes <- nrow(dds)
-message(str_glue("Total number of genes: {total_genes}"))
+# message(str_glue("Total number of genes: {total_genes}"))
 
 keep <- rowSums(counts(dds)) >= 10
-message(str_glue("Keeping {sum(keep)} genes."))
+# message(str_glue("Keeping {sum(keep)} genes."))
 
 dds <- dds[keep, ]
 ```
+
+The original number of genes was `r total_genes`, and the number of genes kept after filtering is `r sum(keep)`.
 
 ### Different normalization approaches for different biases
 
@@ -145,8 +150,10 @@ This includes the following steps:
 
 ```{r run_deseq2}
 dds <- DESeq(dds, quiet = TRUE)
-message(paste0("Coefficient names are: ", paste(resultsNames(dds), collapse = " ")))
+# message(paste0("Coefficient names are: ", paste(resultsNames(dds), collapse = " ")))
 ```
+
+Coefficients in the model are: `r paste(resultsNames(dds), collapse = ", ")`.
 
 After the models are fitted, we can test specific pairs of groups for differential expression. For DESeq2, it is recommended to provide the significance cutoff that you wish to use as it affects the multiple testing correction procedure (see [docs](https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/results)). Here, we'll use the false discovery rate (FDR) cutoff that was provided in the config file (`r params$fdr_cutoff`).
 
@@ -165,8 +172,8 @@ Below is a summary of the DE results, including the number of upregulated and do
 ```{r de_summ}
 df <- as.data.frame(res)
 data.frame(
-  UP=sum(df$padj <= fdr_cutoff & df$log2FoldChange > 0, na.rm = TRUE),
-  DWN=sum(df$padj <= fdr_cutoff & df$log2FoldChange < 0, na.rm = TRUE),
+  Up=sum(df$padj <= fdr_cutoff & df$log2FoldChange > 0, na.rm = TRUE),
+  Down=sum(df$padj <= fdr_cutoff & df$log2FoldChange < 0, na.rm = TRUE),
   Tested=sum(!is.na(df$padj))
 ) %>%
   knitr::kable() %>%
@@ -203,7 +210,7 @@ DESeq2::plotMA(lfc_shrink, main="Shrunken LFC")
 
 ### Output DE results
 
-Here, we merge the different gene name columns to the DE results and output to a tab-delimited file, which can be opened in Excel for manual perusal. This file is `de_res.tsv`, within the `r outdir` directory.
+Here, we merge the different gene name columns to the DE results and output to a tab-delimited file, which can be opened in Excel for manual perusal. This file is `de_res.tsv`, within the *`r outdir`* directory.
 
 ```{r out_de_res_prep}
 df <- cbind(as.data.frame(rowData(dds)[rownames(lfc_shrink), 1:4]),
@@ -231,7 +238,7 @@ df %>% dplyr::filter(Symbol %in% genes_of_interest) %>% print()
 
 ### Output tables with raw counts
 
-Some folks also find it useful to have tables of the raw counts or the normalized counts. The raw counts can be extracted from the DESeq2 object using either `assay()` or `counts()`. This file is `counts.tsv`, within the `r outdir` directory.
+Some folks also find it useful to have tables of the raw counts or the normalized counts. The raw counts can be extracted from the DESeq2 object using either `assay()` or `counts()`. This file is `counts.tsv`, within the *`r outdir`* directory.
 
 ```{r out_counts_prep}
 df <- cbind(as.data.frame(rowData(dds)[, 1:4]),
@@ -246,7 +253,7 @@ write_tsv(df, file.path(outdir, "counts.tsv"))
 ### Output tables with log2 normalized counts
 
 For the log2 normalized counts, we commonly use the variance stabilized transformation ([VST](https://rdrr.io/bioc/DESeq2/man/varianceStabilizingTransformation.html)). These values can be used for heatmaps, clustering or other downstream applications.
-This file is `vst.tsv`, within the `r outdir` directory.
+This file is `vst.tsv`, within the *`r outdir`* directory.
 
 ```{r out_vst_prep}
 vsd <- vst(dds, blind=FALSE)
@@ -435,8 +442,8 @@ ggplot(data = as.data.frame(lfc_shrink) %>%
 
 *Want to make sense of your differential expression results on a broader level?*
 
-See gsea_`params$comparison_name`.html for a pathway-level analysis using GSEA (Gene Set Enrichment Analysis), 
-a method for determining whether the changes you see between `r params$group_test` and `r params$group_reference` are similar to known pathways/genesets. The report contains a summary of the results, including the top enriched pathways, as well as visualizations of the results. This can help you understand the biological significance of your results and identify potential pathways that are affected by the changes in gene expression.
+See gsea_`r params$comparison_name`.html for a pathway-level analysis using GSEA (Gene Set Enrichment Analysis), 
+a method for determining whether the changes you see between your groups (`r params$group_test` and `r params$group_reference`) are similar to known pathways/genesets. The report contains a summary of the results, including the top enriched pathways, as well as visualizations of the results. This can help you understand the biological significance of your results and identify potential pathways that are affected by the changes in gene expression.
 
 And, as always, contact the BBC if you have questions about your results! 
 
@@ -452,7 +459,10 @@ sessionInfo()
 ```{r endtime}
 # output time taken to run script
 end_tm <- Sys.time()
-end_tm
+# end_tm
 end_tm - start_tm
 
 ```
+
+This analysis was completed at `r format(end_tm, "%B %d, %Y at %H:%M")`, for a total runtime of `r end_tm - start_tm`.
+
