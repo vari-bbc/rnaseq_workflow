@@ -17,7 +17,7 @@ search_cols[which(colnames(rowData(sce)) == "row_number")] <- "0 ... 50"
 # You may need to follow the instructions at https://docs.posit.co/shinyapps.io/guide/getting_started/#configure-rsconnect to set up your shinyapps.io credentials
 
 iSEE(sce,
-     initial=list(ComplexHeatmapPlot(PanelWidth=5L, PanelHeight=1000L,
+     initial=list(ComplexHeatmapPlot(PanelWidth=6L, PanelHeight=1000L,
                                      CustomRows=FALSE,
                                      Assay="vst",
                                      ClusterRows=TRUE,
@@ -29,12 +29,12 @@ iSEE(sce,
                                      RowSelectionSource="RowDataTable1",
                                      LegendPosition="Right",
                                      LegendDirection="Vertical"),
-                  RowDataTable(PanelWidth=5L, SearchColumns=search_cols, HiddenColumns=c("entrez","Gene_name","alias","ens_gene","row_number")),
-                  FeatureAssayPlot(DataBoxOpen=TRUE, PanelWidth=4L, Assay="vst",
+                  RowDataTable(PanelWidth=6L, SearchColumns=search_cols, HiddenColumns=c("entrez","Gene_name","alias","ens_gene","row_number")),
+                  FeatureAssayPlot(DataBoxOpen=TRUE, PanelWidth=6L, Assay="vst",
                                    XAxis="Column data", XAxisColumnData="group",
                                    ColorBy="Column data", ColorByColumnData="group",
                                    FontSize=1.5, PointSize=2),
-                  ReducedDimensionPlot(PanelWidth=3L, ColorBy="Column data", ColorByColumnData="group", FontSize=1.5, PointSize=2)
+                  ReducedDimensionPlot(PanelWidth=6L, ColorBy="Column data", ColorByColumnData="group", FontSize=1.5, PointSize=2)
      ),
      appTitle="App for exploring RNA-seq dataset")
 
