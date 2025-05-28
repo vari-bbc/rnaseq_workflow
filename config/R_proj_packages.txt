@@ -25,6 +25,7 @@ SNPRelate
 tidyverse
 txdbmaker
 tximport
+vegan
 ievaKer/aPEAR
 configr
 kableExtra

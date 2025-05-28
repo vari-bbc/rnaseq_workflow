@@ -66,6 +66,7 @@ suppressPackageStartupMessages({
   library(ComplexHeatmap)
   library(DESeq2)
   library(patchwork)
+  library(vegan)
 })
 ```
 
@@ -177,7 +178,7 @@ data.frame(
   Tested=sum(!is.na(df$padj))
 ) %>%
   knitr::kable() %>%
-  kableExtra::kable_styling(full_width = FALSE)
+  kableExtra::kable_styling(full_width = FALSE, font_size = 14) 
 ```
 
 
@@ -226,14 +227,28 @@ write_rds(df, file.path(outdir, "de_res.rds"))
 ```{r specific_genes_check}
 # determine whether any genes have been specified in the config file
 genes_specified <- !(params$genes_of_interest %in% c("", "False", "FALSE", "None"))
+if (genes_specified) {
+  genes_of_interest <- params$genes_of_interest %>% strsplit(",") %>% unlist() %>% gsub("\\s+", "", .)
+}
 ```
 
-`r  if(genes_specified){"### Look for specific genes\nIf we're interested in specific genes (such as genes we'd expect, a priori, to be different),\nwe can check if they are differentially expressed.\n\nThe following genes are shown, based on genes specified in the 'genes_of_interest' parameter in the config file."}` 
+`r if(genes_specified){"### Look for specific genes\nIf we're interested in specific genes (such as genes we'd expect, a priori, to be different),\nwe can check if they are differentially expressed.\nThis is useful for quickly checking if genes of interest are differentially expressed, without having to manually search through the results table.\n\nThe following genes are shown, based on genes specified in the 'genes_of_interest' parameter in the config file."}` 
+
+`r if(genes_specified){"The genes of interest are: "}`
+`r paste(genes_of_interest, collapse=", ")`
+
 
 ```{r specific_genes, eval=genes_specified, echo=genes_specified, include=genes_specified}
-genes_of_interest <- params$genes_of_interest %>% strsplit(",") %>% unlist() %>% gsub("\\s+", "", .)
-message("Genes of interest: ", paste(genes_of_interest, collapse=", "))
-df %>% dplyr::filter(Symbol %in% genes_of_interest) %>% print()
+# message("Genes of interest: ", paste(genes_of_interest, collapse=", "))
+df %>% 
+  dplyr::filter(Symbol %in% genes_of_interest) %>% 
+  dplyr::mutate(log2FoldChange = format(log2FoldChange, scientific=FALSE, digits=3),
+                lfcSE = format(lfcSE, scientific=FALSE, digits=3),
+                pvalue = format(pvalue, scientific=TRUE, digits=3),
+                padj = format(padj, scientific=TRUE, digits=3)) %>%
+  knitr::kable() %>%
+  kableExtra::kable_styling() %>%
+  kableExtra::column_spec(9:10, width = "6em")
 ```
 
 ### Output tables with raw counts
@@ -341,6 +356,41 @@ make_PCA <- function(in_dds, cols, PCx=1, PCy=2, ntop){
   plot_layout(guides="collect") + 
   plot_annotation(title = "PCA - All Samples") 
 ```
+
+```{r test_cluster_separation, fig.height=4.5, fig.width=9}
+test_clustering <- function(in_dds, ntop) {
+  if (ntop > nrow(in_dds)) {
+    ntop <- nrow(in_dds)
+  }
+
+  mat <- assay(in_dds) 
+  col_data <- as.data.frame(colData(in_dds))
+    
+  # row variances
+  vars <- genefilter::rowVars(mat)
+  vars_rank <- order(vars, decreasing = TRUE)
+
+  # get most variable genes
+  mat <- mat[vars_rank[1:ntop], ]
+
+  mat_PERMANOVA <- mat %>%
+    t() %>%
+    scale() 
+  mat_PERMANOVA_df <- mat_PERMANOVA %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column("sample") %>%
+    left_join(., as.data.frame(colData(vsd)), by="sample") 
+
+  adonis2(mat_PERMANOVA ~ group, data = mat_PERMANOVA_df, method='eu')
+}
+res_clustering <- test_clustering(vsd, ntop=10000)
+res_clustering
+```
+
+The PERMANOVA test above tests whether the groups are significantly different from each other based on the most variable genes in the dataset.
+A significant p-value (e.g. < 0.05) indicates that the groups are significantly different from each other, and that the PCA plot is likely to show separation between the groups.
+Here, we see that the groups appear `r if(res_clustering[[1,"Pr(>F)"]] >= 0.05) "*not*"` to be  significantly different from each other 
+(p-value = `r format.pval(res_clustering[[1,"Pr(>F)"]], digits=3)`), indicating that the PCA plot is `r if(res_clustering[[1,"Pr(>F)"]] >= 0.05) "not"` likely to show separation between the groups.
 
 ### Volcano plot
 
@@ -460,9 +510,9 @@ sessionInfo()
 # output time taken to run script
 end_tm <- Sys.time()
 # end_tm
-end_tm - start_tm
+# end_tm - start_tm
 
 ```
 
-This analysis was completed at `r format(end_tm, "%B %d, %Y at %H:%M")`, for a total runtime of `r end_tm - start_tm`.
-
+This analysis was completed on `r format(end_tm, "%B %d, %Y at %H:%M")`, with a total runtime of
+ `r ifelse(difftime(end_tm, start_tm, units = "mins") < 1, paste0(round(difftime(end_tm, start_tm, units = "secs"), 2), " seconds"), paste0(round(difftime(end_tm, start_tm, units = "mins"), 2), " minutes"))`.
