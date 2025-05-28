@@ -22,6 +22,7 @@ rule make_Rproject:
         set_use_pak = lambda wildcards, output: "RENV_CONFIG_PAK_ENABLED={choice}".format(choice="TRUE" if config['renv_use_pak'] else "FALSE"),
         install_pak = lambda wildcards, output: "library(pak)" if config['renv_use_pak'] else "",
         snakemake_dir=snakemake_dir,
+        orgdb = config['orgdb'],
     threads: 1
     envmodules:
         config['modules']['R']
@@ -34,7 +35,7 @@ rule make_Rproject:
         
         # Make R script with package dependencies
         echo '{params.install_pak}' > {output.renv_dependencies}
-        cat {input.R_pkges} | perl -lne 'print qq:library($_):' >> {output.renv_dependencies}
+        (cat {input.R_pkges} && echo {params.orgdb}) | perl -lne 'print qq:library($_):' >> {output.renv_dependencies}
         
         # set RENV_PATHS_CACHE in .Renviron
         echo "RENV_PATHS_ROOT='{params.Renv_root}'" > {output.renviron}
