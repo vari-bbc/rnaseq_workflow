@@ -235,7 +235,7 @@ if (genes_specified) {
 `r if(genes_specified){"### Look for specific genes\nIf we're interested in specific genes (such as genes we'd expect, a priori, to be different),\nwe can check if they are differentially expressed.\nThis is useful for quickly checking if genes of interest are differentially expressed, without having to manually search through the results table.\n\nThe following genes are shown, based on genes specified in the 'genes_of_interest' parameter in the config file."}` 
 
 `r if(genes_specified){"The genes of interest are: "}`
-`r paste(genes_of_interest, collapse=", ")`
+`r if(genes_specified){paste(genes_of_interest, collapse=", ")}`
 
 
 ```{r specific_genes, eval=genes_specified, echo=genes_specified, include=genes_specified}
@@ -492,7 +492,7 @@ ggplot(data = as.data.frame(lfc_shrink) %>%
 
 *Want to make sense of your differential expression results on a broader level?*
 
-See gsea_`r params$comparison_name`.html for a pathway-level analysis using GSEA (Gene Set Enrichment Analysis), 
+See [gsea_`r params$comparison_name`.html](gsea_`r params$comparison_name`.html) for a pathway-level analysis using GSEA (Gene Set Enrichment Analysis), 
 a method for determining whether the changes you see between your groups (`r params$group_test` and `r params$group_reference`) are similar to known pathways/genesets. The report contains a summary of the results, including the top enriched pathways, as well as visualizations of the results. This can help you understand the biological significance of your results and identify potential pathways that are affected by the changes in gene expression.
 
 And, as always, contact the BBC if you have questions about your results! 
