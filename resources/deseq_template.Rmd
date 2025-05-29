@@ -45,7 +45,7 @@ if (!dir.exists(outdir)) {
 ```
 
 
-This analysis was started on `r format(start_tm, "%B %d, %Y at %H:%M")`, and the results will be saved in the *`r outdir`* directory.
+This analysis was started on `r format(start_tm, "%B %d, %Y at %H:%M")`. In addition to this full report, individual result files can be accessed in the "DE Results" tab, under the "Supplementary files" header.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE, dev=c('png','pdf'), 
@@ -211,7 +211,7 @@ DESeq2::plotMA(lfc_shrink, main="Shrunken LFC")
 
 ### Output DE results
 
-Here, we merge the different gene name columns to the DE results and output to a tab-delimited file, which can be opened in Excel for manual perusal. This file is `de_res.tsv`, within the *`r outdir`* directory.
+Here, we merge the different gene name columns to the DE results and output to a tab-delimited file, which can be opened in Excel for manual perusal. This file is **`r params$comparison_name`_de_res.tsv**, within the *[deseq2_tables/](../extras/deseq2_tables/)*  directory.
 
 ```{r out_de_res_prep}
 df <- cbind(as.data.frame(rowData(dds)[rownames(lfc_shrink), 1:4]),
@@ -253,7 +253,7 @@ df %>%
 
 ### Output tables with raw counts
 
-Some folks also find it useful to have tables of the raw counts or the normalized counts. The raw counts can be extracted from the DESeq2 object using either `assay()` or `counts()`. This file is `counts.tsv`, within the *`r outdir`* directory.
+Some folks also find it useful to have tables of the raw counts or the normalized counts. The raw counts can be extracted from the DESeq2 object using either `assay()` or `counts()`. This file is **`r params$comparison_name`_counts.tsv**, within the *[deseq2_tables/](../extras/deseq2_tables/)*  directory.
 
 ```{r out_counts_prep}
 df <- cbind(as.data.frame(rowData(dds)[, 1:4]),
@@ -268,7 +268,7 @@ write_tsv(df, file.path(outdir, "counts.tsv"))
 ### Output tables with log2 normalized counts
 
 For the log2 normalized counts, we commonly use the variance stabilized transformation ([VST](https://rdrr.io/bioc/DESeq2/man/varianceStabilizingTransformation.html)). These values can be used for heatmaps, clustering or other downstream applications.
-This file is `vst.tsv`, within the *`r outdir`* directory.
+This file is **`r params$comparison_name`_vst.tsv**, within the *[deseq2_tables/](../extras/deseq2_tables/)*  directory.
 
 ```{r out_vst_prep}
 vsd <- vst(dds, blind=FALSE)
@@ -284,6 +284,8 @@ write_tsv(vst_df, file.path(outdir, "vst.tsv"))
 ```
 
 ## Some common plots for DEG analysis
+
+The plots below are some common visualizations for differential expression analysis. Individual plots can be found in the *[deseq2_figures/`r params$comparison_name`/](../extras/deseq2_figures/`r params$comparison_name`/)* directory, for easy access to pdf and png files.
 
 ### PCA
 
