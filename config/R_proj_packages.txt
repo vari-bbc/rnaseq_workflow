@@ -36,3 +36,4 @@ packrat
 PKI
 rsconnect
 usethis
+rtracklayer
