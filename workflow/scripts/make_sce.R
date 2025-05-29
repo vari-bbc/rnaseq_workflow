@@ -24,10 +24,7 @@ library(tibble)
 library(edgeR)
 library(rtracklayer)
 # load the org.db for your organism
-if(!require(orgdb, character.only=TRUE)){
-    BiocManager::install(orgdb)
-    library(orgdb, character.only=TRUE)
-}
+library(orgdb, character.only=TRUE)
 library(DESeq2)
 library(AnnotationDbi)
 library(tximport)
@@ -141,6 +138,8 @@ data_for_DE <- read_tsv(samplesheet) %>%
   dplyr::select(-fq1, -fq2) %>%
   unique() # samplesheet can have more than one row for a given sample (e.g. sequenced on more than one lane)
 
+stopifnot(length(data_for_DE$sample) == length(unique(data_for_DE$sample)))
+
 # samplesheet must have at least sample and group
 stopifnot(c("sample", "group") %in% colnames(data_for_DE))
 
@@ -173,6 +172,7 @@ write_rds(se, out_se)
 sce <- as(se, "SingleCellExperiment")
 sce <- runPCA(sce, ntop=5000, ncomponents = 4, exprs_values="vst")
 
+rowData(sce)$ens_gene <- rownames(sce)
 rownames(sce) <- rowData(sce)$Uniq_syms
 write_rds(sce, out_sce)
 
