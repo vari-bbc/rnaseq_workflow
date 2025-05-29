@@ -36,7 +36,7 @@ rule make_final_report:
         root_dir = lambda wildcards, output: os.path.join(os.getcwd(), os.path.dirname(output.website)),
         de_res_outdir = lambda wildcards, input: os.path.dirname(os.path.dirname(input.de_res_figs[0])),
         gsea_dir = lambda wildcards, input: os.path.dirname(input.gsea[0]),
-        isee_site_yml = "    - text: iSEE\\n      icon: ion-sparkles-outline\\n      href: isee.html" if config['deploy_to_shinyio'] else "",
+        isee_site_yml = "    - text: iSEE\\n      icon: fa-solid fa-gem\\n      href: isee.html" if config['deploy_to_shinyio'] else "",
         isee_app_name = config['iSEE_app_name'],
         shinyio_account = config['shinyio_account_name']
     envmodules:
