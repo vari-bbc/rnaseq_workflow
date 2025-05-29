@@ -7,6 +7,7 @@ out_se <- args[4]
 out_sce <- args[5]
 out_sizeFactors <- args[6]
 out_txi <- args[7]
+out_strand <- args[8]
 
 # use the packages in the renv
 renv::load(renv_rproj_dir)
@@ -47,6 +48,12 @@ if(length(lib_type) > 1){
 if(!lib_type %in% c("ISR", "SR", "ISF", "SF", "IU", "U")){
  stop("Unknown library type detected.")
 }
+
+message(str_glue("Salmon-inferred library type is {lib_type}."))
+
+fileConn <- file(out_strand)
+writeLines(lib_type, con = fileConn)
+close(fileConn)
 
 # Read counts
 files <- list.files(star_dir, pattern = "ReadsPerGene.out.tab", full.names = FALSE)
