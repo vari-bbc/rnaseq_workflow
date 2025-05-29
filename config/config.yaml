@@ -83,7 +83,7 @@ modules:
   htslib: bbc2/htslib/htslib-1.17
   multiqc: bbc2/multiqc/multiqc-1.14
   pandoc: bbc2/pandoc/pandoc-3.1.2
-  picard: bbc2/picard/picard-2.27.5
+  picard: bbc2/picard/picard-3.0.0
   # The easiest way to get renv to work is to make sure all packages are already installed and up to date in your user library which will then be simply copied to the project library
   R: bbc2/R/alt/R-4.4.2-extra
   salmon: bbc2/salmon/salmon-1.10.0
@@ -93,4 +93,5 @@ modules:
   sortmerna: bbc2/sortmerna/sortmerna-4.3.6
   star: bbc2/STAR/STAR-2.7.10a
   trim_galore: bbc2/trim_galore/trim_galore-0.6.10
+  ucsctools: bbc2/ucsc_tools/ucsc_tools-20231127 
   vt: bbc2/vt/vt-0.1.16

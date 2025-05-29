@@ -135,6 +135,129 @@ rule sortmerna:
         --ref {params.silva_euk_28s}
         """
 
+rule make_genes_ref_flat:
+    """
+    Make REF FLAT file from GTF.
+    """
+    input:
+        gtf=config['ref']['annotation']
+    output:
+        ref_flat="results/misc/gene_annot.ref_flat.txt"
+    benchmark:
+        "benchmarks/make_genes_ref_flat/bench.txt"
+    params:
+    envmodules:
+        config["modules"]["ucsctools"]
+    threads: 4
+    resources:
+        mem_gb = 80,
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
+    shell:
+        """
+        gtfToGenePred -genePredExt -geneNameAsName2 -ignoreGroupsWithoutExons {input.gtf} /dev/stdout | \
+                perl -F"\\t" -lane 'print join("\\t", @F[11,0..9])'  > {output.ref_flat}
+        """
+
+rule make_genes_bed:
+    """
+    Make BED file from GTF.
+    """
+    input:
+        gtf=config['ref']['annotation']
+    output:
+        bed="results/misc/gene_annot.bed"
+    benchmark:
+        "benchmarks/make_genes_bed/bench.txt"
+    params:
+    envmodules:
+        config["modules"]["ucsctools"]
+    threads: 4
+    resources:
+        mem_gb = 80,
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
+    shell:
+        """
+        gtfToGenePred {input.gtf} /dev/stdout |  genePredToBed /dev/stdin {output.bed} 
+        """
+
+
+rule get_rRNA_intervals_from_gtf:
+    """
+    Get rRNA intervals from GTF in BED format.
+    """
+    input:
+        gtf=config['ref']['annotation'],
+        ref_dict=config['ref']['dict'],
+        renv_lock = ancient("results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname'])),
+    output:
+        bed="results/misc/rrna.bed",
+        interval_list="results/misc/rrna.interval_list"
+    benchmark:
+        "benchmarks/get_rRNA_intervals_from_gtf/bench.txt"
+    params:
+        renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock),
+    envmodules:
+        config["modules"]["picard"],
+        config["modules"]["R"],
+    threads: 4
+    resources:
+        mem_gb = 80,
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
+    shell:
+        """
+        Rscript --vanilla -e 'renv::load("{params.renv_rproj_dir}"); library(rtracklayer); gtf <- import("{input.gtf}"); rrna <- gtf[mcols(gtf)$gene_biotype=="rRNA" & mcols(gtf)$type=="gene"]; score(rrna) <- 1; export(rrna, "{output.bed}")'
+
+        java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $PICARD BedToIntervalList \
+                I={output.bed} \
+                O={output.interval_list} \
+                SD={input.ref_dict}
+        """
+
+def get_library_strandedness(wildcards, input):
+    with open(input.strandedness) as f:
+        first_line = f.readline().strip('\n')
+    if first_line in ("ISR","SR"):
+        strandedness = "SECOND_READ_TRANSCRIPTION_STRAND"
+    elif first_line in ("ISF","SF"):
+        strandedness = "FIRST_READ_TRANSCRIPTION_STRAND"
+    elif first_line in ("IU","U"):
+        strandedness = "NONE"
+    else:
+        raise Exception("Unrecognized strand type") 
+    return strandedness
+
+rule CollectRnaSeqMetrics:
+    """
+    Run Picard CollectRnaSeqMetrics.
+    """
+    input:
+        bam="results/star/{sample}.sorted.bam",
+        ref_flat="results/misc/gene_annot.ref_flat.txt",
+        strandedness="results/SummarizedExperiment/inferred_strandedness.txt",
+        rrna="results/misc/rrna.interval_list"
+    output:
+        metrics="results/CollectRnaSeqMetrics/{sample}.txt"
+    benchmark:
+        "benchmarks/CollectRnaSeqMetrics/{sample}.txt"
+    params:
+        strand=get_library_strandedness,
+    envmodules:
+        config["modules"]["picard"]
+    threads: 4
+    resources:
+        mem_gb = 80,
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
+    shell:
+        """
+        java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $PICARD CollectRnaSeqMetrics \
+        -I {input.bam} \
+        -O {output.metrics} \
+        --REF_FLAT {input.ref_flat} \
+        --STRAND_SPECIFICITY {params.strand} \
+        --RIBOSOMAL_INTERVALS {input.rrna}
+        """
+
+
 multiqc_input = []
 if config["PE_or_SE"] =="SE":
     multiqc_input.append(expand("results/fastq_screen/{samples.sample}_R1_trimmed_screen.txt", samples=samples.itertuples()))
@@ -143,6 +266,7 @@ if config["PE_or_SE"] =="SE":
     multiqc_input.append(expand("results/star/{samples.sample}.Log.final.out", samples=samples.itertuples()))
     multiqc_input.append(expand("results/sortmerna/{samples.sample}",samples=samples.itertuples()))
     multiqc_input.append(expand("results/salmon/{samples.sample}/{file}", samples=samples.itertuples(), file=["aux_info/meta_info.json"]))
+    multiqc_input.append(expand("results/CollectRnaSeqMetrics/{samples.sample}.txt",samples=samples.itertuples()))
 elif config["PE_or_SE"] =="PE":
     multiqc_input.append(expand("results/fastq_screen/{samples.sample}_R{read}_screen.txt", samples=samples.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("results/fastqc/{samples.sample}_R{read}_fastqc.html", samples=samples.itertuples(), read=["1","2"]))
@@ -150,6 +274,7 @@ elif config["PE_or_SE"] =="PE":
     multiqc_input.append(expand("results/star/{samples.sample}.Log.final.out", samples=samples.itertuples()))
     multiqc_input.append(expand("results/salmon/{samples.sample}/{file}", samples=samples.itertuples(), file=["libParams/flenDist.txt","aux_info/meta_info.json"]))
     multiqc_input.append(expand("results/sortmerna/{samples.sample}",samples=samples.itertuples()))
+    multiqc_input.append(expand("results/CollectRnaSeqMetrics/{samples.sample}.txt",samples=samples.itertuples()))
 
 
 rule multiqc:
@@ -161,6 +286,7 @@ rule multiqc:
         "results/fastqc/",
         "results/salmon/",
         "results/sortmerna/",
+        "results/CollectRnaSeqMetrics/",
     output:
         "results/multiqc/multiqc_report.html",
         "results/multiqc/multiqc_report_data/multiqc.log",
