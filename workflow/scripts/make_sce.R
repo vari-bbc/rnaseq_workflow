@@ -24,10 +24,7 @@ library(tibble)
 library(edgeR)
 library(rtracklayer)
 # load the org.db for your organism
-if(!require(orgdb, character.only=TRUE)){
-    BiocManager::install(orgdb)
-    library(orgdb, character.only=TRUE)
-}
+library(orgdb, character.only=TRUE)
 library(DESeq2)
 library(AnnotationDbi)
 library(tximport)

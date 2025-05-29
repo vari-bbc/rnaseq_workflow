@@ -19,11 +19,13 @@ patchwork
 PCAtools
 ReactomePA
 rjson
+rmarkdown
 scater
 SNPRelate
 tidyverse
 txdbmaker
 tximport
+vegan
 ievaKer/aPEAR
 configr
 kableExtra
