@@ -80,6 +80,7 @@ if quick_ref_id:
     config['ref']['index'] = f'{ref_base_dir}/indexes/star'
     config['ref']['salmon_index'] = f'{ref_base_dir}/indexes/salmon/{quick_ref_id}'
     config['ref']['annotation'] = f'{ref_base_dir}/annotation/{quick_ref_id}.gtf'
+    config['ref']['dict'] = f'{ref_base_dir}/sequence/{quick_ref_id}.dict'
 
 else:
     print("Using the index files manually specified in the config file.\n")
