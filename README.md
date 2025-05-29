@@ -30,7 +30,7 @@
   * config/config.yaml
     * **iSEE**
         1. Deployment of iSEE to shinyapps.io can be enabled/disabled using `deploy_to_shinyio`. If set to False, the following steps can be ignored.
-        2. `iSEE_app_name` should be a new app name that does not already exist in your shinyapps.io account. Otherwise, your old app will be overwritten. 
+        2. `iSEE_app_name` should be a new app name that does not already exist in your shinyapps.io account. Otherwise, the deployment will fail or your old app may be overwritten.
         3. In R, run `rsconnect::accounts()`. Choose one of the values in the 'name' column to fill in `shinyio_account_name`. If `rsconnect::accounts()` does not return any results, you need to first follow the instructions [here](https://docs.posit.co/shinyapps.io/guide/getting_started/#configure-rsconnect) to set up your shinyapps.io credentials.
 
 ### Step 1b (_optional_): Specify contig groups for variant calling
