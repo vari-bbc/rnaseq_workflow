@@ -39,7 +39,9 @@ outdir <- file.path("deseq2_out_files", params$comparison_name)
 
 dir.create(outdir, recursive=TRUE, showWarnings = FALSE)
 if (!dir.exists(outdir)) {
-  stop("Output directory does not exist. Please check the 'comparison_name' parameter in the config file.")
+  stop(paste0("Failed to create the output directory: '", outdir, "'. ",
+              "Please check the 'comparison_name' parameter in the config file, ensure the path is valid, ",
+              "and verify that you have sufficient permissions to create directories."))
 }
 # message("Output directory: ", outdir)
 ```
