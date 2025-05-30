@@ -23,6 +23,9 @@ rule isee:
         """
 
 rule deploy_isee_to_shinyappio:
+    """
+    Deploy iSEE to shinyapp.io and try to increase memory (may fail if account tier is too low).
+    """
     input:
         sce="results/iSEE/sce.rds",
         app="results/iSEE/app.R",
@@ -49,6 +52,6 @@ rule deploy_isee_to_shinyappio:
         """
         echo '{params.deployed_file}' > {output.rscignore}
 
-        Rscript --vanilla -e "renv::load('{params.renv_rproj_dir}'); options(repos = BiocManager::repositories()); rsconnect::deployApp({params.app_dir}, {params.app_info}); rsconnect::configureApp({params.app_dir}, {params.app_info}, size='xxxlarge')"
+        Rscript --vanilla -e "renv::load('{params.renv_rproj_dir}'); options(repos = BiocManager::repositories()); rsconnect::deployApp({params.app_dir}, {params.app_info}); try(rsconnect::configureApp({params.app_dir}, {params.app_info}, size='xxxlarge'))"
 
         """
