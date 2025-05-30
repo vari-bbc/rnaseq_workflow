@@ -2,13 +2,9 @@ library(iSEE)
 
 sce <- readRDS("sce.rds")
 
-# sort by significance of the first occurring contrast
-sce <- sce[order(rowData(sce)[[grep("padj$", colnames(rowData(sce)))[1]]]), ]
-rowData(sce)$row_number <- 1:nrow(sce)
-
 rowData(sce) <- rowData(sce)[, setdiff(colnames(rowData(sce)), c("Uniq_syms"))]
 search_cols <- rep("", length(colnames(rowData(sce))))
-search_cols[which(colnames(rowData(sce)) == "row_number")] <- "0 ... 50"
+search_cols[grep("\\.rank$", colnames(rowData(sce)))[1]] <- "1 ... 50" # top 50 genes of the first contrast
 
 # To deploy to shinyapp.io, run manually:
 # usethis::proj_activate(<<<R_proj_path>>>)
@@ -29,7 +25,10 @@ iSEE(sce,
                                      RowSelectionSource="RowDataTable1",
                                      LegendPosition="Right",
                                      LegendDirection="Vertical"),
-                  RowDataTable(PanelWidth=6L, SearchColumns=search_cols, HiddenColumns=c("entrez","Gene_name","alias","ens_gene","row_number",grep("\\.LFC$", colnames(rowData(sce)), value = TRUE))),
+                  RowDataTable(PanelWidth=6L, SearchColumns=search_cols, 
+                               HiddenColumns=c("entrez","Gene_name","alias","ens_gene",
+                                               grep("\\.LFC$", colnames(rowData(sce)), value = TRUE),
+                                               grep("\\.padj$", colnames(rowData(sce)), value = TRUE))),
                   FeatureAssayPlot(DataBoxOpen=TRUE, PanelWidth=6L, Assay="vst",
                                    XAxis="Column data", XAxisColumnData="group",
                                    ColorBy="Column data", ColorByColumnData="group",

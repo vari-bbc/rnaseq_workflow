@@ -21,6 +21,7 @@ for (i in seq_along(comps)){
     de_res <- readRDS(file.path(de_res_outfiles_dir, curr_comp, "de_res.rds"))
     rowData(sce)[[paste0(curr_comp, ".padj")]] <- de_res$padj[match(rowData(sce)$ens_gene, de_res$ens_gene)]
     rowData(sce)[[paste0(curr_comp, ".LFC")]] <- de_res$log2FoldChange[match(rowData(sce)$ens_gene, de_res$ens_gene)]
+    rowData(sce)[[paste0(curr_comp, ".rank")]] <- rank(rowData(sce)[[paste0(curr_comp, ".padj")]], ties.method = "min")
 }
 
 write_rds(sce, out_sce)
