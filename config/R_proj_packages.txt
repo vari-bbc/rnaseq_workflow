@@ -26,6 +26,7 @@ tidyverse
 txdbmaker
 tximport
 vegan
+arules
 ievaKer/aPEAR
 configr
 kableExtra
