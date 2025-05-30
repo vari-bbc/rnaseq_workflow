@@ -1,8 +1,9 @@
 rule make_Rproject:
     input:
-        R_pkges="config/R_proj_packages.txt"
+        R_pkges="config/R_proj_packages.txt",
     output:
         rproj = "results/{Rproj}/{Rproj}.Rproj",
+        gitignore = "results/{Rproj}/.gitignore",
         R_dir = directory("results/{Rproj}/R"),
         renv_lock = "results/{Rproj}/renv.lock",
         renv_dependencies = "results/{Rproj}/_dependencies.R",
@@ -45,14 +46,15 @@ rule make_Rproject:
         echo '{params.set_symlink_from_cache}' >> {output.renviron}
         echo '{params.set_use_pak}' >> {output.renviron}
 
+
         cd {params.Rproj_dir}
-        
-        # Bioc packages not already installed in user library can fail to install. Here we install problematic packages
-        # See https://github.com/rstudio/renv/issues/81#issuecomment-497131224
+       
+        echo "Running script to set up renv library..."
         # Don't use --vanilla because we need to get the RENV_PATHS_ROOT from the .renviron file.
         Rscript {params.snakemake_dir}/workflow/scripts/install_renv_pkges.R {params.snakemake_dir}/{input.R_pkges}
         
         # Set up git
+        echo "Setting up git now..."
         git init
         git add -A 
         git commit -m "initial commit"
