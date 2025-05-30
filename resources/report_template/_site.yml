@@ -30,7 +30,7 @@ navbar:
         - text: "Supplemental files"
         - text: "High-res figures"
           href: ./extras/gsea_figures/
-        - text: "DE result tables"
+        - text: "GSEA result tables"
           href: ./extras/gsea_tables/
 <<<ISEE>>>
   right:
