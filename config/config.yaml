@@ -86,6 +86,7 @@ modules:
   picard: bbc2/picard/picard-3.0.0
   # The easiest way to get renv to work is to make sure all packages are already installed and up to date in your user library which will then be simply copied to the project library
   R: bbc2/R/alt/R-4.4.2-extra
+  rseqc: bbc2/rseqc/rseqc-5.0.4
   salmon: bbc2/salmon/salmon-1.10.0
   samtools: bbc2/samtools/samtools-1.17
   seqtk: bbc2/seqtk/seqtk-1.3-r115-dirty

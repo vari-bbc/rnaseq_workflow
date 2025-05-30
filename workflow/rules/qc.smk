@@ -257,6 +257,34 @@ rule CollectRnaSeqMetrics:
         --RIBOSOMAL_INTERVALS {input.rrna}
         """
 
+rule rseqc_genebody_cov:
+    """
+    Run RSeQC.
+    """
+    input:
+        bam="results/star/{sample}.sorted.bam",
+        genes="results/misc/gene_annot.bed"
+    output:
+        metrics="results/rseqc_genebody_cov/{sample}/{sample}.geneBodyCoverage.txt",
+        r="results/rseqc_genebody_cov/{sample}/{sample}.geneBodyCoverage.r",
+        log="results/rseqc_genebody_cov/{sample}/log.txt",
+    benchmark:
+        "benchmarks/rseqc_genebody_cov/{sample}.txt"
+    params:
+        prefix="{sample}",
+        samp_dir=lambda wildcards, output: os.path.dirname(output.metrics)
+    envmodules:
+        config["modules"]["rseqc"]
+    threads: 4
+    resources:
+        mem_gb = 80,
+        log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
+    shell:
+        """
+        cd {params.samp_dir}
+
+        geneBody_coverage.py -r ../../../{input.genes} -i ../../../{input.bam} -o {params.prefix}
+        """
 
 multiqc_input = []
 if config["PE_or_SE"] =="SE":
@@ -267,6 +295,7 @@ if config["PE_or_SE"] =="SE":
     multiqc_input.append(expand("results/sortmerna/{samples.sample}",samples=samples.itertuples()))
     multiqc_input.append(expand("results/salmon/{samples.sample}/{file}", samples=samples.itertuples(), file=["aux_info/meta_info.json"]))
     multiqc_input.append(expand("results/CollectRnaSeqMetrics/{samples.sample}.txt",samples=samples.itertuples()))
+    multiqc_input.append(expand("results/rseqc_genebody_cov/{samples.sample}/{samples.sample}.geneBodyCoverage.txt",samples=samples.itertuples()))
 elif config["PE_or_SE"] =="PE":
     multiqc_input.append(expand("results/fastq_screen/{samples.sample}_R{read}_screen.txt", samples=samples.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("results/fastqc/{samples.sample}_R{read}_fastqc.html", samples=samples.itertuples(), read=["1","2"]))
@@ -275,6 +304,7 @@ elif config["PE_or_SE"] =="PE":
     multiqc_input.append(expand("results/salmon/{samples.sample}/{file}", samples=samples.itertuples(), file=["libParams/flenDist.txt","aux_info/meta_info.json"]))
     multiqc_input.append(expand("results/sortmerna/{samples.sample}",samples=samples.itertuples()))
     multiqc_input.append(expand("results/CollectRnaSeqMetrics/{samples.sample}.txt",samples=samples.itertuples()))
+    multiqc_input.append(expand("results/rseqc_genebody_cov/{samples.sample}/{samples.sample}.geneBodyCoverage.txt",samples=samples.itertuples()))
 
 
 rule multiqc:
@@ -287,6 +317,7 @@ rule multiqc:
         "results/salmon/",
         "results/sortmerna/",
         "results/CollectRnaSeqMetrics/",
+        "results/rseqc_genebody_cov/",
     output:
         "results/multiqc/multiqc_report.html",
         "results/multiqc/multiqc_report_data/multiqc.log",
