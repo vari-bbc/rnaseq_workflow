@@ -205,7 +205,7 @@ rule get_rRNA_intervals_from_gtf:
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
-        Rscript --vanilla -e 'renv::load("{params.renv_rproj_dir}"); library(rtracklayer); gtf <- import("{input.gtf}"); rrna <- gtf[mcols(gtf)$gene_biotype=="rRNA" & mcols(gtf)$type=="gene"]; score(rrna) <- 1; export(rrna, "{output.bed}")'
+        Rscript --vanilla -e 'renv::load("{params.renv_rproj_dir}"); library(rtracklayer); gtf <- import("{input.gtf}"); biotype_col <- na.omit(match(c("gene_biotype","gene_type"), colnames(mcols(gtf)))); stopifnot(length(biotype_col) > 0); rrna <- gtf[mcols(gtf)[[biotype_col[1]]]=="rRNA" & mcols(gtf)$type=="gene"]; score(rrna) <- 1; export(rrna, "{output.bed}")'
 
         java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $PICARD BedToIntervalList \
                 I={output.bed} \
