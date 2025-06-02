@@ -2,9 +2,6 @@ args <- commandArgs(trailingOnly = TRUE)
 
 pkges_file <- args[1]
 
-if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
 # https://github.com/rstudio/renv/issues/81#issuecomment-497131224
 options(repos = BiocManager::repositories()) 
 
