@@ -291,35 +291,25 @@ if config["PE_or_SE"] =="SE":
     multiqc_input.append(expand("results/fastq_screen/{samples.sample}_R1_trimmed_screen.txt", samples=samples.itertuples()))
     multiqc_input.append(expand("results/fastqc/{samples.sample}_R1_trimmed_fastqc.zip", samples=samples.itertuples()))
     multiqc_input.append(expand("results/fastqc/{samples.sample}_R1_trimmed_fastqc.html", samples=samples.itertuples()))
-    multiqc_input.append(expand("results/star/{samples.sample}.Log.final.out", samples=samples.itertuples()))
-    multiqc_input.append(expand("results/sortmerna/{samples.sample}",samples=samples.itertuples()))
     multiqc_input.append(expand("results/salmon/{samples.sample}/{file}", samples=samples.itertuples(), file=["aux_info/meta_info.json"]))
-    multiqc_input.append(expand("results/CollectRnaSeqMetrics/{samples.sample}.txt",samples=samples.itertuples()))
-    if config['run_rseqc']:
-        multiqc_input.append(expand("results/rseqc_genebody_cov/{samples.sample}/{samples.sample}.geneBodyCoverage.txt",samples=samples.itertuples()))
 elif config["PE_or_SE"] =="PE":
     multiqc_input.append(expand("results/fastq_screen/{samples.sample}_R{read}_screen.txt", samples=samples.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("results/fastqc/{samples.sample}_R{read}_fastqc.html", samples=samples.itertuples(), read=["1","2"]))
     multiqc_input.append(expand("results/fastqc/{samples.sample}_R{read}_fastqc.zip", samples=samples.itertuples(), read=["1","2"]))
-    multiqc_input.append(expand("results/star/{samples.sample}.Log.final.out", samples=samples.itertuples()))
     multiqc_input.append(expand("results/salmon/{samples.sample}/{file}", samples=samples.itertuples(), file=["libParams/flenDist.txt","aux_info/meta_info.json"]))
-    multiqc_input.append(expand("results/sortmerna/{samples.sample}",samples=samples.itertuples()))
-    multiqc_input.append(expand("results/CollectRnaSeqMetrics/{samples.sample}.txt",samples=samples.itertuples()))
-    if config['run_rseqc']:
-        multiqc_input.append(expand("results/rseqc_genebody_cov/{samples.sample}/{samples.sample}.geneBodyCoverage.txt",samples=samples.itertuples()))
+
+multiqc_input.append(expand("results/star/{samples.sample}.Log.final.out", samples=samples.itertuples()))
+multiqc_input.append(expand("results/sortmerna/{samples.sample}",samples=samples.itertuples()))
+multiqc_input.append(expand("results/CollectRnaSeqMetrics/{samples.sample}.txt",samples=samples.itertuples()))
+if config['run_rseqc']:
+    multiqc_input.append(expand("results/rseqc_genebody_cov/{samples.sample}/{samples.sample}.geneBodyCoverage.txt",samples=samples.itertuples()))
 
 
 rule multiqc:
     input:
         multiqc_input
     params:
-        "results/star/",
-        "results/fastq_screen/",
-        "results/fastqc/",
-        "results/salmon/",
-        "results/sortmerna/",
-        "results/CollectRnaSeqMetrics/",
-        "results/rseqc_genebody_cov/" if config['run_rseqc'] else [''],
+        lambda wildcards, input: " ".join(pd.unique([os.path.dirname(x) for x in input]))
     output:
         "results/multiqc/multiqc_report.html",
         "results/multiqc/multiqc_report_data/multiqc.log",
