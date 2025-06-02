@@ -37,6 +37,7 @@ call_variants: False
 grouped_contigs: config/grouped_contigs.tsv 
 
 run_vis_bigwig : True
+run_rseqc: False
 
 # R project config
 Rproj_dirname: "VBCS-000_Rproj"
