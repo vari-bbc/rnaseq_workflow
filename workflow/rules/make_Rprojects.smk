@@ -36,7 +36,7 @@ rule make_Rproject:
         
         # Make R script with package dependencies
         echo '{params.install_pak}' > {output.renv_dependencies}
-        (cat {input.R_pkges} && echo {params.orgdb}) | perl -lne 'print qq:library($_):' >> {output.renv_dependencies}
+        (cat {input.R_pkges} && echo {params.orgdb}) | perl -lne 's:.*/::; s:@.*$::; print qq:library($_):' >> {output.renv_dependencies}
         
         # set RENV_PATHS_CACHE in .Renviron
         echo "RENV_PATHS_ROOT='{params.Renv_root}'" > {output.renviron}

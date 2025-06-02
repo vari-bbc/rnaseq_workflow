@@ -5,6 +5,7 @@
       * [Step 1: Configure the workflow](#step-1-configure-the-workflow)
       * [Step 1b (<em>optional</em>): Specify contig groups for variant calling](#step-1b-optional-specify-contig-groups-for-variant-calling)
       * [Step 2: Test and run the workflow](#step-2-test-and-run-the-workflow)
+   * [Troubleshooting](#troubleshooting)
 
 ## Usage
 
@@ -56,3 +57,6 @@ Execute from within your project directory as a SLURM job.
 sbatch bin/run_snake.sh
 ```
 
+## Troubleshooting
+
+- If running the workflow on an older version of R, incompatibilities with the latest CRAN packages can occur if an older version of the CRAN package is not available in the renv cache or in the user library. To install an older version of a CRAN package, replace/add the package name in the `config/R_proj_packages.txt` file with `package_name@version_number`. The version number should be as listed in the package's reference manual e.g. `arules@1.7-10`. Note that this version number is only considered if the workflow was unable to copy from the cache or user library.
