@@ -1,0 +1,9 @@
+- name: test-dry-run
+  command: >
+    snakemake --dry-run --configfile tests/test_config/config.yaml
+  exit_code: 0
+  stderr:
+    contains:
+      - '(100%) done'
+    must_not_contain:
+      - 'rror'

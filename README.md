@@ -84,16 +84,16 @@ flowchart TB
 	id13[deseq2]
 	id14[gsea]
 	id15[make_final_report]
-    id14 --> id0
-    id11 --> id0
-    id1 --> id0
     id13 --> id0
-    id15 --> id0
+    id1 --> id0
+    id11 --> id0
     id12 --> id0
+    id14 --> id0
+    id15 --> id0
     id7 --> id1
     id2 --> id1
-    id6 --> id1
     id8 --> id1
+    id6 --> id1
     id9 --> id1
     id3 --> id2
     id4 --> id3
@@ -103,13 +103,15 @@ flowchart TB
     id4 --> id8
     id10 --> id9
     id3 --> id10
-    id7 --> id11
     id12 --> id11
     id8 --> id11
+    id7 --> id11
     id12 --> id13
     id11 --> id13
     id13 --> id14
     id12 --> id14
+    id13 --> id15
     id1 --> id15
+    id14 --> id15
     id12 --> id15
 ```
