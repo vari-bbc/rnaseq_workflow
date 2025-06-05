@@ -7,6 +7,7 @@ out_se <- args[4]
 out_sce <- args[5]
 out_sizeFactors <- args[6]
 out_txi <- args[7]
+out_strand <- args[8]
 
 # use the packages in the renv
 renv::load(renv_rproj_dir)
@@ -24,10 +25,7 @@ library(tibble)
 library(edgeR)
 library(rtracklayer)
 # load the org.db for your organism
-if(!require(orgdb, character.only=TRUE)){
-    BiocManager::install(orgdb)
-    library(orgdb, character.only=TRUE)
-}
+library(orgdb, character.only=TRUE)
 library(DESeq2)
 library(AnnotationDbi)
 library(tximport)
@@ -50,6 +48,12 @@ if(length(lib_type) > 1){
 if(!lib_type %in% c("ISR", "SR", "ISF", "SF", "IU", "U")){
  stop("Unknown library type detected.")
 }
+
+message(str_glue("Salmon-inferred library type is {lib_type}."))
+
+fileConn <- file(out_strand)
+writeLines(lib_type, con = fileConn)
+close(fileConn)
 
 # Read counts
 files <- list.files(star_dir, pattern = "ReadsPerGene.out.tab", full.names = FALSE)
@@ -141,6 +145,8 @@ data_for_DE <- read_tsv(samplesheet) %>%
   dplyr::select(-fq1, -fq2) %>%
   unique() # samplesheet can have more than one row for a given sample (e.g. sequenced on more than one lane)
 
+stopifnot(length(data_for_DE$sample) == length(unique(data_for_DE$sample)))
+
 # samplesheet must have at least sample and group
 stopifnot(c("sample", "group") %in% colnames(data_for_DE))
 
@@ -173,6 +179,7 @@ write_rds(se, out_se)
 sce <- as(se, "SingleCellExperiment")
 sce <- runPCA(sce, ntop=5000, ncomponents = 4, exprs_values="vst")
 
+rowData(sce)$ens_gene <- rownames(sce)
 rownames(sce) <- rowData(sce)$Uniq_syms
 write_rds(sce, out_sce)
 

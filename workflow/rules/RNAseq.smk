@@ -244,12 +244,13 @@ rule SummarizedExperiment:
     input:
         star = expand("results/star/{samples.sample}.ReadsPerGene.out.tab", samples=samples.itertuples()),
         salmon = expand("results/salmon/{samples.sample}/{file}", samples=samples.itertuples(), file=['lib_format_counts.json', 'quant.sf']),
-        renv_lock = "results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname'])
+        renv_lock = ancient("results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname']))
     output:
         se="results/SummarizedExperiment/SummarizedExperiment.rds",
         sce="results/SummarizedExperiment/sce.rds",
         sizeFactors="results/SummarizedExperiment/DESeq2_sizeFactors_reciprocal.tsv",
-        txi="results/SummarizedExperiment/txi.rds"
+        txi="results/SummarizedExperiment/txi.rds",
+        strandedness="results/SummarizedExperiment/inferred_strandedness.txt"
     benchmark:
         "benchmarks/SummarizedExperiment/SummarizedExperiment.txt"
     params:
@@ -264,5 +265,5 @@ rule SummarizedExperiment:
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
-        Rscript --vanilla workflow/scripts/make_sce.R {params.gtf} {params.orgdb} {params.renv_rproj_dir} {output.se} {output.sce} {output.sizeFactors} {output.txi}
+        Rscript --vanilla workflow/scripts/make_sce.R {params.gtf} {params.orgdb} {params.renv_rproj_dir} {output.se} {output.sce} {output.sizeFactors} {output.txi} {output.strandedness}
         """

@@ -2,10 +2,12 @@ rule gsea:
     input:
         res_rds="results/deseq2/deseq2_out_files/{comparison}/de_res.rds",
         vsd_rds="results/deseq2/deseq2_out_files/{comparison}/vsd.rds",
-        renv_lock = "results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname'])
+        renv_lock = ancient("results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname']))
     output:
         rmd="results/gsea/gsea_{comparison}.Rmd",
-        html="results/gsea/gsea_{comparison}.html"
+        html="results/gsea/gsea_{comparison}.html",
+        figs=directory("results/gsea/{comparison}_out_files/individual_figures"),
+        outfiles=expand("results/gsea/{{comparison}}_out_files/{collection}_gsea.xlsx", collection = config['pathway_str'].split(','))
     benchmark:
         "benchmarks/gsea/{comparison}.txt"
     params:

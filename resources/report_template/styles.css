@@ -3,6 +3,15 @@ body {
   font-size: 14pt;
 }
 
+.container{
+  max-width: 80% !important;
+}
+
+.main-container {
+  max-width: 80% !important;
+}
+
+
 h1 {
   font-size: 22pt;
   font-weight: bold;

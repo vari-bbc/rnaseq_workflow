@@ -7,7 +7,7 @@ rule make_final_report:
         gsea = expand("results/gsea/gsea_{comp}.html", comp=pd.unique(comparisons["comparison_name"])),
         gsea_figs = expand("results/gsea/{comp}_out_files/individual_figures", comp=pd.unique(comparisons["comparison_name"])),
         gsea_tables = expand("results/gsea/{comp}_out_files/{collection}_gsea.xlsx", comp=pd.unique(comparisons["comparison_name"]), collection = config['pathway_str'].split(',')),
-        renv_lock = "results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname']),
+        renv_lock = ancient("results/{Rproj}/renv.lock".format(Rproj=config['Rproj_dirname'])),
         multiqc = "results/multiqc/multiqc_report.html"
     output:
         site_files = expand("results/make_final_report/{fname}", fname=["_site.yml", "footer.html", "index.Rmd","references.bib", "styles.css", "images/VAI_2_Line_White.png"]),
@@ -21,7 +21,8 @@ rule make_final_report:
         gsea_figs = directory(expand("results/make_final_report/extras/gsea_figures/{comp}", comp=pd.unique(comparisons["comparison_name"]))),
         gsea_tables = expand("results/make_final_report/extras/gsea_tables/{comp}/{collection}_gsea.xlsx", comp=pd.unique(comparisons["comparison_name"]), collection = config['pathway_str'].split(',')),
         multiqc = "results/make_final_report/external_reports/multiqc_report.html",
-        website = directory("results/make_final_report/BBC_RNAseq_Report")
+        website = directory("results/make_final_report/BBC_RNAseq_Report"),
+        isee_rmd = "results/make_final_report/iSEE.Rmd",
     benchmark:
         "benchmarks/make_final_report/bench.txt"
     params:
@@ -35,6 +36,9 @@ rule make_final_report:
         root_dir = lambda wildcards, output: os.path.join(os.getcwd(), os.path.dirname(output.website)),
         de_res_outdir = lambda wildcards, input: os.path.dirname(os.path.dirname(input.de_res_figs[0])),
         gsea_dir = lambda wildcards, input: os.path.dirname(input.gsea[0]),
+        isee_site_yml = "    - text: iSEE\\n      icon: fa-solid fa-gem\\n      href: isee.html" if config['deploy_to_shinyio'] else "",
+        isee_app_name = config['iSEE_app_name'],
+        shinyio_account = config['shinyio_account_name']
     envmodules:
         config['modules']['R'],
         config['modules']['pandoc']
@@ -51,11 +55,14 @@ rule make_final_report:
 
         perl -i -lnpe 's/<<<DE_RES>>>/{params.de_res_yml}/' {params.root_dir}/_site.yml
         perl -i -lnpe 's/<<<GSEA_RES>>>/{params.gsea_yml}/' {params.root_dir}/_site.yml
+        perl -i -lnpe 's/<<<ISEE>>>/{params.isee_site_yml}/' {params.root_dir}/_site.yml
 
         ln -sr {input.multiqc} {output.multiqc}
         ln -sr {input.de_res} {params.ext_reports_dir}
         ln -sr {input.gsea} {params.ext_reports_dir}
        
+        cat {output.multiqc_rmd} | perl -lnpe "s:MultiQC:iSEE:; s|./external_reports/multiqc_report.html|https://{params.shinyio_account}.shinyapps.io/{params.isee_app_name}|" > {output.isee_rmd}
+
         for comp in {params.de_res_comps}
         do
             mkdir -p {params.root_dir}/extras/deseq2_figures/${{comp}}/

@@ -12,8 +12,5 @@ config/samplesheet/*
 *.DS_Store
 *._.DS_Store
 iSEE/.*
-resources/*
-!resources/deseq_template.Rmd
-!resources/report_template
 tmp/
 .Rproj.user

@@ -1,11 +1,11 @@
 # Bulk RNAseq Workflow
 
-
 * [Bulk RNAseq Workflow](#bulk-rnaseq-workflow)
    * [Usage](#usage)
       * [Step 1: Configure the workflow](#step-1-configure-the-workflow)
       * [Step 1b (<em>optional</em>): Specify contig groups for variant calling](#step-1b-optional-specify-contig-groups-for-variant-calling)
       * [Step 2: Test and run the workflow](#step-2-test-and-run-the-workflow)
+   * [Troubleshooting](#troubleshooting)
 
 ## Usage
 
@@ -29,6 +29,10 @@
     * **group_reference**    - Reference group (control/wildtype/baseline)
 
   * config/config.yaml
+    * **iSEE**
+        1. Deployment of iSEE to shinyapps.io can be enabled/disabled using `deploy_to_shinyio`. If set to False, the following steps can be ignored.
+        2. `iSEE_app_name` should be a new app name that does not already exist in your shinyapps.io account. Otherwise, the deployment will fail or your old app may be overwritten.
+        3. In R, run `rsconnect::accounts()`. Choose one of the values in the 'name' column to fill in `shinyio_account_name`. If `rsconnect::accounts()` does not return any results, you need to first follow the instructions [here](https://docs.posit.co/shinyapps.io/guide/getting_started/#configure-rsconnect) to set up your shinyapps.io credentials.
 
 ### Step 1b (_optional_): Specify contig groups for variant calling
 
@@ -52,7 +56,13 @@ Execute from within your project directory as a SLURM job.
 ```
 sbatch bin/run_snake.sh
 ```
-### DAG of the Pipeline
+
+## Troubleshooting
+
+- If running the workflow on an older version of R, incompatibilities with the latest CRAN packages can occur if an older version of the CRAN package is not available in the renv cache or in the user library. To install an older version of a CRAN package, replace/add the package name in the `config/R_proj_packages.txt` file with `package_name@version_number`. The version number should be as listed in the package's reference manual e.g. `arules@1.7-10`. Note that this version number is only considered if the workflow was unable to copy from the cache or user library.
+
+## DAG of the Pipeline
+
 ```mermaid
 ---
 config:

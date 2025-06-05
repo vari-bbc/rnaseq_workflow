@@ -10,7 +10,7 @@ output:
     toc: true
     toc_depth: 5
     toc_float:
-      collapsed: true
+      collapsed: false
       smooth_scroll: false
     number_sections: true
 params:
@@ -35,6 +35,8 @@ params:
 #   pathway_str: "Reactome,BP,BP-simplified,KEGG,H,C1,C2,C3,C4,C5,C6,C7,C8"
 ---
 
+# Gene Set Enrichment Analysis
+
 ```{r keep_figures, cache=TRUE}
 # this chunk is just to keep the _files directory even when we turn off cacheing
 ```
@@ -45,13 +47,17 @@ start_tm <- Sys.time()
 start_tm
 ```
 
-# Make output directory
+```{r outdir, include=TRUE}
 
-```{r makeoutdir}
+# Set output directory
 outdir <- paste0( params$comparison_name, "_out_files/")
 
-dir.create(outdir)
+dir.create(outdir, recursive=TRUE, showWarnings = FALSE)
+if (!dir.exists(outdir)) {
+  stop("Output directory does not exist. Please check the 'comparison_name' parameter in the config file.")
+}
 ```
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.lazy = FALSE, dev=c('png', 'pdf'), fig.width=8, fig.height=8, fig.path=paste0(outdir, "individual_figures/"))
@@ -59,14 +65,18 @@ knitr::opts_chunk$set(echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE, cache.
 options(bitmapType='cairo')
 ```
 
-# Set variables
+This analysis was started on `r format(start_tm, "%B %d, %Y at %H:%M")`, and the results will be saved in the *`r outdir`* directory.
 
-```{r setvars}
+## Data Processing
+
+### Analysis setup
+
+Defining paths to find input data and output results 
+
+```{r Obtain input data and build output directory}
+
 DE_rds_path <- paste0("../deseq2/deseq2_out_files/", params$comparison_name, "/de_res.rds")
 vsd_rds_path <- paste0("../deseq2/deseq2_out_files/", params$comparison_name, "/vsd.rds")
-
-# DE_rds_path <- params$de_res
-# vsd_rds_path <- params$vsd_rds
 
 orgdb <- params$orgdb
 kegg_org <- params$kegg_org
@@ -75,31 +85,33 @@ msigdb_organism <- params$msigdb_organism
 
 ```
 
-# Load packages and source functions
+### Load packages
 
 ```{r loadlibs, echo=TRUE, warning=TRUE, message=TRUE, cache=FALSE}
-
-library(orgdb, character.only=TRUE) # load the org.db for your organism
-library(clusterProfiler)
-library(ComplexHeatmap)
-library(AnnotationDbi)
-library(enrichplot)
-library(ReactomePA)
-library(patchwork)
-library(openxlsx)
-library(ggplot2)
-library(msigdbr)
-library(stringr)
-library(DESeq2)
-library(tibble)
-library(aPEAR)
-library(dplyr)
-library(GO.db)
-library(readr)
-
+suppressPackageStartupMessages({
+  library(orgdb, character.only=TRUE) # load the org.db for your organism
+  library(clusterProfiler)
+  library(ComplexHeatmap)
+  library(AnnotationDbi)
+  library(enrichplot)
+  library(ReactomePA)
+  library(patchwork)
+  library(openxlsx)
+  library(ggplot2)
+  library(msigdbr)
+  library(stringr)
+  library(DESeq2)
+  library(tibble)
+  library(aPEAR)
+  library(dplyr)
+  library(GO.db)
+  library(readr)
+})
 ```
 
-# Define functions
+### Define user-defined functions
+
+These functions filter out genes from differential gene expression results, generate the ranking metric for GSEA, and match gene names to data set gene names.  
 
 ```{r define_funcs}
 # Remove genes with 0 logFC and PValue = 1, calculate ranking metric then sort Entrez genes in descending order
@@ -148,10 +160,9 @@ prep_clusterprofiler_genelist <- function(dge_table, rank_by="log2FoldChange", p
 
 # Get the genesets and format for clusterprofiler (dataframe with col1 = geneset name, col2 = entrez gene)
 # organisms is 'Homo sapiens' or 'Mus musculus'
-# if no msigdb subcat, then specify NA
+# if no msigdb subcat, then specify as NA
 get_geneset <- function(gene_set, msigdb_subcat=NA, organism){
   if (gene_set %in% c("H", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8")){
-    #browser()
     msigdbr_args <- list(species = organism, category = gene_set, subcat=msigdb_subcat)
     msigdbr_args <-  msigdbr_args[!sapply(msigdbr_args, is.na)] # remove 'subcat' param if it is NA
 
@@ -166,14 +177,16 @@ get_geneset <- function(gene_set, msigdb_subcat=NA, organism){
   }
 
   return(geneset_out)
+  
 }
+
 ```
 
-# Read in DE results
+### Read in DE results
 
 ```{r read_DE}
 # set seed for gsea
-gsea_seed <- 2024 #9081
+gsea_seed <- 2024 
 
 vsd <- readRDS(vsd_rds_path)
 vsd_mat <- assay(vsd)
@@ -181,27 +194,12 @@ row_meta <- rowData(vsd)
 
 de_objs <- readRDS(DE_rds_path)
 
-# I've only got 1 comparison stored in this list, so we can modify this code.
-# de_res <- lapply(de_objs, function(comp) comp$lfc_shrink)
-# de_res <- lapply(de_res, as.data.frame)
-# sapply(de_res, nrow)
 de_res <- as.data.frame(de_objs)
-# nrow(de_res)
 
-# add entrez ids
-# again, doing this differently bc only 1 comparison stored here.
-# de_res <- lapply(de_res, function(x) {
-#   stopifnot(all(rownames(x) %in% rownames(row_meta)))
-#   x$entrez <- row_meta$entrez[match(rownames(x), rownames(row_meta))]
-#   x
-# })
-# de_res$entrez <- row_meta$entrez[match(rownames(de_res), rownames(row_meta))]
-
-# ... what if I list it (the one thing) so that future lapplys work? :)
 de_res <- list(de_res)
 ```
 
-# Get ranked genes
+### Process the DE results
 
 ```{r calc_ranks}
 genes_and_score <- lapply(de_res, prep_clusterprofiler_genelist, rank_by="log2FoldChange")
@@ -227,14 +225,13 @@ stopifnot(all(correct_ranking))
 
 ```
 
+## Run GSEA
 
-# Get genesets and run GSEA
+Gene ranking lists are processed through the gene sets listed in the config file.
 
-```{r get_genesets_and_run_gsea}
+```{r get_genesets_and_run_gsea, warning=FALSE, verbose=FALSE, message=FALSE, results='hide'}
 
 pathwayNames = unlist(strsplit(params$pathway_str, ",")[[1]])
-
-print(pathwayNames)
 
 gsea_res <- lapply(setNames(nm=pathwayNames), function(ont){
   message("Running GSEA for ", ont)
@@ -255,13 +252,7 @@ gsea_res <- lapply(setNames(nm=pathwayNames), function(ont){
       gsea_res <- gseKEGG(geneList = y, organism = kegg_org,
                           eps = 0.0 # need to set this or Pvalues will not reach below 1e-10
       )
-    # } else if (ont == "BP-simplified") {
-    #   gsea_res <- clusterProfiler::gseGO(geneList = y,
-    #                                      ont="BP",
-    #                                      OrgDb = eval(as.symbol(orgdb)),
-    #                                      eps = 0.0 # need to set this or Pvalues will not reach below 1e-10
-    #   )
-    } else{
+     } else{
       gsea_res <- clusterProfiler::gseGO(geneList = y,
                                          ont=gsub(ont, pattern = "-.*", replacement = ""),
                                          OrgDb = eval(as.symbol(orgdb)),
@@ -290,7 +281,11 @@ invisible(lapply(names(gsea_res), function(geneset){
 }))
 ```
 
-# Summary Plots
+## Summary Plots
+
+### Dot Plots
+
+Here, dot plots are built to recapitulate findings from our GSEA. 
 
 ```{r plots, fig.width=7, fig.height=5}
 dotplots <- lapply(setNames(nm=names(gsea_res)), function(geneset){
@@ -303,9 +298,12 @@ dotplots <- lapply(setNames(nm=names(gsea_res)), function(geneset){
     #gseaResult <- filter(gseaResult, p.adjust < p_cutoff)
     if(nrow(gseaResult) > 0){
       dotplot(gseaResult, split=".sign") + ggtitle(paste0(params$comparison_name," -- ", geneset)) +
-        scale_y_discrete(label=function(x) str_trunc(str_remove(x, paste0("HALLMARK_|\\s-\\s", params$msigdb_organism,".*")), 40)) + facet_grid(.~.sign)
+        scale_y_discrete(label=function(x) str_wrap(str_trunc(str_remove(x, paste0("HALLMARK_|\\s-\\s", params$msigdb_organism,".*")), 15), width = 60)) + 
+        facet_grid(.~.sign) #+
+        # theme(text=element_text(size = 20), 
+            # axis.title.x = element_text(size = 20))
       
-    } else{
+    } else {
       "No significant results"
     }
   # })
@@ -323,6 +321,11 @@ for (i in 1:length(dotplots)){
   }
 }
 ```
+
+### Gene networks
+
+We can use a package called aPEAR to display genes inside networks found in significant pathways from your data. Each ellipse encompasses a set of related pathways that contain similar genes.
+
 ```{r aPEAR}
 
 set.seed(gsea_seed)
@@ -334,7 +337,7 @@ aPEARobj = lapply(seq_along(gsea_res), FUN = function(x){
 
   tryCatch({
     
-    p <- aPEAR::enrichmentNetwork(gseaResObj@result, drawEllipses = TRUE, fontSize = 2.5) + ggtitle(paste0(params$comparison_name," -- ", resSetName))
+    p <- aPEAR::enrichmentNetwork(gseaResObj@result, drawEllipses = TRUE, fontSize = 6) + ggtitle(paste0(params$comparison_name," -- ", resSetName)) + theme(text=element_text(size = 20))
   
     return(p)
     
@@ -370,14 +373,17 @@ for (i in 1:length(aPEARobj)){
 
 ```
 
+### Session Info
 
-# Session Info
+This shows what software and the specific version used in the analysis, which is quite useful for useful reference and reproducibility. 
 
 ```{r session_info, echo = TRUE, eval=TRUE}
 sessionInfo()
 ```
 
-# Time
+### Time
+
+Measure time passed for the analysis to gauge how long a re-run will take. 
 
 ```{r endtime}
 # output time taken to run script
