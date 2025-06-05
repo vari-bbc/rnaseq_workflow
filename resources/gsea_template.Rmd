@@ -177,6 +177,7 @@ get_geneset <- function(gene_set, msigdb_subcat=NA, organism){
   }
 
   return(geneset_out)
+  
 }
 
 ```
@@ -297,7 +298,10 @@ dotplots <- lapply(setNames(nm=names(gsea_res)), function(geneset){
     #gseaResult <- filter(gseaResult, p.adjust < p_cutoff)
     if(nrow(gseaResult) > 0){
       dotplot(gseaResult, split=".sign") + ggtitle(paste0(params$comparison_name," -- ", geneset)) +
-        scale_y_discrete(label=function(x) str_wrap(str_trunc(str_remove(x, paste0("HALLMARK_|\\s-\\s", params$msigdb_organism,".*")), 15), width = 60)) + facet_grid(.~.sign)
+        scale_y_discrete(label=function(x) str_wrap(str_trunc(str_remove(x, paste0("HALLMARK_|\\s-\\s", params$msigdb_organism,".*")), 15), width = 60)) + 
+        facet_grid(.~.sign) #+
+        # theme(text=element_text(size = 20), 
+            # axis.title.x = element_text(size = 20))
       
     } else {
       "No significant results"
@@ -320,7 +324,7 @@ for (i in 1:length(dotplots)){
 
 ### Gene networks
 
-We can use a package called aPEAR to display genes inside networks found in significant pathways from your data. Each ellipse defines a significant pathway and the association of genes within it. 
+We can use a package called aPEAR to display genes inside networks found in significant pathways from your data. Each ellipse encompasses a set of related pathways that contain similar genes.
 
 ```{r aPEAR}
 
