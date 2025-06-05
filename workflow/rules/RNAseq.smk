@@ -1,11 +1,12 @@
 import gzip
 
 def get_orig_fastq(wildcards):
+    raw_path = config["raw_data_path"]
     if wildcards.read == "R1":
             fastq = units[(units["sample"] == wildcards.sample) & (units["group_index"] == wildcards.group_index)]["fq1"]
     elif wildcards.read == "R2":
             fastq = units[(units["sample"] == wildcards.sample) & (units["group_index"] == wildcards.group_index)]["fq2"]
-    return 'raw_data/' + fastq
+    return raw_path + fastq
 
 rule rename_fastqs:
     """
