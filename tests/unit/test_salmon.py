@@ -1,6 +1,9 @@
 import subprocess as sp
+import os
+import pytest
 from pathlib import Path
 
+@pytest.mark.skipif( not os.path.isdir("results"), reason = "No results dir")
 def test_salmon():
     reference = Path("tests/unit/salmon/expected/SRR1039508/quant.sf")
     output = Path("results/salmon/SRR1039508/quant.sf")
