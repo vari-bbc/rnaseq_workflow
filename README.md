@@ -2,6 +2,8 @@
 
 [![DOI](https://zenodo.org/badge/203868414.svg)](https://zenodo.org/badge/latestdoi/203868414)
 
+## Table of Contents
+
 * [Bulk RNAseq Workflow](#bulk-rnaseq-workflow)
    * [Usage](#usage)
       * [Step 1: Configure the workflow](#step-1-configure-the-workflow)
