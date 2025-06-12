@@ -1,4 +1,6 @@
-# Bulk RNAseq Workflow
+# Bulk RNAseq Workflow 
+
+[![DOI](https://zenodo.org/badge/203868414.svg)](https://zenodo.org/badge/latestdoi/203868414)
 
 * [Bulk RNAseq Workflow](#bulk-rnaseq-workflow)
    * [Usage](#usage)
@@ -6,6 +8,7 @@
       * [Step 1b (<em>optional</em>): Specify contig groups for variant calling](#step-1b-optional-specify-contig-groups-for-variant-calling)
       * [Step 2: Test and run the workflow](#step-2-test-and-run-the-workflow)
    * [Troubleshooting](#troubleshooting)
+   * [Citing](#citing)
 
 ## Usage
 
@@ -60,3 +63,7 @@ sbatch bin/run_snake.sh
 ## Troubleshooting
 
 - If running the workflow on an older version of R, incompatibilities with the latest CRAN packages can occur if an older version of the CRAN package is not available in the renv cache or in the user library. To install an older version of a CRAN package, replace/add the package name in the `config/R_proj_packages.txt` file with `package_name@version_number`. The version number should be as listed in the package's reference manual e.g. `arules@1.7-10`. Note that this version number is only considered if the workflow was unable to copy from the cache or user library.
+
+## Citing
+
+If you use this workflow, please cite our [Zenodo DOI](https://zenodo.org/badge/latestdoi/203868414) in your publication(s) in addition to the tools used by this workflow.
