@@ -10,7 +10,6 @@ rule isee:
         "benchmarks/isee/isee.txt"
     params:
     envmodules:
-    conda:
     threads: 1
     resources:
         nodes = 1,
@@ -44,7 +43,7 @@ rule deploy_isee_to_shinyappio:
         renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock),
     envmodules:
         config['modules']['R'],
-    conda: '../envs/Renv.yaml'
+    conda: '../envs/Renv.yml'
     threads: 1
     resources:
         nodes = 1,
