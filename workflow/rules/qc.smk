@@ -22,6 +22,7 @@ rule concat_fastqs:
         mem_gb=4,
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     envmodules:
+    conda:
     shell:
         """
         {params.cat_or_symlink} {output}
@@ -41,6 +42,7 @@ rule fastq_screen:
         mem_gb =    32,
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     envmodules: config['modules']['fastq_screen']
+    conda: '../envs/qc.yaml'
     shell:
         """
         fastq_screen --threads {threads} --outdir results/fastq_screen/ {input} 
@@ -61,6 +63,7 @@ rule fastqc:
         "benchmarks/fastqc/{fq_pref}.txt"
     envmodules:
         config['modules']['fastqc']
+    conda: '../envs/qc.yaml'        
     threads: 1
     resources:
         mem_gb = 32,
@@ -77,6 +80,7 @@ rule seqtk:
         temp("results/subsample/{fq_pref}.fastq.gz"),
     envmodules:
         config['modules']['seqtk']
+    conda: '../envs/qc.yaml'        
     params:
         num_subsamp = 50000,
     threads: 1
@@ -105,6 +109,7 @@ rule sortmerna:
         directory("results/sortmerna/{sample}")
     envmodules:
         config['modules']['sortmerna']
+    conda: '../envs/qc.yaml'
     params:
         rfam5_8s = config["sortmerna"]["rfam5_8s"],
         rfam5s = config['sortmerna']['rfam5s'],
@@ -148,6 +153,7 @@ rule make_genes_ref_flat:
     params:
     envmodules:
         config["modules"]["ucsctools"]
+    conda: '../envs/qc.yaml'        
     threads: 4
     resources:
         mem_gb = 80,
@@ -171,6 +177,7 @@ rule make_genes_bed:
     params:
     envmodules:
         config["modules"]["ucsctools"]
+    conda: '../envs/qc.yaml'
     threads: 4
     resources:
         mem_gb = 80,
@@ -243,6 +250,7 @@ rule CollectRnaSeqMetrics:
         strand=get_library_strandedness,
     envmodules:
         config["modules"]["picard"]
+    conda: '../envs/qc.yaml'
     threads: 4
     resources:
         mem_gb = 80,
@@ -275,6 +283,7 @@ rule rseqc_genebody_cov:
         samp_dir=lambda wildcards, output: os.path.dirname(output.metrics)
     envmodules:
         config["modules"]["rseqc"]
+    conda: '../envs/qc.yaml'
     threads: 4
     resources:
         mem_gb = 80,
@@ -326,6 +335,7 @@ rule multiqc:
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     envmodules:
         config['modules']['multiqc']
+    conda: '../envs/qc.yaml'
     shell:
         """
         multiqc -f {params} \

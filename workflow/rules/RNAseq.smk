@@ -24,6 +24,7 @@ rule rename_fastqs:
         mem_gb=4,
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     envmodules:
+    conda:
     shell:
         """
         # If the fastqs are not compressed, gzipped them with new name.
