@@ -1,0 +1,10 @@
+name: RNAseq
+channels:
+    - conda-forge
+    - bioconda
+    - defaults
+dependencies:
+    - salmon=1.10.0
+    - samtools=1.17
+    - STAR=2.7.10a
+    - trim-galore=0.6.10

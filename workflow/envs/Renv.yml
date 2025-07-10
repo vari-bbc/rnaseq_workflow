@@ -1,0 +1,9 @@
+name: Renv
+channels:
+    - conda-forge
+    - bioconda
+    - defaults
+dependencies:
+    - r-base=4.5.1
+    - r-renv=1.1.4
+    - pandoc=3.1.2

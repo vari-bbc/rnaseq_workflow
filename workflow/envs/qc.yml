@@ -1,0 +1,15 @@
+name: qc
+channels:
+    - conda-forge
+    - bioconda
+    - defaults
+dependencies:
+    - fastq-screen=0.14.0
+    - fastqc=0.12.1
+    - seqtk=1.5
+    - sortmerna=4.3.6
+    - ucsc-gtftogenepred=469 #ucsctools=20231127
+    - picard=3.0.0
+    - r-base=4.4.3 #R=4.5.0
+    - rseqc=5.0.4
+    - multiqc=1.14
