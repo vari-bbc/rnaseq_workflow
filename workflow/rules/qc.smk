@@ -33,6 +33,8 @@ rule fastq_screen:
     output:
         html =      "results/fastq_screen/{fq_pref}_screen.html",
         txt =       "results/fastq_screen/{fq_pref}_screen.txt",
+    params:
+        conf = config['fastq_screen_conf']
     benchmark:
                     "benchmarks/fastq_screen/{fq_pref}.bmk"
     threads: 8
@@ -44,7 +46,7 @@ rule fastq_screen:
     conda: '../envs/qc.yml'
     shell:
         """
-        fastq_screen --threads {threads} --outdir results/fastq_screen/ {input} 
+        fastq_screen --conf {params.conf} --threads {threads} --outdir results/fastq_screen/ {input} 
         """
 
 rule fastqc:
@@ -202,9 +204,11 @@ rule get_rRNA_intervals_from_gtf:
         "benchmarks/get_rRNA_intervals_from_gtf/bench.txt"
     params:
         renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock),
+        picard_cmd = config["picard_cmd"]
     envmodules:
         config["modules"]["picard"],
         config["modules"]["R"],
+    conda: '../envs/Renv.yml'
     threads: 4
     resources:
         mem_gb = 80,
@@ -213,7 +217,7 @@ rule get_rRNA_intervals_from_gtf:
         """
         Rscript --vanilla -e 'renv::load("{params.renv_rproj_dir}"); library(rtracklayer); gtf <- import("{input.gtf}"); biotype_col <- na.omit(match(c("gene_biotype","gene_type"), colnames(mcols(gtf)))); stopifnot(length(biotype_col) > 0); rrna <- gtf[mcols(gtf)[[biotype_col[1]]]=="rRNA" & mcols(gtf)$type=="gene"]; score(rrna) <- 1; export(rrna, "{output.bed}")'
 
-        java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $PICARD BedToIntervalList \
+        {params.picard_cmd} -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp  BedToIntervalList \
                 I={output.bed} \
                 O={output.interval_list} \
                 SD={input.ref_dict}
@@ -247,16 +251,17 @@ rule CollectRnaSeqMetrics:
         "benchmarks/CollectRnaSeqMetrics/{sample}.txt"
     params:
         strand=get_library_strandedness,
+        picard_cmd = config["picard_cmd"]
     envmodules:
         config["modules"]["picard"]
-    conda: '../envs/qc.yml'
+    conda: '../envs/Renv.yml'
     threads: 4
     resources:
         mem_gb = 80,
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
-        java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $PICARD CollectRnaSeqMetrics \
+        {params.picard_cmd} -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp CollectRnaSeqMetrics \
         -I {input.bam} \
         -O {output.metrics} \
         --REF_FLAT {input.ref_flat} \

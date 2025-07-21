@@ -58,6 +58,7 @@ rule add_DE_to_SE:
         comparisons = pd.unique(comparisons["comparison_name"]),
     envmodules:
         config['modules']['R'],
+    conda: '../envs/Renv.yml'
     threads: 8
     resources:
         nodes = 1,

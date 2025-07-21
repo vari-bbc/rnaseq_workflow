@@ -4,6 +4,39 @@ channels:
     - bioconda
     - defaults
 dependencies:
-    - r-base=4.5.1
-    - r-renv=1.1.4
-    - pandoc=3.1.2
+    - r-base=4.4.3
+    - r-renv
+    - pandoc
+    - r-usethis
+    - r-biocmanager
+    - libgit2
+    - r-openssl
+    - ld_impl_linux-64
+    - zlib
+    - libpng
+    - r-xml2
+    - gcc_linux-64=12 
+    - gxx_linux-64=12
+    - gfortran_linux-64=12
+    - libxml2
+    - glpk
+    - openssl
+    - igraph
+    - r-igraph
+    - r-xml
+    - xz 
+    - pkg-config
+    - bioconductor-rtracklayer
+    - r-magick
+    - r-cairo
+    - r-ggrastr
+    - r-scattermore
+    - bioconductor-spatialexperiment
+    - bioconductor-gsva
+    - xorg-libx11
+    - xorg-libxext
+    - xorg-libxrender
+    - xorg-xorgproto
+    - cairo
+    - r-arules
+    - picard

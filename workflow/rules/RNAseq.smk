@@ -265,7 +265,7 @@ rule SummarizedExperiment:
     threads: 1
     envmodules:
         config['modules']['R']
-    conda: '../envs/RNAseq.yml'
+    conda: '../envs/Renv.yml'
     resources:
         mem_gb=64,
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
