@@ -287,7 +287,7 @@ invisible(lapply(names(gsea_res), function(geneset){
 
 Here, dot plots are built to recapitulate findings from our GSEA. 
 
-```{r plots, fig.width=7, fig.height=5}
+```{r dotplots, fig.width=9, fig.height=5}
 dotplots <- lapply(setNames(nm=names(gsea_res)), function(geneset){
   # lapply(setNames(nm=names(gsea_res[[geneset]])), function(contrast){
     if (geneset == "BP-simplified") {
@@ -297,8 +297,8 @@ dotplots <- lapply(setNames(nm=names(gsea_res)), function(geneset){
     }
     #gseaResult <- filter(gseaResult, p.adjust < p_cutoff)
     if(nrow(gseaResult) > 0){
-      dotplot(gseaResult, split=".sign") + ggtitle(paste0(params$comparison_name," -- ", geneset)) +
-        scale_y_discrete(label=function(x) str_wrap(str_trunc(str_remove(x, paste0("HALLMARK_|\\s-\\s", params$msigdb_organism,".*")), 15), width = 60)) + 
+      dotplot(gseaResult, split=".sign", showCategory = 5) + ggtitle(paste0(params$comparison_name," -- ", geneset)) +
+        scale_y_discrete(label=function(x) str_replace_all(str_trunc(str_remove(x, paste0("HALLMARK_|\\s-\\s", params$msigdb_organism,".*")), 50), "_", " ")) + 
         facet_grid(.~.sign) #+
         # theme(text=element_text(size = 20), 
             # axis.title.x = element_text(size = 20))
@@ -326,7 +326,7 @@ for (i in 1:length(dotplots)){
 
 We can use a package called aPEAR to display genes inside networks found in significant pathways from your data. Each ellipse encompasses a set of related pathways that contain similar genes.
 
-```{r aPEAR}
+```{r network_plots}
 
 set.seed(gsea_seed)
 
@@ -337,7 +337,7 @@ aPEARobj = lapply(seq_along(gsea_res), FUN = function(x){
 
   tryCatch({
     
-    p <- aPEAR::enrichmentNetwork(gseaResObj@result, drawEllipses = TRUE, fontSize = 6) + ggtitle(paste0(params$comparison_name," -- ", resSetName)) + theme(text=element_text(size = 20))
+    p <- aPEAR::enrichmentNetwork(gseaResObj@result, drawEllipses = TRUE, fontSize = 2.5, minClusterSize=3) + ggtitle(paste0(params$comparison_name," -- ", resSetName))
   
     return(p)
     
