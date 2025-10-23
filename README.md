@@ -53,7 +53,7 @@ Rscript --vanilla group_chroms.R
 Test your configuration by performing a dry-run via
 
 ```
-snakemake -npr
+snakemake -np
 ```
 
 Execute from within your project directory as a SLURM job.
