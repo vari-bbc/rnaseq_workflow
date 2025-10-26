@@ -16,7 +16,10 @@ units = pd.read_table(config["units"], dtype={"sample" : str, "group" : str, "fq
 units["RG"] = units["RG"].fillna("")
 validate(units, "../schema/units.schema.yaml")
 units['group_index'] = units.groupby('sample').cumcount().astype(str)
-print(units)
+
+onstart:
+    print(units)
+
 if not (units['fq1'].is_unique and units['fq2'].is_unique):
     raise Exception('Same fastq specified in more than one row.')
 
