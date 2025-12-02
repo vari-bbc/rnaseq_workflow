@@ -24,6 +24,7 @@ rule make_Rproject:
         install_pak = lambda wildcards, output: "library(pak)" if config['renv_use_pak'] else "",
         snakemake_dir=snakemake_dir,
         orgdb = config['orgdb'],
+        init_git = "true" if config['Rproj_init_git'] else "false"
     threads: 1
     envmodules:
         config['modules']['R']
@@ -53,11 +54,17 @@ rule make_Rproject:
         # Don't use --vanilla because we need to get the RENV_PATHS_ROOT from the .renviron file.
         Rscript {params.snakemake_dir}/workflow/scripts/install_renv_pkges.R {params.snakemake_dir}/{input.R_pkges}
         
-        # Set up git
-        echo "Setting up git now..."
-        git init
-        git add -A 
-        git commit -m "initial commit"
+        if {params.init_git}; then 
+            # Set up git
+            echo "Setting up git now..."
+            git init
+            git add -A 
+            git commit -m "initial commit"
+        else
+            echo "Skipping git initialization..."
+        fi
+
+
         
         """
 

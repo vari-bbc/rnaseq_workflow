@@ -41,6 +41,7 @@ run_rseqc: False
 
 # R project config
 Rproj_dirname: "VBCS-000_Rproj"
+Rproj_init_git: False # if setting to True, ensure you have configured your identity for git. See https://git-scm.com/book/ms/v2/Getting-Started-First-Time-Git-Setup.
 ## use renv cache or install/copy all packages in project.
 renv_use_cache: True
 ## copy packages from user library if available?
