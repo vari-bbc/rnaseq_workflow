@@ -23,6 +23,9 @@ onstart:
 fq2_is_all_empty = units['fq2'].isna() | (units['fq2'] == '')
 fq2_is_all_empty = fq2_is_all_empty.all()
 
+if (fq2_is_all_empty and config['PE_or_SE'] != "SE"):
+    raise Exception('The fq2 column in the samplesheet must be filled unless PE_or_SE is set to "SE" in config/config.yaml.')
+
 if not (units['fq1'].is_unique and (units['fq2'].is_unique or fq2_is_all_empty)):
     raise Exception('Same fastq specified in more than one row.')
 
