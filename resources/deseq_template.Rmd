@@ -383,7 +383,9 @@ test_clustering <- function(in_dds, ntop) {
   mat_PERMANOVA_df <- mat_PERMANOVA %>%
     as.data.frame() %>%
     tibble::rownames_to_column("sample") %>%
-    left_join(., as.data.frame(colData(vsd)), by="sample") 
+    left_join(., 
+              as.data.frame(colData(vsd)) %>% mutate(sample = as.character(sample)),
+              by="sample") 
 
   adonis2(mat_PERMANOVA ~ group, data = mat_PERMANOVA_df, method='eu')
 }
