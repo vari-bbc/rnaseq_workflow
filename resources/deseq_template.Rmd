@@ -343,8 +343,8 @@ make_PCA <- function(in_dds, cols, PCx=1, PCy=2, ntop){
     gg_args <- lapply(gg_args, function(x) if (!is.null(x)) sym(x))
     out_patchwork <- c(out_patchwork, list(ggplot(df, aes(!!!gg_args)) +
                                              geom_point(size=1) +
-                                             scale_color_manual(values = setNames(c("#440154FF","#2A788EFF", ggsci::pal_npg()(length(levels(dds$group))-2)),
-                                                                                  levels(dds$group))) +
+                                             scale_color_manual(values = setNames(c("#440154FF","#2A788EFF", ggsci::pal_npg()(length(levels(in_dds@colData[[cols[i]]]))-2)),
+                                                                                  levels(in_dds@colData[[cols[i]]]))) +
                                              xlab(paste0(str_glue("PC{PCx}: "),percentVar[PCx],"% variance")) +
                                              ylab(paste0(str_glue("PC{PCy}: "),percentVar[PCy],"% variance")) + 
                                              theme_bw() + 
