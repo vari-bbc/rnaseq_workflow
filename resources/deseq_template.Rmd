@@ -18,8 +18,10 @@ params:
   comparison_name: ""
   group_test: ""
   group_reference: ""
+  group_reg_formula: ""
   fdr_cutoff: ""
   genes_of_interest: ""
+
 ---
 
 # Analysis
@@ -45,7 +47,6 @@ if (!dir.exists(outdir)) {
 }
 # message("Output directory: ", outdir)
 ```
-
 
 This analysis was started on `r format(start_tm, "%B %d, %Y at %H:%M")`. In addition to this full report, individual result files can be accessed in the "DE Results" tab, under the "Supplementary files" header.
 
@@ -82,6 +83,7 @@ se <- se[, colData(se)$group %in% c(params$group_test, params$group_reference)]
 
 # factor the group column to make sure the reference group is the first level
 se$group <- factor(se$group, levels=c(params$group_reference, params$group_test))
+
 ```
 
 
@@ -104,17 +106,27 @@ se
 
 Set up analysis using counts data from the previous steps of the workflow, and 
 basic meta data given from units.tsv, with group as the variable we're testing.
-**Note that no covariates are included here**; if you have a more complex 
-experimental setup with additional covariates and/or confounders, 
-this model is overly simplistic and won't accurately model your data --
+**Note that covariates can be used here**; these are utilized in the `comparisons.tsv` file if you've included additional
+columns in the `units.tsv` file in the config folder. For more specialized design or analyses,
 please modify and/or contact the BBC.
 
 <!-- The counts and the meta data need to be stored inside a special DESeq2 object called a 'DESeqDataSet'.  -->
-<!-- Here, we also specify that each gene will be fit with a model design of '~ group'. -->
+<!-- Here, we also specify that each gene will be fit with a group-specific model design (these can be altered in the `comparisons.tsv` file). -->
 
 ```{r make_dds, message=FALSE}
-dds <- DESeqDataSet(se, design = ~ group)
+
+
+if (gsub(" ", "", params$group_reg_formula ) == ""){
+  formula <- as.formula( "~group")
+} else{
+  formula <- as.formula( params$group_reg_formula ) 
+}
+
+dds <- DESeq2::DESeqDataSet(se, design = formula)
+
 ```
+
+#### The model formula used: `formula`
 
 ### Remove genes with low/no expression
 
@@ -301,8 +313,10 @@ If group has a significant effect on the variance in the data, we will see that 
 If we see samples clustering by some *other* variable (e.g. batch, treatment, age, sex, genotype, etc.), this suggests that this other variable is confounding the results and should be accounted for in the analysis. 
 If this is the case, you may need to include this variable as a covariate in the model design (e.g. `design = ~ batch + group`).
 
-**Note, again, that no covariates are included in this analysis**; if you have a more complex 
-experimental setup with additional covariates and/or confounders, 
+**Note, again, that covariates can be included in this analysis**; 
+Include a new column in the `units.tsv` file, 
+then add a new comparison to the `comparisons.tsv` file.
+If you have a more complex experimental setup with additional covariates and/or confounders, 
 the model used in this report is overly simplistic and won't accurately model your data --
 please modify and/or contact the BBC.
 
@@ -316,7 +330,7 @@ make_PCA <- function(in_dds, cols, PCx=1, PCy=2, ntop){
   }
   mat <- assay(in_dds) 
   col_data <- as.data.frame(colData(in_dds))
-  
+
   # row variances
   vars <- genefilter::rowVars(mat)
   vars_rank <- order(vars, decreasing = TRUE)
@@ -333,9 +347,9 @@ make_PCA <- function(in_dds, cols, PCx=1, PCy=2, ntop){
   #pcaData <- plotPCA(in_dds, intgroup=colnames(colData(in_dds)), returnData=TRUE, ...)
   percentVar <- round(100 * prop_var$prop)
   
-  
   df <- cbind(pcaData$x, col_data)
-  
+  df[,cols] = factor(df[,cols])
+
   out_patchwork <- list()
   
   for (i in 1:length(cols)){
@@ -343,7 +357,7 @@ make_PCA <- function(in_dds, cols, PCx=1, PCy=2, ntop){
     gg_args <- lapply(gg_args, function(x) if (!is.null(x)) sym(x))
     out_patchwork <- c(out_patchwork, list(ggplot(df, aes(!!!gg_args)) +
                                              geom_point(size=1) +
-                                             scale_color_manual(values = setNames(c("#440154FF","#2A788EFF", ggsci::pal_npg()(length(levels(in_dds@colData[[cols[i]]]))-2)),
+                                             scale_color_manual(values = setNames(c("#440154FF","#2A788EFF", ggsci::pal_npg()(length(levels(factor(in_dds@colData[[cols[i]]], levels = unique(in_dds@colData[[cols[i]]]))))-2)),
                                                                                   levels(in_dds@colData[[cols[i]]]))) +
                                              xlab(paste0(str_glue("PC{PCx}: "),percentVar[PCx],"% variance")) +
                                              ylab(paste0(str_glue("PC{PCy}: "),percentVar[PCy],"% variance")) + 
@@ -355,10 +369,17 @@ make_PCA <- function(in_dds, cols, PCx=1, PCy=2, ntop){
 ```
 
 ```{r plot_pca, fig.height=4.5, fig.width=9}
-(make_PCA(vsd, ntop=10000, cols="group") | 
-    (make_PCA(vsd, ntop=10000, cols="group", PCx = 3, PCy = 4))) +
+
+param_list = strsplit(gsub("~", "", params$group_reg_formula), "[+]")[[1]]
+
+lapply(param_list, FUN = function(covar){
+
+(make_PCA(vsd, ntop=10000, cols=covar) | 
+    (make_PCA(vsd, ntop=10000, cols=covar, PCx = 3, PCy = 4))) +
   plot_layout(guides="collect") + 
-  plot_annotation(title = "PCA - All Samples") 
+  plot_annotation(title = paste0("PCA - All Samples by ", covar)) 
+  
+})
 ```
 
 ```{r test_cluster_separation, fig.height=4.5, fig.width=9}
