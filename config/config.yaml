@@ -37,9 +37,9 @@ pathway_str: Reactome,BP,BP-simplified,KEGG,H,C1,C2,C3,C4,C5,C6,C7,C8
 # "~group+batch", or "~group+batch+sex" can be used if a "batch" and "sex" column are 
 # added to the end of the units.tsv.
 
-# Any additional column un "units.tsv" that should be treated as a numeric variable should be listed in a comma-separated list below - all others will be treated as categorical: 
+# Any additional column in "units.tsv" that should be treated as a numeric variable should be listed in a comma-separated list below - all others will be treated as categorical: 
 # For example: age,RIN,height,weight,temperature,dose; no commas required for a single variable
-numeric_variables: age
+numeric_variables: 
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
