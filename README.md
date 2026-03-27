@@ -27,11 +27,13 @@
     * **fq1**           - name of read1 fastq
     * **fq2**           - name of read2 fastq
     * **RG**            - space-delimited read group specification e.g. ID:XYZ PU:XYZ LB:LIB01 PL:ILLUMINA SM:SAMPLE01
+    * **Extra columns** - Optional metadata columns like batch, age, and sex can be specified to use in the statistical model. Add tabs betwixt each column.
 
   * config/samplesheet/comparisons.tsv; fill this out with you 
     * **comparison_name**    - Name of your comparison (use only letters, numbers, and underscores -- special characters or spaces will result in errors).
     * **group_test**         - Experimental group (treated/condition/phenotype)
     * **group_reference**    - Reference group (control/wildtype/baseline)
+    * **group_reg_formula**  - Default is "~group", but can be expanded with **Extra columns** names from the `units.tsv` file using "+" (i.e. ~group+batch+sex+age). Specify any numeric columns in the `config/config.yaml` file.
 
   * config/config.yaml
     * **iSEE**

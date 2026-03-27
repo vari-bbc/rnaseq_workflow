@@ -29,6 +29,17 @@ msigdb_organism: Homo sapiens
 # Choose which gene sets you would like to test against
 pathway_str: Reactome,BP,BP-simplified,KEGG,H,C1,C2,C3,C4,C5,C6,C7,C8
 
+######### 
+# Statistical modelling note:
+# You can define the default statistics model in config/samplesheet/comparisons.tsv if
+# additional metadata columns are added in units.tsv. The default is "~group", but can be
+# changed to include columns listed in the last column of units.tsv. As an example: 
+# "~group+batch", or "~group+batch+sex" can be used if a "batch" and "sex" column are 
+# added to the end of the units.tsv.
+
+# Any additional column un "units.tsv" that should be treated as a numeric variable should be listed in a comma-separated list below - all others will be treated as categorical: 
+# For example: age,RIN,height,weight,temperature,dose; no commas required for a single variable
+numeric_variables: age
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
@@ -36,11 +47,11 @@ PE_or_SE: PE
 call_variants: False
 grouped_contigs: config/grouped_contigs.tsv 
 
-run_vis_bigwig : True
+run_vis_bigwig : False
 run_rseqc: False
 
 # R project config
-Rproj_dirname: "VBCS-000_Rproj"
+Rproj_dirname: "VBCS-0000_Rproj"
 Rproj_init_git: False # if setting to True, ensure you have configured your identity for git. See https://git-scm.com/book/ms/v2/Getting-Started-First-Time-Git-Setup.
 ## use renv cache or install/copy all packages in project.
 renv_use_cache: True
@@ -53,7 +64,7 @@ renv_use_pak: False # I couldn't get pak to install to the renv cache which resu
 renv_root_path: /varidata/research/projects/bbc/tools/renv_root
 
 # iSEE config
-iSEE_app_name: "RNAseq_devel_airway"
+iSEE_app_name: "RNAseq_proj"
 deploy_to_shinyio: False
 shinyio_account_name: "vai-bbc" # valid account names can be found using rsconnect::accounts(); If blank, follow instructions at https://docs.posit.co/shinyapps.io/guide/getting_started/#configure-rsconnect 
 

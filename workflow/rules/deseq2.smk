@@ -21,6 +21,7 @@ rule deseq2:
         group_reference = lambda wildcards: comparisons.loc[comparisons['comparison_name'] == wildcards.comparison, 'group_reference'].values[0],
         group_reg_formula = lambda wildcards: comparisons.loc[comparisons['comparison_name'] == wildcards.comparison, 'group_reg_formula'].values[0],
         genes_of_interest = config['genes_of_interest'],
+        numeric_vars = config['numeric_variables'],
         renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock)
     envmodules:
         config['modules']['R'],
@@ -41,7 +42,8 @@ rule deseq2:
                                             group_reference = '{params.group_reference}',
                                             group_reg_formula = '{params.group_reg_formula}',
                                             fdr_cutoff = {params.fdr_cutoff},
-                                            genes_of_interest = '{params.genes_of_interest}'))"
+                                            genes_of_interest = '{params.genes_of_interest}',
+                                            numeric_variables = '{params.numeric_vars}'))"
         """
 
 rule add_DE_to_SE:
