@@ -86,9 +86,9 @@ se$group <- factor(se$group, levels=c(params$group_reference, params$group_test)
 
 # Convert all everything to their designated types if there are extra columns in units.tsv
 if (ncol(colData(se)) > 5 & params$numeric_variables != "" ){
-  numeric_vars = str_split(params$numeric_variables, ",")[[1]]
+  numeric_vars <- str_split(params$numeric_variables, ",")[[1]]
   for (colNames in numeric_vars){
-    colData(se)[,colNames] = as.numeric(as.character(colData(se)[,colNames]))
+    colData(se)[,colNames] <- as.numeric(as.character(colData(se)[,colNames]))
   }
 }
 
@@ -143,7 +143,7 @@ format_vars <- function(x) {
 
 design_vars <- all.vars(design(dds))
 
-empty_variable_vec = c()
+empty_variable_vec <- c()
 
 for (v in design_vars) {
   if (is.numeric(colData(dds)[,v])) {
@@ -151,7 +151,7 @@ for (v in design_vars) {
   }
 }
 
-numeric_covar_str = format_vars(empty_variable_vec) 
+numeric_covar_str <- format_vars(empty_variable_vec) 
 
 ```
 
@@ -364,8 +364,8 @@ make_PCA <- function(in_dds, cols, PCx=1, PCy=2, ntop){
   pcaData <- prcomp(t(mat))
   
   prop_var <- data.frame(t(summary(pcaData)$importance))
-  names(prop_var) = c("sd", "prop", "cum")
-  prop_var$num = 1:nrow(prop_var)
+  names(prop_var) <- c("sd", "prop", "cum")
+  prop_var$num <- 1:nrow(prop_var)
   
   #pcaData <- plotPCA(in_dds, intgroup=colnames(colData(in_dds)), returnData=TRUE, ...)
   percentVar <- round(100 * prop_var$prop)
@@ -411,7 +411,7 @@ make_PCA <- function(in_dds, cols, PCx=1, PCy=2, ntop){
 
 if (!(tolower(params$group_reg_formula) %in% c("nan", ""))){
   param_list <- unlist(str_split(gsub("~", "", gsub(" ", "", params$group_reg_formula)), "[+]"))
-} else{ param_list = list("group")}
+} else{ param_list <- list("group")}
 
 lapply(param_list, FUN = function(covar){
 
