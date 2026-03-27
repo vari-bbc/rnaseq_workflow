@@ -85,7 +85,7 @@ se <- se[, colData(se)$group %in% c(params$group_test, params$group_reference)]
 se$group <- factor(se$group, levels=c(params$group_reference, params$group_test))
 
 # Convert all everything to their designated types if there are extra columns in units.tsv
-if (ncol(colData(se)) > 5){
+if (ncol(colData(se)) > 5 & params$numeric_variables != "" ){
   numeric_vars = str_split(params$numeric_variables, ",")[[1]]
   for (colNames in numeric_vars){
     colData(se)[,colNames] = as.numeric(as.character(colData(se)[,colNames]))
