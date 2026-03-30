@@ -27,7 +27,7 @@
     * **fq1**           - name of read1 fastq
     * **fq2**           - name of read2 fastq
     * **RG**            - space-delimited read group specification e.g. ID:XYZ PU:XYZ LB:LIB01 PL:ILLUMINA SM:SAMPLE01
-    * **Extra columns** - Optional metadata columns like batch, age, and sex can be specified to use in the statistical model. Add tabs betwixt each column.
+    * **Extra columns** - Optional metadata columns like batch, age, and sex can be specified to use in the statistical model. Add tabs between each column.
 
   * config/samplesheet/comparisons.tsv; fill this out with you 
     * **comparison_name**    - Name of your comparison (use only letters, numbers, and underscores -- special characters or spaces will result in errors).

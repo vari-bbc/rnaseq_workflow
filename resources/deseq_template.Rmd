@@ -286,7 +286,7 @@ if (genes_specified) {
 ```{r specific_genes, eval=genes_specified, echo=genes_specified, include=genes_specified}
 # message("Genes of interest: ", paste(genes_of_interest, collapse=", "))
 df %>% 
-  dplyr::filter(Symbol %in% params$genes_of_interest) %>% 
+  dplyr::filter(Symbol %in% genes_of_interest) %>% 
   dplyr::mutate(log2FoldChange = format(log2FoldChange, scientific=FALSE, digits=3),
                 lfcSE = format(lfcSE, scientific=FALSE, digits=3),
                 pvalue = format(pvalue, scientific=TRUE, digits=3),
@@ -409,9 +409,7 @@ make_PCA <- function(in_dds, cols, PCx=1, PCy=2, ntop){
 
 ```{r plot_pca, fig.height=4.5, fig.width=9}
 
-if (!(tolower(params$group_reg_formula) %in% c("nan", ""))){
-  param_list <- unlist(str_split(gsub("~", "", gsub(" ", "", params$group_reg_formula)), "[+]"))
-} else{ param_list <- list("group")}
+param_list <- all.vars(formula)
 
 lapply(param_list, FUN = function(covar){
 
