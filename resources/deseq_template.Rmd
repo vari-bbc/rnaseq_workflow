@@ -18,8 +18,10 @@ params:
   comparison_name: ""
   group_test: ""
   group_reference: ""
+  group_reg_formula: ""
   fdr_cutoff: ""
   genes_of_interest: ""
+  numeric_variables: ""
 ---
 
 # Analysis
@@ -45,7 +47,6 @@ if (!dir.exists(outdir)) {
 }
 # message("Output directory: ", outdir)
 ```
-
 
 This analysis was started on `r format(start_tm, "%B %d, %Y at %H:%M")`. In addition to this full report, individual result files can be accessed in the "DE Results" tab, under the "Supplementary files" header.
 
@@ -82,6 +83,15 @@ se <- se[, colData(se)$group %in% c(params$group_test, params$group_reference)]
 
 # factor the group column to make sure the reference group is the first level
 se$group <- factor(se$group, levels=c(params$group_reference, params$group_test))
+
+# Convert all everything to their designated types if there are extra columns in units.tsv
+if (ncol(colData(se)) > 5 & params$numeric_variables != "" ){
+  numeric_vars <- str_split(params$numeric_variables, ",")[[1]]
+  for (colNames in numeric_vars){
+    colData(se)[,colNames] <- as.numeric(as.character(colData(se)[,colNames]))
+  }
+}
+
 ```
 
 
@@ -90,12 +100,10 @@ se$group <- factor(se$group, levels=c(params$group_reference, params$group_test)
 assayNames(se)
 ```
 
-
 ```{r check_assays}
 # Note that DESeq2 assumes the first assay is the raw counts.
 stopifnot(assayNames(se)[1] == "counts")
 ```
-
 
 ```{r look_se, eval=FALSE}
 # To print more information about this SummarizedExperiment object, you can just type its name. 
@@ -104,17 +112,54 @@ se
 
 Set up analysis using counts data from the previous steps of the workflow, and 
 basic meta data given from units.tsv, with group as the variable we're testing.
-**Note that no covariates are included here**; if you have a more complex 
-experimental setup with additional covariates and/or confounders, 
-this model is overly simplistic and won't accurately model your data --
+**Note that covariates can be used here**; these are utilized in the `comparisons.tsv` file if you've included additional
+columns in the `units.tsv` file in the config folder. For more specialized design or analyses,
 please modify and/or contact the BBC.
 
 <!-- The counts and the meta data need to be stored inside a special DESeq2 object called a 'DESeqDataSet'.  -->
-<!-- Here, we also specify that each gene will be fit with a model design of '~ group'. -->
+<!-- Here, we also specify that each gene will be fit with a group-specific model design (these can be altered in the `comparisons.tsv` file). -->
 
 ```{r make_dds, message=FALSE}
-dds <- DESeqDataSet(se, design = ~ group)
+
+if (params$group_reg_formula %in% c("", " ", NA) | tolower(params$group_reg_formula) == "nan"){
+  formula <- as.formula( "~group")
+} else{
+  formula <- as.formula( params$group_reg_formula ) 
+}
+
+dds <- DESeq2::DESeqDataSet(se, design = formula)
+
+# Check status of each variable in the `formula` and throw warning for each numeric
+
+format_vars <- function(x) {
+  if (length(x) == 0) {
+    return("No numeric variables.")
+  } else if (length(x) == 1) {
+    return(paste0(paste(x, collapse = ""), " is being treated as a numeric variable - not a categorical/ordinal variable."))
+  } else {
+    return(paste0(paste(x, collapse = ", "), " are being treated as a numeric variable - not a categorical/ordinal variable."))
+  }
+}
+
+design_vars <- all.vars(design(dds))
+
+empty_variable_vec <- c()
+
+for (v in design_vars) {
+  if (is.numeric(colData(dds)[,v])) {
+    empty_variable_vec <- c(empty_variable_vec, v)
+  }
+}
+
+numeric_covar_str <- format_vars(empty_variable_vec) 
+
 ```
+
+#### The model formula used: **`r gsub(",", "", as.character(deparse(formula)))`**
+
+Model formulas use either categorical/ordinal variables or numeric variables. Numeric variables can be used, but often require specific circumstances. Please check any numeric variables and convert them to categorical variables (add letters to the variable names in `units.tsv`). 
+
+**`r numeric_covar_str`**
 
 ### Remove genes with low/no expression
 
@@ -137,7 +182,6 @@ The original number of genes was `r total_genes`, and the number of genes kept a
 ### Different normalization approaches for different biases
 
 [Types of biases in RNA-seq](https://vanandelinstitute-my.sharepoint.com/:b:/g/personal/kin_lau_vai_org/EcruvwL-OrBIvCzXZ7HMPlcBo65fu0pucrivMmCwzM98dA?e=yCkfTa)
-
 
 ### Run the DE workflow
 
@@ -182,7 +226,6 @@ data.frame(
   knitr::kable() %>%
   kableExtra::kable_styling(full_width = FALSE, font_size = 14) 
 ```
-
 
 ### Shrink log fold changes for lowly expressed genes
 
@@ -299,12 +342,6 @@ PCA is often used to visualize the variance in data and to identify how samples 
 
 If group has a significant effect on the variance in the data, we will see that samples cluster together by group in the PCA plot.
 If we see samples clustering by some *other* variable (e.g. batch, treatment, age, sex, genotype, etc.), this suggests that this other variable is confounding the results and should be accounted for in the analysis. 
-If this is the case, you may need to include this variable as a covariate in the model design (e.g. `design = ~ batch + group`).
-
-**Note, again, that no covariates are included in this analysis**; if you have a more complex 
-experimental setup with additional covariates and/or confounders, 
-the model used in this report is overly simplistic and won't accurately model your data --
-please modify and/or contact the BBC.
 
 Here, we will plot the first four principal components, colored by group.
 
@@ -316,7 +353,7 @@ make_PCA <- function(in_dds, cols, PCx=1, PCy=2, ntop){
   }
   mat <- assay(in_dds) 
   col_data <- as.data.frame(colData(in_dds))
-  
+
   # row variances
   vars <- genefilter::rowVars(mat)
   vars_rank <- order(vars, decreasing = TRUE)
@@ -327,38 +364,62 @@ make_PCA <- function(in_dds, cols, PCx=1, PCy=2, ntop){
   pcaData <- prcomp(t(mat))
   
   prop_var <- data.frame(t(summary(pcaData)$importance))
-  names(prop_var) = c("sd", "prop", "cum")
-  prop_var$num = 1:nrow(prop_var)
+  names(prop_var) <- c("sd", "prop", "cum")
+  prop_var$num <- 1:nrow(prop_var)
   
   #pcaData <- plotPCA(in_dds, intgroup=colnames(colData(in_dds)), returnData=TRUE, ...)
   percentVar <- round(100 * prop_var$prop)
   
-  
   df <- cbind(pcaData$x, col_data)
-  
+
   out_patchwork <- list()
   
   for (i in 1:length(cols)){
-    gg_args <- list(x=str_glue("PC{PCx}"), y=str_glue("PC{PCy}"), color=cols[i], label="sample")
-    gg_args <- lapply(gg_args, function(x) if (!is.null(x)) sym(x))
-    out_patchwork <- c(out_patchwork, list(ggplot(df, aes(!!!gg_args)) +
+    
+    if (class(df[,cols]) %in% c("factor", "character")){
+      
+      ht_col_colors <- c("#440154FF","#2A788EFF", ggsci::pal_npg()(length(unique(in_dds@colData[[cols[i]]]))-2))
+    
+      gg_args <- list(x=str_glue("PC{PCx}"), y=str_glue("PC{PCy}"), color=cols[i], label="sample")
+      gg_args <- lapply(gg_args, function(x) if (!is.null(x)) sym(x))
+      out_patchwork <- c(out_patchwork, list(ggplot(df, aes(!!!gg_args)) +
                                              geom_point(size=1) +
-                                             scale_color_manual(values = setNames(c("#440154FF","#2A788EFF", ggsci::pal_npg()(length(levels(in_dds@colData[[cols[i]]]))-2)),
-                                                                                  levels(in_dds@colData[[cols[i]]]))) +
+                                             scale_color_manual(values = ht_col_colors) +
                                              xlab(paste0(str_glue("PC{PCx}: "),percentVar[PCx],"% variance")) +
                                              ylab(paste0(str_glue("PC{PCy}: "),percentVar[PCy],"% variance")) + 
                                              theme_bw() + 
                                              ggrepel::geom_text_repel(max.overlaps=5)))
+      
+    } else if (class(df[,cols]) == "numeric") {
+      
+      gg_args <- list(x=str_glue("PC{PCx}"), y=str_glue("PC{PCy}"), color=cols[i], label="sample")
+      gg_args <- lapply(gg_args, function(x) if (!is.null(x)) sym(x))
+      out_patchwork <- c(out_patchwork, list(ggplot(df, aes(!!!gg_args)) +
+                                             geom_point(size=1) +
+                                             scale_color_continuous(palette = c("#440154FF","#2A788EFF")) +
+                                             xlab(paste0(str_glue("PC{PCx}: "),percentVar[PCx],"% variance")) +
+                                             ylab(paste0(str_glue("PC{PCy}: "),percentVar[PCy],"% variance")) + 
+                                             theme_bw() + 
+                                             ggrepel::geom_text_repel(max.overlaps=5)))
+    }
   }
   wrap_plots(out_patchwork)
 }
 ```
 
 ```{r plot_pca, fig.height=4.5, fig.width=9}
-(make_PCA(vsd, ntop=10000, cols="group") | 
-    (make_PCA(vsd, ntop=10000, cols="group", PCx = 3, PCy = 4))) +
+
+param_list <- all.vars(formula)
+
+lapply(param_list, FUN = function(covar){
+
+  (make_PCA(vsd, ntop=10000, cols=covar) | 
+    (make_PCA(vsd, ntop=10000, cols=covar, PCx = 3, PCy = 4))) +
   plot_layout(guides="collect") + 
-  plot_annotation(title = "PCA - All Samples") 
+  plot_annotation(title = paste0("PCA - All Samples by ", covar)) 
+  
+})
+
 ```
 
 ```{r test_cluster_separation, fig.height=4.5, fig.width=9}

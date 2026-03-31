@@ -1,2 +1,3 @@
-comparison_name	group_test	group_reference
-trt_vs_untrt	trt	untrt
+comparison_name	group_test	group_reference	group_reg_formula
+trt_vs_untrt	trt	untrt	~group
+
