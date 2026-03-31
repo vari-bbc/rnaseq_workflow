@@ -170,7 +170,8 @@ get_geneset <- function(gene_set, msigdb_subcat=NA, organism){
 
     # convert to clusterprofiler friendly format
     geneset_out <- msigdbr_gene_set[, c("gs_name", "entrez_gene")] %>%
-      as.data.frame(stringsAsFactors = FALSE)
+      as.data.frame(stringsAsFactors = FALSE) %>%
+      dplyr::distinct()
 
   } else{
     stop("Invalid value for gene_set parameter.")
