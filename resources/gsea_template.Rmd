@@ -23,16 +23,7 @@ params:
   de_res: ""
   vsd_rds: ""
   pathway_str: ""
-# params:
-#   orgdb: "org.Mm.eg.db"
-#   kegg_org: "mmu"
-#   reactome_org: "mouse"
-#   msigdb_organism: "Mus musculus"
-#   comparison_name: "ko_v_ctrl"
-#   fdr_cutoff: "0.1"
-#   de_res: "../results/deseq2/deseq2_out_files/ko_v_ctrl/de_res.rds"
-#   vsd_rds: "../results/deseq2/deseq2_out_files/ko_v_ctrl/vsd.rds"
-#   pathway_str: "Reactome,BP,BP-simplified,KEGG,H,C1,C2,C3,C4,C5,C6,C7,C8"
+
 ---
 
 # Gene Set Enrichment Analysis
@@ -117,11 +108,11 @@ These functions filter out genes from differential gene expression results, gene
 # Remove genes with 0 logFC and PValue = 1, calculate ranking metric then sort Entrez genes in descending order
 # Adapts code from
 # https://github.com/YuLab-SMU/DOSE/wiki/how-to-prepare-your-own-geneList.
-prep_clusterprofiler_genelist <- function(dge_table, rank_by="log2FoldChange", pval_col="pvalue", lfc_col="log2FoldChange"){
+prep_clusterprofiler_genelist <- function(dge_table, rank_by="signedPvalues", pval_col="pvalue", lfc_col="log2FoldChange"){
   geneList <- NULL
 
   # calculate rank_metric
-  if(identical(rank_by, "log2FoldChange")){
+  if(identical(rank_by, "signedPvalues")){
     if(!pval_col %in% colnames(dge_table)){
       stop("Specify valid column for PValue.")
     }
@@ -131,6 +122,9 @@ prep_clusterprofiler_genelist <- function(dge_table, rank_by="log2FoldChange", p
     # filter away genes with exactly 0 logFC and PValue = 1.
     dge_table <- dge_table[dge_table[[lfc_col]] != 0 &
                                   dge_table[[pval_col]] != 1, ]
+
+    # Remove zeroes for log transformation; raise to the minimum value the machine is capable of maintaining
+    dge_table[[pval_col]] <- dge_table[[pval_col]] + .Machine$double.eps
 
     ## feature 1: numeric vector
     geneList <-
@@ -170,7 +164,8 @@ get_geneset <- function(gene_set, msigdb_subcat=NA, organism){
 
     # convert to clusterprofiler friendly format
     geneset_out <- msigdbr_gene_set[, c("gs_name", "entrez_gene")] %>%
-      as.data.frame(stringsAsFactors = FALSE)
+      as.data.frame(stringsAsFactors = FALSE) %>%
+      dplyr::distinct()
 
   } else{
     stop("Invalid value for gene_set parameter.")
@@ -202,7 +197,7 @@ de_res <- list(de_res)
 ### Process the DE results
 
 ```{r calc_ranks}
-genes_and_score <- lapply(de_res, prep_clusterprofiler_genelist, rank_by="log2FoldChange")
+genes_and_score <- lapply(de_res, prep_clusterprofiler_genelist, rank_by="signedPvalues")
 sapply(genes_and_score, length)
 
 # remove genes with no Entrez ID (isNA)
@@ -287,7 +282,7 @@ invisible(lapply(names(gsea_res), function(geneset){
 
 Here, dot plots are built to recapitulate findings from our GSEA. 
 
-```{r plots, fig.width=7, fig.height=5}
+```{r dotplots, fig.width=9, fig.height=5}
 dotplots <- lapply(setNames(nm=names(gsea_res)), function(geneset){
   # lapply(setNames(nm=names(gsea_res[[geneset]])), function(contrast){
     if (geneset == "BP-simplified") {
@@ -297,8 +292,8 @@ dotplots <- lapply(setNames(nm=names(gsea_res)), function(geneset){
     }
     #gseaResult <- filter(gseaResult, p.adjust < p_cutoff)
     if(nrow(gseaResult) > 0){
-      dotplot(gseaResult, split=".sign") + ggtitle(paste0(params$comparison_name," -- ", geneset)) +
-        scale_y_discrete(label=function(x) str_wrap(str_trunc(str_remove(x, paste0("HALLMARK_|\\s-\\s", params$msigdb_organism,".*")), 15), width = 60)) + 
+      dotplot(gseaResult, split=".sign", showCategory = 5) + ggtitle(paste0(params$comparison_name," -- ", geneset)) +
+        scale_y_discrete(label=function(x) str_replace_all(str_trunc(str_remove(x, paste0("HALLMARK_|\\s-\\s", params$msigdb_organism,".*")), 50), "_", " ")) + 
         facet_grid(.~.sign) #+
         # theme(text=element_text(size = 20), 
             # axis.title.x = element_text(size = 20))
@@ -326,7 +321,7 @@ for (i in 1:length(dotplots)){
 
 We can use a package called aPEAR to display genes inside networks found in significant pathways from your data. Each ellipse encompasses a set of related pathways that contain similar genes.
 
-```{r aPEAR}
+```{r network_plots}
 
 set.seed(gsea_seed)
 
@@ -337,7 +332,7 @@ aPEARobj = lapply(seq_along(gsea_res), FUN = function(x){
 
   tryCatch({
     
-    p <- aPEAR::enrichmentNetwork(gseaResObj@result, drawEllipses = TRUE, fontSize = 6) + ggtitle(paste0(params$comparison_name," -- ", resSetName)) + theme(text=element_text(size = 20))
+    p <- aPEAR::enrichmentNetwork(gseaResObj@result, drawEllipses = TRUE, fontSize = 2.5, minClusterSize=3) + ggtitle(paste0(params$comparison_name," -- ", resSetName))
   
     return(p)
     

@@ -1,4 +1,8 @@
-# Bulk RNAseq Workflow
+# Bulk RNAseq Workflow 
+
+[![DOI](https://zenodo.org/badge/203868414.svg)](https://zenodo.org/badge/latestdoi/203868414)
+
+## Table of Contents
 
 * [Bulk RNAseq Workflow](#bulk-rnaseq-workflow)
    * [Usage](#usage)
@@ -6,6 +10,7 @@
       * [Step 1b (<em>optional</em>): Specify contig groups for variant calling](#step-1b-optional-specify-contig-groups-for-variant-calling)
       * [Step 2: Test and run the workflow](#step-2-test-and-run-the-workflow)
    * [Troubleshooting](#troubleshooting)
+   * [Citing](#citing)
 
 ## Usage
 
@@ -22,11 +27,13 @@
     * **fq1**           - name of read1 fastq
     * **fq2**           - name of read2 fastq
     * **RG**            - space-delimited read group specification e.g. ID:XYZ PU:XYZ LB:LIB01 PL:ILLUMINA SM:SAMPLE01
+    * **Extra columns** - Optional metadata columns like batch, age, and sex can be specified to use in the statistical model. Add tabs between each column.
 
   * config/samplesheet/comparisons.tsv; fill this out with you 
     * **comparison_name**    - Name of your comparison (use only letters, numbers, and underscores -- special characters or spaces will result in errors).
     * **group_test**         - Experimental group (treated/condition/phenotype)
     * **group_reference**    - Reference group (control/wildtype/baseline)
+    * **group_reg_formula**  - Default is "~group", but can be expanded with **Extra columns** names from the `units.tsv` file using "+" (i.e. ~group+batch+sex+age). Specify any numeric columns in the `config/config.yaml` file.
 
   * config/config.yaml
     * **iSEE**
@@ -48,7 +55,7 @@ Rscript --vanilla group_chroms.R
 Test your configuration by performing a dry-run via
 
 ```
-snakemake -npr
+snakemake -np
 ```
 
 Execute from within your project directory as a SLURM job.
@@ -61,67 +68,6 @@ sbatch bin/run_snake.sh
 
 - If running the workflow on an older version of R, incompatibilities with the latest CRAN packages can occur if an older version of the CRAN package is not available in the renv cache or in the user library. To install an older version of a CRAN package, replace/add the package name in the `config/R_proj_packages.txt` file with `package_name@version_number`. The version number should be as listed in the package's reference manual e.g. `arules@1.7-10`. Note that this version number is only considered if the workflow was unable to copy from the cache or user library.
 
-## DAG of the Pipeline
+## Citing
 
-```mermaid
----
-config:
-  look: classic
-  theme: base
-  themeVariables: {
-      'primaryColor': '#005596',
-      'primaryTextColor': '#fff',
-      'primaryBorderColor': '#60abde',
-      'lineColor': '#60abde',
-      'secondaryColor': '#006100',
-      'tertiaryColor': '#fff'
-    }
----
-flowchart TB
-	id0[all]
-	id1[multiqc]
-	id2[fastq_screen]
-	id3[concat_fastqs]
-	id4[trim_galore_PE]
-	id5[rename_fastqs]
-	id6[fastqc]
-	id7[STAR]
-	id8[salmon]
-	id9[sortmerna]
-	id10[seqtk]
-	id11[SummarizedExperiment]
-	id12[make_Rproject]
-	id13[deseq2]
-	id14[gsea]
-	id15[make_final_report]
-    id13 --> id0
-    id1 --> id0
-    id11 --> id0
-    id12 --> id0
-    id14 --> id0
-    id15 --> id0
-    id7 --> id1
-    id2 --> id1
-    id8 --> id1
-    id6 --> id1
-    id9 --> id1
-    id3 --> id2
-    id4 --> id3
-    id5 --> id4
-    id3 --> id6
-    id4 --> id7
-    id4 --> id8
-    id10 --> id9
-    id3 --> id10
-    id12 --> id11
-    id8 --> id11
-    id7 --> id11
-    id12 --> id13
-    id11 --> id13
-    id13 --> id14
-    id12 --> id14
-    id13 --> id15
-    id1 --> id15
-    id14 --> id15
-    id12 --> id15
-```
+If you use this workflow, please cite our [Zenodo DOI](https://zenodo.org/badge/latestdoi/203868414) in your publication(s) in addition to the tools used by this workflow.

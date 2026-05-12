@@ -202,7 +202,7 @@ rule merge_vcf:
         """
 
 def get_filt_params (wildcards):
-    # parameters adapted from https://gencore.bio.nyu.edu/variant-calling-pipeline-gatk4/
+    # parameters adapted from https://github.com/gatk-workflows/gatk4-rnaseq-germline-snps-indels/blob/master/gatk4-rna-best-practices.wdl and https://gencore.bio.nyu.edu/variant-calling-pipeline-gatk4/
     if (wildcards.var_type == "SNP"):
         return """--cluster-window-size 35 \
         --cluster-size 3 \
