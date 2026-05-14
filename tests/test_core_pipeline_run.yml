@@ -3,7 +3,7 @@
     - hpc
     - snakemake
     - integration
-  command: bash tests/scripts/run_core_pipeline_hpc.sh
+  command: sbatch tests/scripts/run_core_pipeline_hpc.sh
   exit_code: 0
   files:
     - path: results/rename_fastqs/SRR1039508_0_R1.fastq.gz
