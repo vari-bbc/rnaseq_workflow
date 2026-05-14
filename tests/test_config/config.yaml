@@ -1,25 +1,25 @@
 quick_ref:
 # Only fill this if you are NOT doing SNP calling. "ref_genome_verison" is the dir of the date and version of the reference. Check what is available at /varidata/research/projects/bbc/versioned_references. If you are not sure, you can use the latest one.  "species_name" is the dir name of the reference genome, check /varidata/research/projects/bbc/versioned_references/latest/data/ to see species are there. The most commonly used species are mmm10_gencode and hg38_gencode. ref_genome_version is optional whereas species_name is MANDATORY; if you leave quick_ref section blank, the workflow will use references from "ref" section below. 
   ref_genome_version:       # The earliest recommended version is 2021-08-10_11.12.27_v6. Note that the Salmon index might not exist for earlier versions.
-  species_name: hg38_gencode 
+  species_name:
 ref:
-  index:          /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/star
-  salmon_index:   /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/indexes/salmon/hg38_gencode
-  annotation:     /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/annotation/hg38_gencode.gtf
+  index:          tests/fixtures/reference/star_index
+  salmon_index:   tests/fixtures/reference/salmon_index
+  annotation:     tests/fixtures/reference/annotation.gtf
   # Below used only for variant calling
-  dict: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.dict
-  snpeff_db_id: hg38
-  known_snps: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/gatk_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
-  known_indels: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/gatk_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
-  sequence: /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.fa
-  fai:  /varidata/research/projects/bbc/versioned_references/2023-05-03_15.28.41_v12/data/hg38_gencode/sequence/hg38_gencode.fa.fai
+  dict: tests/fixtures/reference/genome.dict
+  snpeff_db_id: test_ref
+  known_snps: tests/fixtures/reference/known_snps.vcf
+  known_indels: tests/fixtures/reference/known_indels.vcf
+  sequence: tests/fixtures/reference/genome.fa
+  fai:  tests/fixtures/reference/genome.fa.fai
 
 # OrgDB R package for covnerting gene names. Common choices are 'org.Mm.eg.db' for mouse and 'org.Hs.eg.db' for human.
 orgdb: org.Hs.eg.db
 fdr_cutoff: 0.1
 genes_of_interest: #DUSP1,KLF15,CRISPLD2 # create table in report of these genes, keep empty if no initial genes of interest.
 raw_data_path: tests/test_raw_data/
-fastq_screen_conf: /primary/projects/bbc/references/fastq_screen/downloaded_20200309/FastQ_Screen_Genomes/fastq_screen.conf
+fastq_screen_conf: tests/fixtures/reference/fastq_screen.conf
 picard_cmd: "picard" #java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $PICARD 
 
 # For GSEA quick_ref can only handle human, mouse, rat, and fly; all other organisms need to be filled in manually
@@ -32,18 +32,20 @@ msigdb_organism: Homo sapiens
 # Choose which gene sets you would like to test against
 pathway_str: Reactome,BP,BP-simplified,KEGG,H,C1,C2,C3,C4,C5,C6,C7,C8
 
+numeric_variables:
 
 # are the sequencing reads paired-end ('PE') or single-end ('SE')
 PE_or_SE: PE
 
 call_variants: False
-grouped_contigs: tests/test_config/grouped_contigs.tsv 
+grouped_contigs: tests/fixtures/reference/grouped_contigs.tsv
 
 run_vis_bigwig : False
 run_rseqc: False
 
 # R project config
 Rproj_dirname: "VBCS-000_Rproj"
+Rproj_init_git: False
 ## use renv cache or install/copy all packages in project.
 renv_use_cache: True
 ## copy packages from user library if available?
@@ -52,7 +54,7 @@ renv_symlink_from_cache: True #False
 # Use Pak to install packages
 renv_use_pak: False # I couldn't get pak to install to the renv cache which resulted in rebuilding the library each time; see https://github.com/r-lib/pak/issues/284
 ## if using renv cache, this is the path to where the cache is/will be stored.
-renv_root_path: /varidata/research/projects/bbc/tools/renv_root
+renv_root_path: tests/fixtures/renv_root
 
 # iSEE config
 iSEE_app_name: "RNAseq_devel_airway"
@@ -69,15 +71,15 @@ units: tests/test_config/samplesheet/units.tsv
 comparisons: tests/test_config/samplesheet/comparisons.tsv
 
 sortmerna:
-    rfam5_8s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.6-Linux/rRNA_databases/rfam-5.8s-database-id98.fasta
-    rfam5s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.6-Linux/rRNA_databases/rfam-5s-database-id98.fasta
-    silva_arc_16s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.6-Linux/rRNA_databases/silva-arc-16s-id95.fasta
-    silva_arc_23s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.6-Linux/rRNA_databases/silva-arc-23s-id98.fasta
-    silva_bac_16s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.6-Linux/rRNA_databases/silva-bac-16s-id90.fasta
-    silva_bac_23s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.6-Linux/rRNA_databases/silva-bac-23s-id98.fasta
-    silva_euk_18s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.6-Linux/rRNA_databases/silva-euk-18s-id95.fasta
-    silva_euk_28s: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.6-Linux/rRNA_databases/silva-euk-28s-id98.fasta
-    idx_dir: /varidata/research/software/BBC/sortmerna/sortmerna-4.3.6-Linux/indexes/idx/
+    rfam5_8s: tests/fixtures/reference/sortmerna_rfam_5_8s.fasta
+    rfam5s: tests/fixtures/reference/sortmerna_rfam_5s.fasta
+    silva_arc_16s: tests/fixtures/reference/sortmerna_silva_arc_16s.fasta
+    silva_arc_23s: tests/fixtures/reference/sortmerna_silva_arc_23s.fasta
+    silva_bac_16s: tests/fixtures/reference/sortmerna_silva_bac_16s.fasta
+    silva_bac_23s: tests/fixtures/reference/sortmerna_silva_bac_23s.fasta
+    silva_euk_18s: tests/fixtures/reference/sortmerna_silva_euk_18s.fasta
+    silva_euk_28s: tests/fixtures/reference/sortmerna_silva_euk_28s.fasta
+    idx_dir: tests/fixtures/reference/sortmerna_idx/
 
 modules:
   deeptools: bbc2/deeptools/deeptools-3.5.2

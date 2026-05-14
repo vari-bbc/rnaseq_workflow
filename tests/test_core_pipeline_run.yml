@@ -1,0 +1,19 @@
+- name: test-core-pipeline-run-hpc
+  tags:
+    - hpc
+    - snakemake
+    - integration
+  command: bash tests/scripts/run_core_pipeline_hpc.sh
+  exit_code: 0
+  files:
+    - path: results/rename_fastqs/SRR1039508_0_R1.fastq.gz
+    - path: results/trimmed_data/SRR1039508_0_R1_val_1.fq.gz
+    - path: results/trimmed_data/SRR1039508_0_R2_val_2.fq.gz
+    - path: results/concat_fastqs/SRR1039508_R1.fastq.gz
+    - path: results/star/SRR1039508.sorted.bam
+    - path: results/star/SRR1039508.Log.final.out
+      contains:
+        - "Number of input reads"
+    - path: results/salmon/SRR1039508/quant.sf
+      contains:
+        - "Name"

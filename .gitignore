@@ -5,6 +5,12 @@ results/
 logs/
 benchmarks/
 .snakemake/
+.pytest_cache/
+__pycache__/
+tests/fixtures/reference/star_index/*
+!tests/fixtures/reference/star_index/.gitkeep
+tests/fixtures/reference/salmon_index/*
+!tests/fixtures/reference/salmon_index/.gitkeep
 config/samplesheet/*
 !config/samplesheet/make_units_template*
 !config/samplesheet/units.tsv
