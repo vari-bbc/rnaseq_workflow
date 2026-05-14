@@ -4,7 +4,7 @@
     - snakemake
     - dry-run
   command: >
-    snakemake --dry-run --printshellcmds --cores 1 --forceall
+    env XDG_CACHE_HOME=.cache snakemake --dry-run --printshellcmds --cores 1 --forceall
     --snakefile workflow/Snakefile --configfile tests/test_config/config.yaml
   exit_code: 0
   stderr:
@@ -30,12 +30,13 @@
     - snakemake
     - dry-run
   command: >
-    snakemake --dry-run --printshellcmds --cores 1 --forceall --snakefile workflow/Snakefile
-    --configfile tests/test_config/config.yaml
-    --config run_vis_bigwig=True run_rseqc=True deploy_to_shinyio=True
+    env XDG_CACHE_HOME=.cache snakemake
     results/avg_bigwigs/untrt.unstr.bw
     results/rseqc_genebody_cov/SRR1039508/SRR1039508.geneBodyCoverage.txt
     results/iSEE/deployed
+    --dry-run --printshellcmds --cores 1 --forceall --snakefile workflow/Snakefile
+    --configfile tests/test_config/config.yaml
+    --config run_vis_bigwig=True run_rseqc=True deploy_to_shinyio=True
   exit_code: 0
   stderr:
     must_not_contain:
@@ -54,11 +55,12 @@
     - snakemake
     - dry-run
   command: >
-    snakemake --dry-run --printshellcmds --cores 1 --forceall --snakefile workflow/Snakefile
-    --configfile tests/test_config/config.yaml
-    --config call_variants=True
+    env XDG_CACHE_HOME=.cache snakemake
     results/variant_calling/final/07a_variant_annot/all.merged.filt.PASS.snpeff.vcf.gz
     results/variant_calling/final/07b_snp_pca_and_dendro/snprelate.html
+    --dry-run --printshellcmds --cores 1 --forceall --snakefile workflow/Snakefile
+    --configfile tests/test_config/config.yaml
+    --config call_variants=True
   exit_code: 0
   stderr:
     must_not_contain:
