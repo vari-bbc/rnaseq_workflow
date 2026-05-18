@@ -6,8 +6,8 @@ ref:
   index:          tests/fixtures/reference/star_index
   salmon_index:   tests/fixtures/reference/salmon_index
   annotation:     tests/fixtures/reference/annotation.gtf
-  # Below used only for variant calling
   dict: tests/fixtures/reference/genome.dict
+  # Below used only for variant calling
   snpeff_db_id: test_ref
   known_snps: tests/fixtures/reference/known_snps.vcf
   known_indels: tests/fixtures/reference/known_indels.vcf
@@ -18,9 +18,6 @@ ref:
 orgdb: org.Hs.eg.db
 fdr_cutoff: 0.1
 genes_of_interest: #DUSP1,KLF15,CRISPLD2 # create table in report of these genes, keep empty if no initial genes of interest.
-raw_data_path: tests/test_raw_data/
-fastq_screen_conf: tests/fixtures/reference/fastq_screen.conf
-picard_cmd: "picard" #java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $PICARD 
 
 # For GSEA quick_ref can only handle human, mouse, rat, and fly; all other organisms need to be filled in manually
 # kegg_org should be a three or four letter string corresponding to your reference species. List of KEGG species is found here: https://www.genome.jp/kegg/tables/br08606.html
@@ -57,7 +54,7 @@ renv_use_pak: False # I couldn't get pak to install to the renv cache which resu
 renv_root_path: tests/fixtures/renv_root
 
 # iSEE config
-iSEE_app_name: "RNAseq_devel_airway"
+iSEE_app_name: "RNAseq_proj"
 deploy_to_shinyio: False
 shinyio_account_name: "vai-bbc" # valid account names can be found using rsconnect::accounts(); If blank, follow instructions at https://docs.posit.co/shinyapps.io/guide/getting_started/#configure-rsconnect 
 

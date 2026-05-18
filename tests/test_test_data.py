@@ -9,7 +9,6 @@ def read_tsv(path):
 
 def test_test_config_uses_repo_local_fixtures(repo_root, test_config):
     assert test_config["quick_ref"]["species_name"] is None
-    assert test_config["raw_data_path"] == "tests/test_raw_data/"
     assert test_config["PE_or_SE"] == "PE"
     assert test_config["call_variants"] is False
     assert test_config["run_vis_bigwig"] is False
@@ -25,7 +24,6 @@ def test_test_config_uses_repo_local_fixtures(repo_root, test_config):
         test_config["ref"]["sequence"],
         test_config["ref"]["index"],
         test_config["ref"]["salmon_index"],
-        test_config["fastq_screen_conf"],
         test_config["grouped_contigs"],
         test_config["units"],
         test_config["comparisons"],
@@ -45,7 +43,7 @@ def test_test_units_match_fastq_fixtures(repo_root, test_config):
         assert row["group"]
         for column in ("fq1", "fq2"):
             fastq = row[column]
-            fastq_path = repo_root / test_config["raw_data_path"] / fastq
+            fastq_path = repo_root / "raw_data" / fastq
             assert fastq_path.exists(), fastq
             assert fastq not in seen_fastqs
             seen_fastqs.add(fastq)
