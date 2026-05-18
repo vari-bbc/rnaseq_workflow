@@ -1,12 +1,11 @@
 import gzip
 
 def get_orig_fastq(wildcards):
-    raw_path = config["raw_data_path"]
     if wildcards.read == "R1":
             fastq = units[(units["sample"] == wildcards.sample) & (units["group_index"] == wildcards.group_index)]["fq1"]
     elif wildcards.read == "R2":
             fastq = units[(units["sample"] == wildcards.sample) & (units["group_index"] == wildcards.group_index)]["fq2"]
-    return raw_path + fastq
+    return 'raw_data/' + fastq
 
 rule rename_fastqs:
     """
@@ -66,7 +65,6 @@ rule trim_galore_PE:
         "benchmarks/trim_galore/{sample}_{group_index}.txt"
     envmodules:
         config['modules']['trim_galore']
-    conda: '../envs/RNAseq.yml'
     threads: 4
     resources:
         nodes =   1,
@@ -97,7 +95,6 @@ rule trim_galore_SE:
         "benchmarks/trim_galore/{sample}_{group_index}.txt"
     envmodules:
         config['modules']['trim_galore']
-    conda: '../envs/RNAseq.yml'    
     threads: 4
     resources:
         nodes =   1,
@@ -191,7 +188,6 @@ rule STAR:
     envmodules:
         config['modules']['star'],
         config['modules']['samtools']
-    conda: '../envs/RNAseq.yml'
     threads: 8
     resources:
         nodes =   1,
@@ -228,7 +224,6 @@ rule salmon:
         "benchmarks/salmon/{sample}.txt"
     envmodules:
         config['modules']['salmon']
-    conda: '../envs/RNAseq.yml'
     threads: 8
     resources:
         nodes =   1,
@@ -265,7 +260,6 @@ rule SummarizedExperiment:
     threads: 1
     envmodules:
         config['modules']['R']
-    conda: '../envs/Renv.yml'
     resources:
         mem_gb=64,
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"

@@ -33,8 +33,6 @@ rule fastq_screen:
     output:
         html =      "results/fastq_screen/{fq_pref}_screen.html",
         txt =       "results/fastq_screen/{fq_pref}_screen.txt",
-    params:
-        conf = config['fastq_screen_conf']
     benchmark:
                     "benchmarks/fastq_screen/{fq_pref}.bmk"
     threads: 8
@@ -43,10 +41,9 @@ rule fastq_screen:
         mem_gb =    32,
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     envmodules: config['modules']['fastq_screen']
-    conda: '../envs/qc.yml'
     shell:
         """
-        fastq_screen --conf {params.conf} --threads {threads} --outdir results/fastq_screen/ {input} 
+        fastq_screen --threads {threads} --outdir results/fastq_screen/ {input} 
         """
 
 rule fastqc:
@@ -64,7 +61,6 @@ rule fastqc:
         "benchmarks/fastqc/{fq_pref}.txt"
     envmodules:
         config['modules']['fastqc']
-    conda: '../envs/qc.yml'        
     threads: 1
     resources:
         mem_gb = 32,
@@ -81,7 +77,6 @@ rule seqtk:
         temp("results/subsample/{fq_pref}.fastq.gz"),
     envmodules:
         config['modules']['seqtk']
-    conda: '../envs/qc.yml'        
     params:
         num_subsamp = 50000,
     threads: 1
@@ -110,7 +105,6 @@ rule sortmerna:
         directory("results/sortmerna/{sample}")
     envmodules:
         config['modules']['sortmerna']
-    conda: '../envs/qc.yml'
     params:
         rfam5_8s = config["sortmerna"]["rfam5_8s"],
         rfam5s = config['sortmerna']['rfam5s'],
@@ -154,7 +148,6 @@ rule make_genes_ref_flat:
     params:
     envmodules:
         config["modules"]["ucsctools"]
-    conda: '../envs/qc.yml'        
     threads: 4
     resources:
         mem_gb = 80,
@@ -178,7 +171,6 @@ rule make_genes_bed:
     params:
     envmodules:
         config["modules"]["ucsctools"]
-    conda: '../envs/qc.yml'
     threads: 4
     resources:
         mem_gb = 80,
@@ -204,11 +196,9 @@ rule get_rRNA_intervals_from_gtf:
         "benchmarks/get_rRNA_intervals_from_gtf/bench.txt"
     params:
         renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock),
-        picard_cmd = config["picard_cmd"]
     envmodules:
         config["modules"]["picard"],
         config["modules"]["R"],
-    conda: '../envs/Renv.yml'
     threads: 4
     resources:
         mem_gb = 80,
@@ -217,7 +207,7 @@ rule get_rRNA_intervals_from_gtf:
         """
         Rscript --vanilla -e 'renv::load("{params.renv_rproj_dir}"); library(rtracklayer); gtf <- import("{input.gtf}"); biotype_col <- na.omit(match(c("gene_biotype","gene_type"), colnames(mcols(gtf)))); stopifnot(length(biotype_col) > 0); rrna <- gtf[mcols(gtf)[[biotype_col[1]]]=="rRNA" & mcols(gtf)$type=="gene"]; score(rrna) <- 1; export(rrna, "{output.bed}")'
 
-        {params.picard_cmd} -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp  BedToIntervalList \
+        java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $PICARD BedToIntervalList \
                 I={output.bed} \
                 O={output.interval_list} \
                 SD={input.ref_dict}
@@ -251,17 +241,15 @@ rule CollectRnaSeqMetrics:
         "benchmarks/CollectRnaSeqMetrics/{sample}.txt"
     params:
         strand=get_library_strandedness,
-        picard_cmd = config["picard_cmd"]
     envmodules:
         config["modules"]["picard"]
-    conda: '../envs/Renv.yml'
     threads: 4
     resources:
         mem_gb = 80,
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
-        {params.picard_cmd} -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp CollectRnaSeqMetrics \
+        java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $PICARD CollectRnaSeqMetrics \
         -I {input.bam} \
         -O {output.metrics} \
         --REF_FLAT {input.ref_flat} \
@@ -287,7 +275,6 @@ rule rseqc_genebody_cov:
         samp_dir=lambda wildcards, output: os.path.dirname(output.metrics)
     envmodules:
         config["modules"]["rseqc"]
-    conda: '../envs/qc.yml'
     threads: 4
     resources:
         mem_gb = 80,
@@ -339,7 +326,6 @@ rule multiqc:
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     envmodules:
         config['modules']['multiqc']
-    conda: '../envs/qc.yml'
     shell:
         """
         multiqc -f {params} \
@@ -348,3 +334,4 @@ rule multiqc:
         -n multiqc_report.html \
         --cl-config 'max_table_rows: 999999' 
         """
+

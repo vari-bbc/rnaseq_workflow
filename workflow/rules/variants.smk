@@ -391,7 +391,6 @@ rule snprelate:
     envmodules:
         config['modules']['R'],
         config['modules']['pandoc']
-    conda: '../envs/Renv.yml'
     threads: 1
     resources:
         mem_gb = 60,

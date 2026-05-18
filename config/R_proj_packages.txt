@@ -38,4 +38,3 @@ PKI
 rsconnect
 usethis
 rtracklayer
-BiocManager

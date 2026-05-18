@@ -18,9 +18,6 @@ ref:
 orgdb: org.Hs.eg.db
 fdr_cutoff: 0.1
 genes_of_interest: #DUSP1,KLF15,CRISPLD2 # create table in report of these genes, keep empty if no initial genes of interest.
-raw_data_path: raw_data/ #tests/test_raw_data
-fastq_screen_conf: /varidata/research/software/BBC/fastq_screen/fastq_screen_v0.14.0/fastq_screen.conf
-picard_cmd: "picard" #java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $PICARD 
 
 # For GSEA quick_ref can only handle human, mouse, rat, and fly; all other organisms need to be filled in manually
 # kegg_org should be a three or four letter string corresponding to your reference species. List of KEGG species is found here: https://www.genome.jp/kegg/tables/br08606.html
