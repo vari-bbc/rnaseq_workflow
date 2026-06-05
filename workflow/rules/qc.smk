@@ -309,7 +309,7 @@ rule multiqc:
     input:
         multiqc_input
     params:
-        lambda wildcards, input: " ".join(pd.unique([os.path.dirname(x) for x in input]))
+        lambda wildcards, input: " ".join(sorted({os.path.dirname(str(x)) for x in input}))
     output:
         "results/multiqc/multiqc_report.html",
         "results/multiqc/multiqc_report_data/multiqc.log",

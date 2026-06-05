@@ -1,0 +1,2 @@
+chr1	test	gene	1	12	.	+	.	gene_id "TEST1"; gene_name "TEST1"; gene_biotype "protein_coding";
+chr1	test	exon	1	12	.	+	.	gene_id "TEST1"; gene_name "TEST1"; gene_biotype "protein_coding";
