@@ -43,6 +43,10 @@ rule deploy_isee_to_shinyappio:
         renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock),
     envmodules:
         config['modules']['R'],
+    conda:
+        "../envs/Renv.yml"
+    container:
+        config["containers"]["renv"]
     threads: 1
     resources:
         nodes = 1,

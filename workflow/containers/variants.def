@@ -1,0 +1,20 @@
+Bootstrap: docker
+From: condaforge/miniforge3:latest
+
+%files
+    workflow/envs/variants.yml /tmp/environment.yml
+
+%post
+    set -eux
+    /opt/conda/bin/conda config --set channel_priority strict
+    /opt/conda/bin/conda env create -p /opt/conda/envs/rnaseq-variants -f /tmp/environment.yml
+    /opt/conda/bin/conda clean -afy
+    SNPEFF_DIR="$(find /opt/conda/envs/rnaseq-variants/share -maxdepth 1 -type d -name 'snpeff-*' -print -quit)"
+    test -n "$SNPEFF_DIR"
+    mkdir -p /opt/snpeff
+    ln -sf "$SNPEFF_DIR/snpEff.jar" /opt/snpeff/snpEff.jar
+
+%environment
+    export PATH=/opt/conda/envs/rnaseq-variants/bin:/opt/conda/bin:$PATH
+    export SNPEFF=/opt/snpeff
+    export LC_ALL=C

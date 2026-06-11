@@ -1,0 +1,11 @@
+name: rnaseq-variants
+channels:
+    - conda-forge
+    - bioconda
+    - defaults
+dependencies:
+    - gatk4=4.3.0.0
+    - htslib=1.17
+    - openjdk=17
+    - snpeff=5.1
+    - vt=0.1.16

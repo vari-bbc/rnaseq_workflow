@@ -11,6 +11,10 @@ rule markdups:
         "benchmarks/variant_calling/markdup/{sample}.txt"
     envmodules:
         config['modules']['gatk']
+    conda:
+        "../envs/variants.yml"
+    container:
+        config["containers"]["variants"]
     threads: 4
     resources: 
         mem_gb = 120,
@@ -41,6 +45,10 @@ rule splitncigar:
         ref_fasta=config["ref"]["sequence"],
     envmodules:
         config['modules']['gatk']
+    conda:
+        "../envs/variants.yml"
+    container:
+        config["containers"]["variants"]
     threads: 4
     resources: 
         mem_gb = 96,
@@ -68,6 +76,10 @@ rule haplotypecaller:
         
     envmodules:
         config["modules"]["gatk"]
+    conda:
+        "../envs/variants.yml"
+    container:
+        config["containers"]["variants"]
     threads: 4
     resources: 
         mem_gb = 80,
@@ -101,6 +113,10 @@ rule combinevar:
         contigs = lambda wildcards: "-L " + contig_groups[contig_groups.name == wildcards.contig_group]['contigs'].values[0].replace(",", " -L "),
     envmodules:
         config["modules"]["gatk"]
+    conda:
+        "../envs/variants.yml"
+    container:
+        config["containers"]["variants"]
     threads: 4
     resources: 
         mem_gb = 120,
@@ -127,6 +143,10 @@ rule jointgeno:
         genomicsdb="results/variant_calling/{round}/02_combinevar/{contig_group}.genomicsdb"
     envmodules:
         config["modules"]["gatk"]
+    conda:
+        "../envs/variants.yml"
+    container:
+        config["containers"]["variants"]
     threads: 4
     resources: 
         mem_gb = 80,
@@ -154,6 +174,10 @@ rule sortVCF:
         dictionary=config['ref']['dict'],
     envmodules:
         config["modules"]["gatk"]
+    conda:
+        "../envs/variants.yml"
+    container:
+        config["containers"]["variants"]
     threads: 4
     resources: 
         mem_gb = 80,
@@ -186,6 +210,10 @@ rule merge_vcf:
     envmodules:
         config["modules"]["gatk"],
         config["modules"]["vt"],
+    conda:
+        "../envs/variants.yml"
+    container:
+        config["containers"]["variants"]
     threads: 4
     resources: 
         mem_gb = 80,
@@ -239,6 +267,10 @@ rule filter_vcf:
     envmodules:
         config["modules"]["gatk"],
         config["modules"]["vt"]
+    conda:
+        "../envs/variants.yml"
+    container:
+        config["containers"]["variants"]
     threads: 4
     resources: 
         mem_gb = 80,
@@ -295,6 +327,10 @@ rule BQSR:
         ref_fasta=config["ref"]["sequence"],
     envmodules:
         config["modules"]["gatk"],
+    conda:
+        "../envs/variants.yml"
+    container:
+        config["containers"]["variants"]
     threads: 4
     resources: 
         mem_gb = 80,
@@ -341,13 +377,36 @@ rule variant_annot:
     envmodules:
         config['modules']['snpeff'],
         config['modules']['htslib']
+    conda:
+        "../envs/variants.yml"
+    container:
+        config["containers"]["variants"]
     threads: 4
     resources: 
         mem_gb = 80,
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
-        java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $SNPEFF/snpEff.jar eff \
+        SNPEFF_JAR=""
+        if [[ -n "${{SNPEFF:-}}" ]]; then
+            if [[ -f "$SNPEFF/snpEff.jar" ]]; then
+                SNPEFF_JAR="$SNPEFF/snpEff.jar"
+            else
+                SNPEFF_JAR="$SNPEFF"
+            fi
+        fi
+        if [[ -z "$SNPEFF_JAR" ]]; then
+            SNPEFF_BIN="$(command -v snpEff || true)"
+            if [[ -n "$SNPEFF_BIN" ]]; then
+                SNPEFF_JAR="$(find "$(dirname "$(dirname "$SNPEFF_BIN")")/share" -name snpEff.jar -print -quit)"
+            fi
+        fi
+        if [[ -z "$SNPEFF_JAR" ]]; then
+            echo "Could not locate snpEff.jar. Set SNPEFF or install the snpeff conda package." >&2
+            exit 1
+        fi
+
+        java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar "$SNPEFF_JAR" eff \
         -v \
         -canon \
         -onlyProtein \
@@ -359,7 +418,7 @@ rule variant_annot:
         tabix {output.vcf_canon}
 
 
-        java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar $SNPEFF/snpEff.jar eff \
+        java -Xms8g -Xmx{resources.mem_gb}g -Djava.io.tmpdir=./tmp -jar "$SNPEFF_JAR" eff \
         -v \
         -onlyProtein \
         -stats {output.html} \
@@ -391,6 +450,10 @@ rule snprelate:
     envmodules:
         config['modules']['R'],
         config['modules']['pandoc']
+    conda:
+        "../envs/Renv.yml"
+    container:
+        config["containers"]["renv"]
     threads: 1
     resources:
         mem_gb = 60,

@@ -1,0 +1,15 @@
+Bootstrap: docker
+From: condaforge/miniforge3:latest
+
+%files
+    workflow/envs/RNAseq.yml /tmp/environment.yml
+
+%post
+    set -eux
+    /opt/conda/bin/conda config --set channel_priority strict
+    /opt/conda/bin/conda env create -p /opt/conda/envs/rnaseq -f /tmp/environment.yml
+    /opt/conda/bin/conda clean -afy
+
+%environment
+    export PATH=/opt/conda/envs/rnaseq/bin:/opt/conda/bin:$PATH
+    export LC_ALL=C

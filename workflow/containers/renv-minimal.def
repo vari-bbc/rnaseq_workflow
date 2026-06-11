@@ -1,0 +1,61 @@
+Bootstrap: docker
+From: rocker/r-ver:4.4.3
+
+%post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        bash \
+        build-essential \
+        ca-certificates \
+        cmake \
+        coreutils \
+        curl \
+        default-jre-headless \
+        file \
+        findutils \
+        gfortran \
+        git \
+        grep \
+        gzip \
+        libbz2-dev \
+        libcairo2-dev \
+        libcurl4-openssl-dev \
+        libfontconfig1-dev \
+        libfreetype6-dev \
+        libfribidi-dev \
+        libgit2-dev \
+        libglpk-dev \
+        libgsl-dev \
+        libharfbuzz-dev \
+        libhdf5-dev \
+        libicu-dev \
+        libjpeg-dev \
+        liblzma-dev \
+        libmagick++-dev \
+        libpcre2-dev \
+        libpng-dev \
+        libreadline-dev \
+        libssl-dev \
+        libtiff-dev \
+        libxml2-dev \
+        libxt-dev \
+        make \
+        pandoc \
+        perl \
+        picard-tools \
+        pkg-config \
+        sed \
+        wget \
+        zlib1g-dev
+    rm -rf /var/lib/apt/lists/*
+    PICARD_JAR="$(find /usr/share/java -name 'picard*.jar' -print -quit)"
+    test -n "$PICARD_JAR"
+    mkdir -p /opt/picard
+    ln -sf "$PICARD_JAR" /opt/picard/picard.jar
+    Rscript -e 'options(repos = c(CRAN = "https://cloud.r-project.org/")); install.packages(c("renv", "BiocManager", "usethis", "rmarkdown", "rsconnect"))'
+
+%environment
+    export PICARD=/opt/picard/picard.jar
+    export LC_ALL=C

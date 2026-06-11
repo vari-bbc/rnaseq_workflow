@@ -1,0 +1,8 @@
+name: rnaseq-visualisation
+channels:
+    - conda-forge
+    - bioconda
+    - defaults
+dependencies:
+    - deeptools=3.5.2
+    - samtools=1.17

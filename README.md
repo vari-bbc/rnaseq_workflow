@@ -64,6 +64,38 @@ Execute from within your project directory as a SLURM job.
 sbatch bin/run_snake.sh
 ```
 
+The module-based runner above is the primary supported path on the VAI HPC.
+The rules also include conda and Singularity metadata for alternate execution
+modes.
+
+To run with conda environments instead of rule modules:
+
+```
+sbatch bin/run_conda_snake.sh
+```
+
+That runner expects `conda` to already be available in the submit environment.
+
+To run with Singularity-compatible images, first build local SIFs:
+
+```
+bin/build_singularity_images.sh
+```
+
+Then submit:
+
+```
+sbatch bin/run_singularity_snake.sh
+```
+
+The default image paths are configured under `containers:` in
+`config/config.yaml`; local relative paths are interpreted from the project
+root. Replace those values with hosted image URIs or shared absolute `.sif`
+paths if the images are built centrally. The R image is based on Rocker R and
+preinstalls the workflow R packages into the image site library so the R/renv
+rules do not rely on conda solving CRAN and Bioconductor packages. See
+`workflow/containers/README.md` for the smaller runtime-restore R image option.
+
 ## Troubleshooting
 
 - If running the workflow on an older version of R, incompatibilities with the latest CRAN packages can occur if an older version of the CRAN package is not available in the renv cache or in the user library. To install an older version of a CRAN package, replace/add the package name in the `config/R_proj_packages.txt` file with `package_name@version_number`. The version number should be as listed in the package's reference manual e.g. `arules@1.7-10`. Note that this version number is only considered if the workflow was unable to copy from the cache or user library.

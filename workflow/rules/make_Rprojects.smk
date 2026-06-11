@@ -28,6 +28,10 @@ rule make_Rproject:
     threads: 1
     envmodules:
         config['modules']['R']
+    conda:
+        "../envs/Renv.yml"
+    container:
+        config["containers"]["renv"]
     resources:
         mem_gb=64,
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log", 
@@ -67,4 +71,3 @@ rule make_Rproject:
 
         
         """
-

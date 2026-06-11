@@ -24,6 +24,10 @@ rule bigwigs:
         "benchmarks/bigwigs/{sample}.{dir}.txt"
     envmodules:
         config['modules']['deeptools']
+    conda:
+        "../envs/visualisation.yml"
+    container:
+        config["containers"]["visualisation"]
     threads: 8
     resources:
         nodes = 1,
@@ -46,6 +50,10 @@ rule avg_bigwigs:
         "benchmarks/avg_bigwigs/{group}.{dir}.txt"
     envmodules:
         config['modules']['deeptools']
+    conda:
+        "../envs/visualisation.yml"
+    container:
+        config["containers"]["visualisation"]
     threads: 8
     resources:
         nodes = 1,
@@ -55,4 +63,3 @@ rule avg_bigwigs:
         """
         bigwigAverage -b {input} --binSize 10 -p {threads} -o {output.bw} -of "bigwig"
         """
-

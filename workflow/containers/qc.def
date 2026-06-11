@@ -1,0 +1,20 @@
+Bootstrap: docker
+From: condaforge/miniforge3:latest
+
+%files
+    workflow/envs/qc.yml /tmp/environment.yml
+
+%post
+    set -eux
+    /opt/conda/bin/conda config --set channel_priority strict
+    /opt/conda/bin/conda env create -p /opt/conda/envs/rnaseq-qc -f /tmp/environment.yml
+    /opt/conda/bin/conda clean -afy
+    PICARD_JAR="$(find /opt/conda/envs/rnaseq-qc/share -name picard.jar -print -quit)"
+    test -n "$PICARD_JAR"
+    mkdir -p /opt/picard
+    ln -sf "$PICARD_JAR" /opt/picard/picard.jar
+
+%environment
+    export PATH=/opt/conda/envs/rnaseq-qc/bin:/opt/conda/bin:$PATH
+    export PICARD=/opt/picard/picard.jar
+    export LC_ALL=C

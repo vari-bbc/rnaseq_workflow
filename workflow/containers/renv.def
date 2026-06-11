@@ -1,0 +1,104 @@
+Bootstrap: docker
+From: rocker/r-ver:4.4.3
+
+%files
+    config/R_proj_packages.txt /tmp/R_proj_packages.txt
+
+%post
+    set -eux
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        bash \
+        build-essential \
+        ca-certificates \
+        cmake \
+        coreutils \
+        curl \
+        default-jre-headless \
+        file \
+        findutils \
+        gfortran \
+        git \
+        grep \
+        gzip \
+        libblas-dev \
+        libbz2-dev \
+        libcairo2-dev \
+        libcurl4-openssl-dev \
+        libfontconfig1-dev \
+        libfreetype6-dev \
+        libfribidi-dev \
+        libgit2-dev \
+        libglpk-dev \
+        libgsl-dev \
+        libharfbuzz-dev \
+        libhdf5-dev \
+        libicu-dev \
+        libjpeg-dev \
+        liblapack-dev \
+        liblzma-dev \
+        libmagick++-dev \
+        libpcre2-dev \
+        libpng-dev \
+        libreadline-dev \
+        libssl-dev \
+        libtiff-dev \
+        libxml2-dev \
+        libxt-dev \
+        make \
+        pandoc \
+        perl \
+        picard-tools \
+        pkg-config \
+        sed \
+        wget \
+        zlib1g-dev
+    rm -rf /var/lib/apt/lists/*
+    mkdir -p /opt/rnaseq_workflow
+    cp /tmp/R_proj_packages.txt /opt/rnaseq_workflow/R_proj_packages.txt
+    PICARD_JAR="$(find /usr/share/java -name 'picard*.jar' -print -quit)"
+    test -n "$PICARD_JAR"
+    mkdir -p /opt/picard
+    ln -sf "$PICARD_JAR" /opt/picard/picard.jar
+    Rscript - <<'EOF'
+options(repos = c(CRAN = "https://cloud.r-project.org/"))
+install.packages(c("renv", "BiocManager", "usethis", "rmarkdown", "rsconnect"))
+options(repos = BiocManager::repositories())
+
+bioc_repos <- BiocManager::repositories()
+bioc_available <- available.packages(repos = bioc_repos[grepl("BioC", names(bioc_repos))])
+packages <- readLines("/opt/rnaseq_workflow/R_proj_packages.txt", warn = FALSE)
+packages <- unique(trimws(packages))
+packages <- packages[nzchar(packages) & !grepl("^#", packages)]
+packages <- unique(c(
+    packages,
+    "org.Hs.eg.db",
+    "org.Mm.eg.db",
+    "org.Rn.eg.db",
+    "org.Dm.eg.db",
+    "org.Ce.eg.db"
+))
+
+required_name <- function(pkg) {
+    pkg <- sub("@.*$", "", pkg)
+    basename(pkg)
+}
+
+for (pkg in packages) {
+    req <- required_name(pkg)
+    if (requireNamespace(req, quietly = TRUE)) {
+        next
+    }
+    install_spec <- pkg
+    if (pkg %in% bioc_available[, "Package"]) {
+        install_spec <- paste0("bioc::", pkg)
+    }
+    message("Installing ", install_spec)
+    renv::install(install_spec)
+}
+EOF
+
+%environment
+    export PICARD=/opt/picard/picard.jar
+    export LC_ALL=C

@@ -23,6 +23,10 @@ rule gsea:
     envmodules:
         config['modules']['R'],
         config['modules']['pandoc']
+    conda:
+        "../envs/Renv.yml"
+    container:
+        config["containers"]["renv"]
     threads: 8
     resources:
         nodes = 1,

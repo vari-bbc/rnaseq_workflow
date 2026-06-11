@@ -66,6 +66,10 @@ rule trim_galore_PE:
         "benchmarks/trim_galore/{sample}_{group_index}.txt"
     envmodules:
         config['modules']['trim_galore']
+    conda:
+        "../envs/RNAseq.yml"
+    container:
+        config["containers"]["rnaseq"]
     threads: 4
     resources:
         nodes =   1,
@@ -96,6 +100,10 @@ rule trim_galore_SE:
         "benchmarks/trim_galore/{sample}_{group_index}.txt"
     envmodules:
         config['modules']['trim_galore']
+    conda:
+        "../envs/RNAseq.yml"
+    container:
+        config["containers"]["rnaseq"]
     threads: 4
     resources:
         nodes =   1,
@@ -189,6 +197,10 @@ rule STAR:
     envmodules:
         config['modules']['star'],
         config['modules']['samtools']
+    conda:
+        "../envs/RNAseq.yml"
+    container:
+        config["containers"]["rnaseq"]
     threads: 8
     resources:
         nodes =   1,
@@ -225,6 +237,10 @@ rule salmon:
         "benchmarks/salmon/{sample}.txt"
     envmodules:
         config['modules']['salmon']
+    conda:
+        "../envs/RNAseq.yml"
+    container:
+        config["containers"]["rnaseq"]
     threads: 8
     resources:
         nodes =   1,
@@ -261,6 +277,10 @@ rule SummarizedExperiment:
     threads: 1
     envmodules:
         config['modules']['R']
+    conda:
+        "../envs/Renv.yml"
+    container:
+        config["containers"]["renv"]
     resources:
         mem_gb=64,
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"

@@ -19,6 +19,7 @@ orgdb: org.Hs.eg.db
 fdr_cutoff: 0.1
 genes_of_interest: #DUSP1,KLF15,CRISPLD2 # create table in report of these genes, keep empty if no initial genes of interest.
 raw_data_path: raw_data/ #tests/test_raw_data
+fastq_screen_conf: # Optional path to an explicit FastQ Screen config, useful for conda/container runs.
 
 # For GSEA quick_ref can only handle human, mouse, rat, and fly; all other organisms need to be filled in manually
 # kegg_org should be a three or four letter string corresponding to your reference species. List of KEGG species is found here: https://www.genome.jp/kegg/tables/br08606.html
@@ -63,6 +64,18 @@ renv_symlink_from_cache: True #False
 renv_use_pak: False # I couldn't get pak to install to the renv cache which resulted in rebuilding the library each time; see https://github.com/r-lib/pak/issues/284
 ## if using renv cache, this is the path to where the cache is/will be stored.
 renv_root_path: /varidata/research/projects/bbc/tools/renv_root
+
+# Container image locations used only when Snakemake is run with singularity
+# software deployment. Local relative paths are interpreted from the project
+# root. The module-based runner remains the primary supported execution mode.
+# Replace these with docker://, oras://, or shared absolute .sif paths if images
+# are hosted centrally.
+containers:
+  rnaseq: workflow/containers/images/rnaseq.sif
+  qc: workflow/containers/images/qc.sif
+  renv: workflow/containers/images/renv.sif
+  variants: workflow/containers/images/variants.sif
+  visualisation: workflow/containers/images/visualisation.sif
 
 # iSEE config
 iSEE_app_name: "RNAseq_proj"
