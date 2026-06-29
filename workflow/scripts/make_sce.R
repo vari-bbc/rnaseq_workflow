@@ -8,6 +8,7 @@ out_sce <- args[5]
 out_sizeFactors <- args[6]
 out_txi <- args[7]
 out_strand <- args[8]
+out_count_matrix <- args[9]
 
 # use the packages in the renv
 renv::load(renv_rproj_dir)
@@ -165,6 +166,10 @@ count_data <- list(counts=raw_cts, tpms=tpms[rownames(raw_cts), ])
 
 se <- SummarizedExperiment(assays = count_data, colData = data_for_DE, rowData = gene_names_df)
 se <- se[, order(se$group)] # order samples by group
+
+# also output the count matrix for use with other tools
+write_tsv(as.data.frame(assays(se)$counts) |>
+            rownames_to_column("ensembl_id"), out_count_matrix)
 
 # Add vst
 dds <- DESeqDataSet(se, design = ~ group)
