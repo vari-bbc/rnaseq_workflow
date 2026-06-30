@@ -1,4 +1,4 @@
-sample	group	fq1	fq2	RG
+sample	group	fq1	fq2	RG	filterColumn	filterColumnLevel
 SRR1039508	untrt	SRR1039508_L000_R1_001.fastq.gz	SRR1039508_L000_R2_001.fastq.gz	
 SRR1039509	trt	SRR1039509_L000_R1_001.fastq.gz	SRR1039509_L000_R2_001.fastq.gz	
 SRR1039512	untrt	SRR1039512_L000_R1_001.fastq.gz	SRR1039512_L000_R2_001.fastq.gz	
