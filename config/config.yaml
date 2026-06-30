@@ -55,10 +55,10 @@ run_rseqc: False
 Rproj_dirname: "VBCS-0000_Rproj"
 Rproj_init_git: False # if setting to True, ensure you have configured your identity for git. See https://git-scm.com/book/ms/v2/Getting-Started-First-Time-Git-Setup.
 ## use renv cache or install/copy all packages in project.
-renv_use_cache: True
+renv_use_cache: False
 ## copy packages from user library if available?
-renv_use_user_lib: True
-renv_symlink_from_cache: True #False
+renv_use_user_lib: False
+renv_symlink_from_cache: False
 # Use Pak to install packages
 renv_use_pak: False # I couldn't get pak to install to the renv cache which resulted in rebuilding the library each time; see https://github.com/r-lib/pak/issues/284
 ## if using renv cache, this is the path to where the cache is/will be stored.
