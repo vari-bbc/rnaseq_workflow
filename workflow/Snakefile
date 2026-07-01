@@ -30,7 +30,7 @@ if not (units['fq1'].is_unique and (units['fq2'].is_unique or fq2_is_all_empty))
     raise Exception('Same fastq specified in more than one row.')
 
 
-samples = units[["sample","group"]].drop_duplicates()
+samples = units[["sample","group"]].drop_duplicates() 
 if not samples['sample'].is_unique:
     raise Exception('A sample has more than one group.')
 valid_groups = samples.groupby(['group'])['group'].count() > 1
@@ -43,9 +43,37 @@ Rproj_packages_vals = pd.read_table("config/R_proj_packages.txt", header=None)[0
 Rproj_packages = "c('" + "','".join(Rproj_packages_vals) + "')"
 
 # comparisons: list of comparisons (contrasts) to be tested
-comparisons = pd.read_table(config["comparisons"]) #, dtype={"comparison_name" : str, "group_test" : str, "group_reference" : str})
-if not (comparisons['group_test'].isin(samples['group']).all() and comparisons['group_reference'].isin(samples['group']).all()):
-    raise Exception('A group in the comparisons file is not in the samplesheet.')
+comparisons = pd.read_table(config["comparisons"],dtype={"filterColumnLevel": str}) 
+def get_formula_column(formula):
+    # Strip whitespace, remove leading '~', take the column name
+    # handles simple formulas like "~group" or "~batch + group" (takes first term)
+    formula = formula.strip().lstrip('~').strip()
+    terms = re.split(r'[+\-*:]', formula)
+    return terms[0].strip()
+
+errors = []
+for idx, row in comparisons.iterrows():
+    col = get_formula_column(row['group_reg_formula'])
+    
+    if col not in units.columns:
+        errors.append(f"Row {idx} ('{row['comparison_name']}'): column '{col}' from formula '{row['group_reg_formula']}' not found in samplesheet.")
+        continue
+    
+    valid_levels = units[col].unique()
+    
+    if row['group_test'] not in valid_levels:
+        errors.append(f"Row {idx} ('{row['comparison_name']}'): group_test '{row['group_test']}' not a level of '{col}'.")
+    if row['group_reference'] not in valid_levels:
+        errors.append(f"Row {idx} ('{row['comparison_name']}'): group_reference '{row['group_reference']}' not a level of '{col}'.")
+
+if errors:
+    raise Exception("Comparisons file validation failed:\n" + "\n".join(errors))
+
+
+
+#, dtype={"comparison_name" : str, "group_test" : str, "group_reference" : str})
+# if not (comparisons['group_test'].isin(samples['group']).all() and comparisons['group_reference'].isin(samples['group']).all()):
+    # raise Exception('A group in the comparisons file is not in the samplesheet.')
     
 dupes = comparisons.loc[comparisons['comparison_name'].duplicated(keep=False), 'comparison_name'].unique()
 assert len(dupes) == 0, f"Duplicate comparison_name values found: {dupes}"

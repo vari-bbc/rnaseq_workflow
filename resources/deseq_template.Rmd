@@ -19,6 +19,8 @@ params:
   group_test: ""
   group_reference: ""
   group_reg_formula: ""
+  filterColumn: ""
+  filterColumnLevel: ""
   fdr_cutoff: ""
   genes_of_interest: ""
   numeric_variables: ""
@@ -78,11 +80,29 @@ suppressPackageStartupMessages({
 ```{r read_se}
 se <- readRDS(paste0("../../", params$se_obj))
 
+# first subset on filterColumn==filterColumnLevel in !is.null 
+if(!is.null(colData(se)[[params$filterColumn]])){
+  se <- se[, colData(se)[[params$filterColumn]]==params$filterColumnLevel]
+  print(paste0('Filtering to ',ncol(se),' samples with ',params$filterColumn,'==',params$filterColumnLevel))
+}
+
 # subset se to just samples in this comparison (relevant esp if variance is diff between groups)
-se <- se[, colData(se)$group %in% c(params$group_test, params$group_reference)]
+formula <- trimws(params$group_reg_formula)
+formula <- sub("^~", "", formula)
+formula <- trimws(formula)
+terms <- strsplit(formula, "[+\\-*:]", perl = TRUE)[[1]]
+columnToTest <- trimws(terms[1])
+se <- se[, colData(se)[[columnToTest]] %in% c(params$group_test, params$group_reference)]
+print(paste0('Filtered to ',ncol(se),' samples with ',columnToTest,' %in% ',params$group_test,' or ',params$group_reference))
+
+# make sure we have samples left
+if (ncol(se) < 2) {
+  stop("SummarizedExperiment object has <2 samples after filtering samples.")
+}
+
 
 # factor the group column to make sure the reference group is the first level
-se$group <- factor(se$group, levels=c(params$group_reference, params$group_test))
+se[[columnToTest]] <- factor(se[[columnToTest]], levels=c(params$group_reference, params$group_test))
 
 # Convert all everything to their designated types if there are extra columns in units.tsv
 if (ncol(colData(se)) > 5 & params$numeric_variables != "" & params$numeric_variables != "None"){
@@ -111,7 +131,7 @@ se
 ```
 
 Set up analysis using counts data from the previous steps of the workflow, and 
-basic meta data given from units.tsv, with group as the variable we're testing.
+basic meta data given from units.tsv.
 **Note that covariates can be used here**; these are utilized in the `comparisons.tsv` file if you've included additional
 columns in the `units.tsv` file in the config folder. For more specialized design or analyses,
 please modify and/or contact the BBC.
@@ -205,7 +225,7 @@ Coefficients in the model are: `r paste(resultsNames(dds), collapse = ", ")`.
 After the models are fitted, we can test specific pairs of groups for differential expression. For DESeq2, it is recommended to provide the significance cutoff that you wish to use as it affects the multiple testing correction procedure (see [docs](https://www.rdocumentation.org/packages/DESeq2/versions/1.12.3/topics/results)). Here, we'll use the false discovery rate (FDR) cutoff that was provided in the config file (`r params$fdr_cutoff`).
 
 ```{r run_contrast}
-contrast <- c("group", params$group_test, params$group_reference)
+contrast <- c(columnToTest, params$group_test, params$group_reference)
 fdr_cutoff <- params$fdr_cutoff
 
 res <- results(dds, contrast=contrast, alpha=fdr_cutoff)
@@ -448,13 +468,13 @@ test_clustering <- function(in_dds, ntop) {
               as.data.frame(colData(vsd)) %>% mutate(sample = as.character(sample)),
               by="sample") 
 
-  adonis2(mat_PERMANOVA ~ group, data = mat_PERMANOVA_df, method='eu')
+  adonis2(as.formula(paste("mat_PERMANOVA ~", columnToTest)), data = mat_PERMANOVA_df, method = 'eu')
 }
 res_clustering <- test_clustering(vsd, ntop=10000)
 res_clustering
 ```
 
-The PERMANOVA test above tests whether the groups are significantly different from each other based on the most variable genes in the dataset.
+The PERMANOVA test above tests whether **`r columnToTest`** are significantly different from each other based on the most variable genes in the dataset.
 A significant p-value (e.g. < 0.05) indicates that the groups are significantly different from each other, and that the PCA plot is likely to show separation between the groups.
 Here, we see that the groups appear `r if(res_clustering[[1,"Pr(>F)"]] >= 0.05) "*not*"` to be  significantly different from each other 
 (p-value = `r format.pval(res_clustering[[1,"Pr(>F)"]], digits=3)`), indicating that the PCA plot is `r if(res_clustering[[1,"Pr(>F)"]] >= 0.05) "not"` likely to show separation between the groups.
@@ -517,9 +537,9 @@ mat <- assay(top_se, "vst")
 mat <- t(scale(t(mat), scale=FALSE, center = TRUE))
 
 # column annot
-ht_col_annot <- as.data.frame(colData(top_se)[, "group", drop=FALSE])
+ht_col_annot <- as.data.frame(colData(top_se)[, columnToTest , drop=FALSE])
 
-group_lvls <- unique(ht_col_annot$group)
+group_lvls <- unique(ht_col_annot[[columnToTest]])
 ht_col_colors <- list(group=setNames(c("#440154FF","#2A788EFF", ggsci::pal_npg()(length(group_lvls)-2)),
                                          nm=group_lvls))
 
