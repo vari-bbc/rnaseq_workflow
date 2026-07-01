@@ -75,6 +75,8 @@ if errors:
 # if not (comparisons['group_test'].isin(samples['group']).all() and comparisons['group_reference'].isin(samples['group']).all()):
     # raise Exception('A group in the comparisons file is not in the samplesheet.')
     
+dupes = comparisons.loc[comparisons['comparison_name'].duplicated(keep=False), 'comparison_name'].unique()
+assert len(dupes) == 0, f"Duplicate comparison_name values found: {dupes}"
 
 snakemake_dir = os.getcwd() + "/"
 
