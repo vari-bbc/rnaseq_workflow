@@ -43,7 +43,7 @@ Rproj_packages_vals = pd.read_table("config/R_proj_packages.txt", header=None)[0
 Rproj_packages = "c('" + "','".join(Rproj_packages_vals) + "')"
 
 # comparisons: list of comparisons (contrasts) to be tested
-comparisons = pd.read_table(config["comparisons"]) 
+comparisons = pd.read_table(config["comparisons"],dtype={"filterColumnLevel": str}) 
 def get_formula_column(formula):
     # Strip whitespace, remove leading '~', take the column name
     # handles simple formulas like "~group" or "~batch + group" (takes first term)
