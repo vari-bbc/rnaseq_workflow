@@ -2,6 +2,8 @@
 
 [![DOI](https://zenodo.org/badge/203868414.svg)](https://zenodo.org/badge/latestdoi/203868414)
 
+[![pytest](https://github.com/vari-bbc/rnaseq_workflow/actions/workflows/pytest.yml/badge.svg)](https://github.com/vari-bbc/rnaseq_workflow/actions/workflows/pytest.yml)
+
 ## Table of Contents
 
 * [Bulk RNAseq Workflow](#bulk-rnaseq-workflow)
