@@ -107,6 +107,6 @@ modules:
   snpeff: bbc2/SnpEff/SnpEff-5.1
   sortmerna: bbc2/sortmerna/sortmerna-4.3.6
   star: bbc2/STAR/STAR-2.7.10a
-  trim_galore: bbc2/trim_galore/trim_galore-0.6.10
+  trim_galore: trim_galore: bbc2/trim_galore/trim_galore-2.3.0
   ucsctools: bbc2/ucsc_tools/ucsc_tools-20231127 
   vt: bbc2/vt/vt-0.1.16
