@@ -50,10 +50,8 @@ if not (comparisons['group_test'].isin(samples['group']).all() and comparisons['
 dupes = comparisons.loc[comparisons['comparison_name'].duplicated(keep=False), 'comparison_name'].unique()
 assert len(dupes) == 0, f"Duplicate comparison_name values found: {dupes}"
 
-snakemake_dir = os.getcwd() + "/"
-
 # make a tmp directory for analyses
-tmp_dir = os.path.join(snakemake_dir, "tmp")
+tmp_dir = "tmp"
 if not os.path.exists(tmp_dir):
     os.mkdir(tmp_dir)
 

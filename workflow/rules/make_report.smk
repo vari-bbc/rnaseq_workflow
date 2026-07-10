@@ -27,13 +27,12 @@ rule make_final_report:
         "benchmarks/make_final_report/bench.txt"
     params:
         template_dir = lambda wildcards, input: os.path.commonprefix(input.website_template),
-        template_files = lambda wildcards, input: [ fname.replace("resources/report_template/", "")  for fname in input.website_template],
         de_res_comps = " ".join(["'" + comp + "'" for comp in pd.unique(comparisons["comparison_name"])]),
         de_res_yml = "\\n".join([f"        - text: {comp}\\n          href: DESeq2_{comp}.html" for comp in pd.unique(comparisons["comparison_name"])]),
         gsea_yml = "\\n".join([f"        - text: {comp}\\n          href: gsea_{comp}.html" for comp in pd.unique(comparisons["comparison_name"])]),
         ext_reports_dir = lambda wildcards, output: os.path.dirname(output.multiqc),
         renv_rproj_dir = lambda wildcards, input: os.path.dirname(input.renv_lock),
-        root_dir = lambda wildcards, output: os.path.join(os.getcwd(), os.path.dirname(output.website)),
+        root_dir = lambda wildcards, output: os.path.dirname(output.website),
         de_res_outdir = lambda wildcards, input: os.path.dirname(os.path.dirname(input.de_res_figs[0])),
         gsea_dir = lambda wildcards, input: os.path.dirname(input.gsea[0]),
         isee_site_yml = "    - text: iSEE\\n      icon: fa-solid fa-gem\\n      href: isee.html" if config['deploy_to_shinyio'] else "",
@@ -49,9 +48,7 @@ rule make_final_report:
         log_prefix=lambda wildcards: "_".join(wildcards) if len(wildcards) > 0 else "log"
     shell:
         """
-        cd {params.template_dir}
-        cp --parents -r {params.template_files} {params.root_dir}/
-        cd -
+        cp -r {params.template_dir}/* {params.root_dir}/
 
         perl -i -lnpe 's/<<<DE_RES>>>/{params.de_res_yml}/' {params.root_dir}/_site.yml
         perl -i -lnpe 's/<<<GSEA_RES>>>/{params.gsea_yml}/' {params.root_dir}/_site.yml

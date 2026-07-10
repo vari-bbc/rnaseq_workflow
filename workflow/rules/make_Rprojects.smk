@@ -22,7 +22,6 @@ rule make_Rproject:
         set_symlink_from_cache = lambda wildcards, output: "RENV_CONFIG_CACHE_SYMLINKS={choice}".format(choice="TRUE" if config['renv_symlink_from_cache'] else "FALSE"),
         set_use_pak = lambda wildcards, output: "RENV_CONFIG_PAK_ENABLED={choice}".format(choice="TRUE" if config['renv_use_pak'] else "FALSE"),
         install_pak = lambda wildcards, output: "library(pak)" if config['renv_use_pak'] else "",
-        snakemake_dir=snakemake_dir,
         orgdb = config['orgdb'],
         init_git = "true" if config['Rproj_init_git'] else "false"
     threads: 1
@@ -52,7 +51,7 @@ rule make_Rproject:
        
         echo "Running script to set up renv library..."
         # Don't use --vanilla because we need to get the RENV_PATHS_ROOT from the .renviron file.
-        Rscript {params.snakemake_dir}/workflow/scripts/install_renv_pkges.R {params.snakemake_dir}/{input.R_pkges}
+        Rscript ../../workflow/scripts/install_renv_pkges.R ../../{input.R_pkges}
         
         if {params.init_git}; then 
             # Set up git
