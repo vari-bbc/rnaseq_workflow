@@ -63,12 +63,12 @@ def test_test_comparisons_match_units(repo_root, test_config):
     groups = {row["group"] for row in units}
 
     assert comparisons
-    assert {"comparison_name", "group_test", "group_reference", "group_reg_formula"} <= set(comparisons[0])
+    assert {"comparison_name", "group_test", "group_reference", "group_reg_formula", "filterColumn", "filterColumnLevel"} <= set(comparisons[0])
     for row in comparisons:
         assert row["group_test"] in groups
         assert row["group_reference"] in groups
         assert row["group_reg_formula"].startswith("~")
-
+    
 
 def test_grouped_contigs_match_reference_fai(repo_root, test_config):
     contigs = read_tsv(repo_root / test_config["grouped_contigs"])
