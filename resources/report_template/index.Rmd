@@ -17,6 +17,10 @@ library(configr)
 library(tidyverse)
 library(kableExtra)
 library(SummarizedExperiment)
+library(ggrepel)
+library(patchwork)
+library(DESeq2)
+
 ```
 
 ## Experimental design
@@ -57,6 +61,82 @@ de_sum_all |>
   kbl(caption = paste0("DE gene summary (FDR cutoff = ", fdr, ")"), row.names = FALSE) |>
    kable_classic_2(full_width = F)
 
+```
+<br>
+
+## PCA all samples
+
+```{r pca_plot, include=T, echo=F, message=F, warning=F}
+make_PCA <- function(in_se, cols, PCx = 1, PCy = 2, ntop = 10000) {
+  if (ntop > nrow(in_se)) {
+    ntop <- nrow(in_se)
+  }
+
+  dds <- DESeqDataSet(
+  in_se,
+  design = ~ group
+)
+
+  vsd <- varianceStabilizingTransformation(dds, blind = TRUE)
+  mat <- assay(vsd)
+  col_data <- as.data.frame(colData(dds))
+
+  vars <- genefilter::rowVars(mat)
+  vars_rank <- order(vars, decreasing = TRUE)
+  mat <- mat[vars_rank[1:ntop], ]
+
+  pcaData <- prcomp(t(mat))
+
+  prop_var <- data.frame(t(summary(pcaData)$importance))
+  names(prop_var) <- c("sd", "prop", "cum")
+  prop_var$num <- 1:nrow(prop_var)
+
+  percentVar <- round(100 * prop_var$prop)
+  df <- cbind(pcaData$x, col_data)
+
+  out_patchwork <- list()
+
+  for (i in seq_along(cols)) {
+    if (class(df[, cols[i]]) %in% c("factor", "character")) {
+      ht_col_colors <- c("#440154FF", "#2A788EFF", ggsci::pal_npg()(length(unique(dds@colData[[cols[i]]])) - 2))
+
+      gg_args <- list(x = str_glue("PC{PCx}"), y = str_glue("PC{PCy}"), color = cols[i], label = "sample")
+      gg_args <- lapply(gg_args, function(x) if (!is.null(x)) sym(x))
+
+      out_patchwork <- c(out_patchwork, list(
+        ggplot(df, aes(!!!gg_args)) +
+          geom_point(size = 1) +
+          scale_color_manual(values = ht_col_colors) +
+          xlab(paste0(str_glue("PC{PCx}: "), percentVar[PCx], "% variance")) +
+          ylab(paste0(str_glue("PC{PCy}: "), percentVar[PCy], "% variance")) +
+          theme_bw() +
+          ggrepel::geom_text_repel(max.overlaps = 5)
+      ))
+    } else if (class(df[, cols[i]]) == "numeric") {
+      gg_args <- list(x = str_glue("PC{PCx}"), y = str_glue("PC{PCy}"), color = cols[i], label = "sample")
+      gg_args <- lapply(gg_args, function(x) if (!is.null(x)) sym(x))
+
+      out_patchwork <- c(out_patchwork, list(
+        ggplot(df, aes(!!!gg_args)) +
+          geom_point(size = 1) +
+          scale_color_continuous(palette = c("#440154FF", "#2A788EFF")) +
+          xlab(paste0(str_glue("PC{PCx}: "), percentVar[PCx], "% variance")) +
+          ylab(paste0(str_glue("PC{PCy}: "), percentVar[PCy], "% variance")) +
+          theme_bw() +
+          ggrepel::geom_text_repel(max.overlaps = 5)
+      ))
+    }
+  }
+
+  wrap_plots(out_patchwork)
+}
+
+group_col <- if ("group" %in% colnames(colData(se))) "group" else names(colData(se))[1]
+
+# Use the full SummarizedExperiment object for PCA so all sample groups are included.
+pca_input <- se
+
+make_PCA(pca_input, cols = group_col, ntop = 10000)
 ```
 
 <br>
