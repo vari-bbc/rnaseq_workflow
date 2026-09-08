@@ -4,7 +4,7 @@
 #SBATCH -o rnaseq_workflow.o
 #SBATCH -e rnaseq_workflow.e
 #SBATCH --ntasks 1
-#SBATCH --time 120:00:00
+#SBATCH --time 95:00:00
 #SBATCH --mem=8G
 #SBATCH --partition=long
 
@@ -33,7 +33,7 @@ snakemake \
 --nodes 1 \
 --ntasks-per-node {threads} \
 --mem={resources.mem_gb}G \
--t 120:00:00 \
+-t 95:00:00 \
 -o logs/{rule}/{resources.log_prefix}.o \
 -e logs/{rule}/{resources.log_prefix}.e" # SLURM hangs if output dir does not exist, so we create it before running sbatch on the snakemake jobs.
 #--slurm \
