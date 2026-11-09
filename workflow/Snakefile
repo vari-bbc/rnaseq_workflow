@@ -59,12 +59,19 @@ for idx, row in comparisons.iterrows():
         errors.append(f"Row {idx} ('{row['comparison_name']}'): column '{col}' from formula '{row['group_reg_formula']}' not found in samplesheet.")
         continue
     
-    valid_levels = units[col].unique()
-    
-    if row['group_test'] not in valid_levels:
-        errors.append(f"Row {idx} ('{row['comparison_name']}'): group_test '{row['group_test']}' not a level of '{col}'.")
-    if row['group_reference'] not in valid_levels:
-        errors.append(f"Row {idx} ('{row['comparison_name']}'): group_reference '{row['group_reference']}' not a level of '{col}'.")
+    # valid_levels = units[col].unique()
+    # if row['group_test'] not in valid_levels:
+        # errors.append(f"Row {idx} ('{row['comparison_name']}'): group_test '{row['group_test']}' not a level of '{col}'.")
+    # if row['group_reference'] not in valid_levels:
+        # errors.append(f"Row {idx} ('{row['comparison_name']}'): group_reference '{row['group_reference']}' not a level of '{col}'.")
+    valid_levels = set(units[col].dropna().astype(str))
+    test = str(row['group_test'])
+    ref = str(row['group_reference'])
+
+    if test not in valid_levels:
+        errors.append(f"Row {idx} ('{row['comparison_name']}'): group_test '{test}' not a level of '{col}' (levels: {sorted(valid_levels)}).")
+    if ref not in valid_levels:
+        errors.append(f"Row {idx} ('{row['comparison_name']}'): group_reference '{ref}' not a level of '{col}' (levels: {sorted(valid_levels)}).")
 
 if errors:
     raise Exception("Comparisons file validation failed:\n" + "\n".join(errors))
